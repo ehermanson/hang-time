@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { LayoutGrid } from 'lucide-react'
 
 interface Props {
   calculator: UseCalculatorReturn
@@ -15,7 +16,9 @@ export function LayoutTypeSelector({ calculator }: Props) {
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <span className="w-6 h-6 rounded flex items-center justify-center text-sm" style={{ background: '#fef3c7' }}>⚡</span>
+        <span className="w-6 h-6 rounded flex items-center justify-center bg-amber-100 text-amber-600">
+          <LayoutGrid className="h-3.5 w-3.5" />
+        </span>
         Layout Type
       </h3>
 

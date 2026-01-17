@@ -3,6 +3,7 @@ import type { HorizontalAnchorType } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { MoveHorizontal } from 'lucide-react'
 
 interface Props {
   calculator: UseCalculatorReturn
@@ -20,7 +21,9 @@ export function HorizontalPosition({ calculator }: Props) {
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <span className="w-6 h-6 rounded flex items-center justify-center text-sm" style={{ background: '#e0e7ff' }}>↔️</span>
+        <span className="w-6 h-6 rounded flex items-center justify-center bg-indigo-100 text-indigo-600">
+          <MoveHorizontal className="h-3.5 w-3.5" />
+        </span>
         Horizontal Position
       </h3>
       <div className="flex flex-col gap-2">

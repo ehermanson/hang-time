@@ -1,6 +1,7 @@
 import type { UseCalculatorReturn } from '@/hooks/useCalculator'
 import { formatMeasurement, toDisplayUnit } from '@/utils/calculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ListChecks } from 'lucide-react'
 
 interface HowToHangProps {
   calculator: UseCalculatorReturn
@@ -19,7 +20,9 @@ export function HowToHang({ calculator }: HowToHangProps) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <span className="w-6 h-6 rounded flex items-center justify-center text-sm" style={{ background: '#d1fae5' }}>📝</span>
+          <span className="w-6 h-6 rounded flex items-center justify-center bg-emerald-100 text-emerald-600">
+            <ListChecks className="h-3.5 w-3.5" />
+          </span>
           How to Hang
         </CardTitle>
       </CardHeader>

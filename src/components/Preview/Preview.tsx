@@ -3,6 +3,7 @@ import type { UseCalculatorReturn } from '@/hooks/useCalculator'
 import type { DragState } from '@/types'
 import { formatMeasurement, formatShort, toDisplayUnit } from '@/utils/calculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Eye } from 'lucide-react'
 
 interface PreviewProps {
   calculator: UseCalculatorReturn
@@ -365,7 +366,9 @@ export function Preview({ calculator }: PreviewProps) {
     <Card ref={containerRef}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <span className="w-6 h-6 rounded flex items-center justify-center text-sm" style={{ background: '#dbeafe' }}>👁️</span>
+          <span className="w-6 h-6 rounded flex items-center justify-center bg-blue-100 text-blue-600">
+            <Eye className="h-3.5 w-3.5" />
+          </span>
           Visual Preview (To Scale)
         </CardTitle>
       </CardHeader>

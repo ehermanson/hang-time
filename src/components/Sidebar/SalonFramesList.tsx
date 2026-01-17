@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { Images } from 'lucide-react'
 
 interface Props {
   calculator: UseCalculatorReturn
@@ -17,7 +18,9 @@ export function SalonFramesList({ calculator }: Props) {
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <span className="w-6 h-6 rounded flex items-center justify-center text-sm" style={{ background: '#fce7f3' }}>🖼️</span>
+        <span className="w-6 h-6 rounded flex items-center justify-center bg-pink-100 text-pink-600">
+          <Images className="h-3.5 w-3.5" />
+        </span>
         Frames ({state.salonFrames.length})
       </h3>
       <div className="max-h-[250px] overflow-y-auto space-y-2">

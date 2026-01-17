@@ -1,6 +1,7 @@
 import type { UseCalculatorReturn } from '@/hooks/useCalculator'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Ruler } from 'lucide-react'
 
 interface Props {
   calculator: UseCalculatorReturn
@@ -12,7 +13,9 @@ export function WallDimensions({ calculator }: Props) {
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <span className="w-6 h-6 rounded flex items-center justify-center text-sm" style={{ background: '#dbeafe' }}>📐</span>
+        <span className="w-6 h-6 rounded flex items-center justify-center bg-blue-100 text-blue-600">
+          <Ruler className="h-3.5 w-3.5" />
+        </span>
         Wall Dimensions
       </h3>
       <div className="grid grid-cols-2 gap-3">

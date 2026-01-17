@@ -2,6 +2,7 @@ import type { UseCalculatorReturn } from '@/hooks/useCalculator'
 import { formatMeasurement, formatShort, toDisplayUnit } from '@/utils/calculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { Ruler } from 'lucide-react'
 
 interface MeasurementsProps {
   calculator: UseCalculatorReturn
@@ -17,7 +18,9 @@ export function Measurements({ calculator }: MeasurementsProps) {
     <Card className="max-h-[280px] overflow-hidden">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <span className="w-6 h-6 rounded flex items-center justify-center text-sm" style={{ background: '#fef3c7' }}>📏</span>
+          <span className="w-6 h-6 rounded flex items-center justify-center bg-amber-100 text-amber-600">
+            <Ruler className="h-3.5 w-3.5" />
+          </span>
           Hook Placement Measurements
         </CardTitle>
       </CardHeader>

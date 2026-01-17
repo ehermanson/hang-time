@@ -3,6 +3,15 @@ import { useQueryState, useQueryStates, parseAsInteger, parseAsFloat, parseAsStr
 import type { CalculatorState, FramePosition, SalonFrame, Unit, LayoutType, AnchorType, HorizontalAnchorType } from '@/types'
 import { calculateLayoutPositions, toDisplayUnit, fromDisplayUnit } from '@/utils/calculations'
 
+const UNIT_STORAGE_KEY = 'picture-hanging-unit'
+
+// Get saved unit from localStorage or default to 'in'
+function getSavedUnit(): 'in' | 'cm' {
+  if (typeof window === 'undefined') return 'in'
+  const saved = localStorage.getItem(UNIT_STORAGE_KEY)
+  return saved === 'cm' ? 'cm' : 'in'
+}
+
 const DEFAULT_SALON_FRAMES: SalonFrame[] = [
   { id: 1, name: 'Frame 1', width: 16, height: 20, hangingOffset: 3, x: 30, y: 30 },
   { id: 2, name: 'Frame 2', width: 10, height: 12, hangingOffset: 2, x: 50, y: 35 },
@@ -27,7 +36,7 @@ const salonFramesValidator = (value: unknown): SalonFrame[] | null => {
 
 // Parser definitions grouped by concern
 const wallParsers = {
-  u: parseAsStringLiteral(['in', 'cm'] as const).withDefault('in'),
+  u: parseAsStringLiteral(['in', 'cm'] as const).withDefault(getSavedUnit()),
   ww: parseAsFloat.withDefault(120),
   wh: parseAsFloat.withDefault(96),
 }

@@ -3,6 +3,7 @@ import type { AnchorType } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { MoveVertical } from 'lucide-react'
 
 interface Props {
   calculator: UseCalculatorReturn
@@ -31,7 +32,9 @@ export function VerticalPosition({ calculator }: Props) {
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <span className="w-6 h-6 rounded flex items-center justify-center text-sm" style={{ background: '#d1fae5' }}>📍</span>
+        <span className="w-6 h-6 rounded flex items-center justify-center bg-emerald-100 text-emerald-600">
+          <MoveVertical className="h-3.5 w-3.5" />
+        </span>
         Vertical Position
       </h3>
       <div className="flex flex-col gap-2">

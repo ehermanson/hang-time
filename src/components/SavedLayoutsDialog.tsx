@@ -7,6 +7,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Trash2 } from 'lucide-react'
 
 interface SavedLayoutsDialogProps {
   open: boolean
@@ -71,7 +72,7 @@ export function SavedLayoutsDialog({
                     onDelete(layout.id)
                   }}
                 >
-                  🗑️
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             ))}
