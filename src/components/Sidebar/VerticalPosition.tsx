@@ -1,9 +1,70 @@
 import type { UseCalculatorReturn } from '@/hooks/useCalculator'
-import type { AnchorType } from '@/types'
+import type { AnchorType, Distribution } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { MoveVertical } from 'lucide-react'
+
+// Visual preview of distribution mode (vertical orientation)
+function DistributionPreview({
+  mode,
+  isSelected,
+}: {
+  mode: Distribution
+  isSelected: boolean
+}) {
+  const frameColor = isSelected ? 'fill-emerald-500' : 'fill-gray-400'
+  const wallColor = isSelected ? 'stroke-emerald-300' : 'stroke-gray-300'
+
+  const w = 24
+  const h = 48
+  const fw = 14
+  const fh = 10
+
+  const getPositions = (): number[] => {
+    const totalFrames = 3 * fh
+    const available = h - totalFrames
+
+    switch (mode) {
+      case 'fixed': {
+        const gap = 3
+        const totalHeight = 3 * fh + 2 * gap
+        const start = (h - totalHeight) / 2
+        return [start, start + fh + gap, start + 2 * (fh + gap)]
+      }
+      case 'space-between': {
+        const gap = available / 2
+        return [0, fh + gap, 2 * (fh + gap)]
+      }
+      case 'space-evenly': {
+        const gap = available / 4
+        return [gap, gap + fh + gap, gap + 2 * (fh + gap)]
+      }
+      case 'space-around': {
+        const gap = available / 3
+        return [gap / 2, gap / 2 + fh + gap, gap / 2 + 2 * (fh + gap)]
+      }
+    }
+  }
+
+  const positions = getPositions()
+
+  return (
+    <svg width={w} height={h} className="flex-shrink-0">
+      <rect x={0.5} y={0.5} width={w - 1} height={h - 1} fill="none" className={wallColor} strokeWidth={1} rx={2} />
+      {positions.map((pos, i) => (
+        <rect key={i} x={(w - fw) / 2} y={pos} width={fw} height={fh} className={frameColor} rx={1} />
+      ))}
+    </svg>
+  )
+}
+
+const DISTRIBUTION_OPTIONS: { value: Distribution; label: string }[] = [
+  { value: 'fixed', label: 'Fixed' },
+  { value: 'space-between', label: 'Edge' },
+  { value: 'space-evenly', label: 'Even' },
+  { value: 'space-around', label: 'Balanced' },
+]
 
 interface Props {
   calculator: UseCalculatorReturn
@@ -23,11 +84,15 @@ export function VerticalPosition({ calculator }: Props) {
     fromU,
     setAnchorType,
     setAnchorValue,
+    setVDistribution,
+    setVSpacing,
     setFurnitureWidth,
     setFurnitureHeight,
     setFurnitureX,
     setFurnitureCentered,
   } = calculator
+
+  const showDistribution = state.layoutType !== 'row'
 
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -37,105 +102,157 @@ export function VerticalPosition({ calculator }: Props) {
         </span>
         Vertical Position
       </h3>
-      <div className="flex flex-col gap-2">
-        {options.map((opt) => (
-          <label
-            key={opt.value}
-            className={cn(
-              "flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors",
-              state.anchorType === opt.value
-                ? "border-indigo-600 bg-indigo-50"
-                : "border-gray-200 hover:border-indigo-400 hover:bg-gray-50"
-            )}
-            onClick={() => {
-              setAnchorType(opt.value)
-              if (opt.value !== 'center') setAnchorValue(opt.defaultValue)
-            }}
-          >
-            <input
-              type="radio"
-              checked={state.anchorType === opt.value}
-              onChange={() => {}}
-              className="mt-1 accent-indigo-600"
-            />
-            <div>
-              <div className="text-sm font-medium text-gray-900">{opt.label}</div>
-              <div className="text-xs text-gray-500">{opt.desc}</div>
-            </div>
-          </label>
-        ))}
-      </div>
 
-      {state.anchorType !== 'center' && state.anchorType !== 'furniture' && (
-        <div className="space-y-1.5 mt-3">
-          <Label>
-            {state.anchorType === 'floor' ? 'Distance from floor' : 'Distance from ceiling'} ({state.unit})
-          </Label>
-          <Input
-            type="number"
-            step="0.125"
-            value={parseFloat(u(state.anchorValue).toFixed(3))}
-            onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
-          />
+      {/* Distribution Mode - only for multi-row layouts */}
+      {showDistribution && (
+        <div className="space-y-1.5 mb-3">
+          <Label>Distribution</Label>
+          <div className="grid grid-cols-4 gap-1.5">
+            {DISTRIBUTION_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setVDistribution(option.value)}
+                className={cn(
+                  "flex flex-col items-center p-1.5 rounded-lg border-2 transition-all",
+                  state.vDistribution === option.value
+                    ? "border-emerald-500 bg-emerald-50"
+                    : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                )}
+              >
+                <DistributionPreview
+                  mode={option.value}
+                  isSelected={state.vDistribution === option.value}
+                />
+                <span className={cn(
+                  "text-[10px] font-medium mt-1",
+                  state.vDistribution === option.value ? "text-emerald-700" : "text-gray-600"
+                )}>
+                  {option.label}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
-      {state.anchorType === 'furniture' && (
-        <div className="mt-3 space-y-3">
-          <div className="bg-white rounded-md border border-gray-200 p-3 space-y-3">
-            <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">Furniture Dimensions</div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Width ({state.unit})</Label>
-                <Input
-                  type="number"
-                  step="0.125"
-                  value={parseFloat(u(state.furnitureWidth).toFixed(3))}
-                  onChange={(e) => setFurnitureWidth(fromU(parseFloat(e.target.value) || 0))}
+      {/* Anchor options - only show for fixed distribution (or row layout) */}
+      {(!showDistribution || state.vDistribution === 'fixed') && (
+        <>
+          <div className="flex flex-col gap-2">
+            {options.map((opt) => (
+              <label
+                key={opt.value}
+                className={cn(
+                  "flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors",
+                  state.anchorType === opt.value
+                    ? "border-indigo-600 bg-indigo-50"
+                    : "border-gray-200 hover:border-indigo-400 hover:bg-gray-50"
+                )}
+                onClick={() => {
+                  setAnchorType(opt.value)
+                  if (opt.value !== 'center') setAnchorValue(opt.defaultValue)
+                }}
+              >
+                <input
+                  type="radio"
+                  checked={state.anchorType === opt.value}
+                  onChange={() => {}}
+                  className="mt-1 accent-indigo-600"
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Height ({state.unit})</Label>
-                <Input
-                  type="number"
-                  step="0.125"
-                  value={parseFloat(u(state.furnitureHeight).toFixed(3))}
-                  onChange={(e) => setFurnitureHeight(fromU(parseFloat(e.target.value) || 0))}
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Offset from center ({state.unit})</Label>
+                <div>
+                  <div className="text-sm font-medium text-gray-900">{opt.label}</div>
+                  <div className="text-xs text-gray-500">{opt.desc}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {state.anchorType !== 'center' && state.anchorType !== 'furniture' && (
+            <div className="space-y-1.5 mt-3">
+              <Label>
+                {state.anchorType === 'floor' ? 'Distance from floor' : 'Distance from ceiling'} ({state.unit})
+              </Label>
               <Input
                 type="number"
                 step="0.125"
-                value={parseFloat(u(state.furnitureX).toFixed(3))}
-                onChange={(e) => setFurnitureX(fromU(parseFloat(e.target.value) || 0))}
+                value={parseFloat(u(state.anchorValue).toFixed(3))}
+                onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
               />
-              <p className="text-xs text-gray-500">0 = centered, negative = left, positive = right</p>
             </div>
-          </div>
+          )}
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={state.furnitureCentered}
-              onChange={(e) => setFurnitureCentered(e.target.checked)}
-              className="accent-indigo-600"
-            />
-            <span className="text-sm text-gray-700">Center frames above furniture</span>
-          </label>
+          {state.anchorType === 'furniture' && (
+            <div className="mt-3 space-y-3">
+              <div className="bg-white rounded-md border border-gray-200 p-3 space-y-3">
+                <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">Furniture Dimensions</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Width ({state.unit})</Label>
+                    <Input
+                      type="number"
+                      step="0.125"
+                      value={parseFloat(u(state.furnitureWidth).toFixed(3))}
+                      onChange={(e) => setFurnitureWidth(fromU(parseFloat(e.target.value) || 0))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Height ({state.unit})</Label>
+                    <Input
+                      type="number"
+                      step="0.125"
+                      value={parseFloat(u(state.furnitureHeight).toFixed(3))}
+                      onChange={(e) => setFurnitureHeight(fromU(parseFloat(e.target.value) || 0))}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Offset from center ({state.unit})</Label>
+                  <Input
+                    type="number"
+                    step="0.125"
+                    value={parseFloat(u(state.furnitureX).toFixed(3))}
+                    onChange={(e) => setFurnitureX(fromU(parseFloat(e.target.value) || 0))}
+                  />
+                  <p className="text-xs text-gray-500">0 = centered, negative = left, positive = right</p>
+                </div>
+              </div>
 
-          <div className="space-y-1.5">
-            <Label>Gap above furniture ({state.unit})</Label>
-            <Input
-              type="number"
-              step="0.125"
-              value={parseFloat(u(state.anchorValue).toFixed(3))}
-              onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
-            />
-          </div>
-        </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={state.furnitureCentered}
+                  onChange={(e) => setFurnitureCentered(e.target.checked)}
+                  className="accent-indigo-600"
+                />
+                <span className="text-sm text-gray-700">Center frames above furniture</span>
+              </label>
+
+              <div className="space-y-1.5">
+                <Label>Gap above furniture ({state.unit})</Label>
+                <Input
+                  type="number"
+                  step="0.125"
+                  value={parseFloat(u(state.anchorValue).toFixed(3))}
+                  onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Gap input for fixed distribution in multi-row layouts */}
+          {showDistribution && (
+            <div className="space-y-1.5 mt-3">
+              <Label>Gap between rows ({state.unit})</Label>
+              <Input
+                type="number"
+                step="0.125"
+                min={0}
+                value={parseFloat(u(state.vSpacing).toFixed(3))}
+                onChange={(e) => setVSpacing(fromU(parseFloat(e.target.value) || 0))}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   )

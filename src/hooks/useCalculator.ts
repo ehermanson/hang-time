@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useQueryState, useQueryStates, parseAsInteger, parseAsFloat, parseAsStringLiteral, parseAsJson } from 'nuqs'
-import type { CalculatorState, FramePosition, GalleryFrame, Unit, LayoutType, AnchorType, HorizontalAnchorType, HangingType } from '@/types'
+import type { CalculatorState, FramePosition, GalleryFrame, Unit, LayoutType, AnchorType, HorizontalAnchorType, HangingType, Distribution } from '@/types'
 import { calculateLayoutPositions, toDisplayUnit, fromDisplayUnit } from '@/utils/calculations'
 
 const UNIT_STORAGE_KEY = 'picture-hanging-unit'
@@ -56,6 +56,8 @@ const frameParsers = {
   hi: parseAsFloat.withDefault(3), // hook inset from edge for dual hanging
   hs: parseAsFloat.withDefault(3),
   vs: parseAsFloat.withDefault(3),
+  hd: parseAsStringLiteral(['fixed', 'space-between', 'space-evenly', 'space-around'] as const).withDefault('fixed'),
+  vd: parseAsStringLiteral(['fixed', 'space-between', 'space-evenly', 'space-around'] as const).withDefault('fixed'),
 }
 
 const positionParsers = {
@@ -109,6 +111,8 @@ export function useCalculator() {
     hookInset: frame.hi,
     hSpacing: frame.hs,
     vSpacing: frame.vs,
+    hDistribution: frame.hd as Distribution,
+    vDistribution: frame.vd as Distribution,
     anchorType: position.at as AnchorType,
     anchorValue: position.av,
     hAnchorType: position.hat as HorizontalAnchorType,
@@ -159,6 +163,8 @@ export function useCalculator() {
   const setHookInset = (value: number) => setFrame({ hi: value })
   const setHSpacing = (value: number) => setFrame({ hs: value })
   const setVSpacing = (value: number) => setFrame({ vs: value })
+  const setHDistribution = (value: Distribution) => setFrame({ hd: value })
+  const setVDistribution = (value: Distribution) => setFrame({ vd: value })
   const setAnchorType = (value: AnchorType) => setPosition({ at: value })
   const setAnchorValue = (value: number) => setPosition({ av: value })
   const setHAnchorType = (value: HorizontalAnchorType) => setPosition({ hat: value })
@@ -333,6 +339,8 @@ export function useCalculator() {
     setHookInset,
     setHSpacing,
     setVSpacing,
+    setHDistribution,
+    setVDistribution,
     setAnchorType,
     setAnchorValue,
     setHAnchorType,

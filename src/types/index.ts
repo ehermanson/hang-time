@@ -8,6 +8,8 @@ export type HorizontalAnchorType = 'center' | 'left' | 'right'
 
 export type HangingType = 'center' | 'dual'
 
+export type Distribution = 'fixed' | 'space-between' | 'space-evenly' | 'space-around'
+
 export interface GalleryFrame {
   id: number
   name: string
@@ -63,6 +65,8 @@ export interface CalculatorState {
   hookInset: number  // For dual: distance from frame edge to each hook
   hSpacing: number
   vSpacing: number
+  hDistribution: Distribution
+  vDistribution: Distribution
 
   // Positioning
   anchorType: AnchorType

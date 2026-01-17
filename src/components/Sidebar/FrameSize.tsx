@@ -32,7 +32,6 @@ export function FrameSize({ calculator }: Props) {
     state, u, fromU,
     setFrameWidth, setFrameHeight, setHangingOffset,
     setHangingType, setHookInset,
-    setHSpacing, setVSpacing
   } = calculator
 
   // Find matching template for current dimensions
@@ -132,28 +131,6 @@ export function FrameSize({ calculator }: Props) {
             />
           </div>
         )}
-      </div>
-      <div className="grid grid-cols-2 gap-3 mt-3">
-        <div className="space-y-1.5">
-          <Label>Horizontal Spacing</Label>
-          <Input
-            type="number"
-            step="0.125"
-            min={0}
-            value={parseFloat(u(state.hSpacing).toFixed(3))}
-            onChange={(e) => setHSpacing(fromU(parseFloat(e.target.value) || 0))}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Vertical Spacing</Label>
-          <Input
-            type="number"
-            step="0.125"
-            min={0}
-            value={parseFloat(u(state.vSpacing).toFixed(3))}
-            onChange={(e) => setVSpacing(fromU(parseFloat(e.target.value) || 0))}
-          />
-        </div>
       </div>
     </div>
   )
