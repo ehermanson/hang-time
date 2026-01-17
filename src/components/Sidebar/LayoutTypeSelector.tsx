@@ -63,6 +63,13 @@ function LayoutPreview({
   const cells = []
   let placed = 0
 
+  // Calculate cell size to fit within 44px height (with 2px gaps)
+  const gap = 2
+  const maxHeight = 44
+  const maxWidth = 56
+  const cellHeight = Math.min(16, (maxHeight - (rows - 1) * gap) / rows)
+  const cellWidth = Math.min(14, (maxWidth - (cols - 1) * gap) / cols)
+
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const isFilled = placed < frameCount
@@ -76,8 +83,8 @@ function LayoutPreview({
               : "bg-gray-200 border border-dashed border-gray-300"
           )}
           style={{
-            width: `${Math.min(16, 64 / cols)}px`,
-            height: `${Math.min(20, 48 / rows)}px`,
+            width: `${cellWidth}px`,
+            height: `${cellHeight}px`,
           }}
         />
       )
@@ -87,11 +94,10 @@ function LayoutPreview({
 
   return (
     <div
-      className="flex flex-wrap justify-center items-center gap-0.5 p-2"
       style={{
         display: 'grid',
         gridTemplateColumns: `repeat(${cols}, 1fr)`,
-        gap: '2px',
+        gap: `${gap}px`,
       }}
     >
       {cells}
@@ -150,7 +156,7 @@ export function LayoutTypeSelector({ calculator }: Props) {
                 key={optionKey}
                 onClick={() => handleSelectLayout(option)}
                 className={cn(
-                  "flex flex-col items-center p-2 rounded-lg border-2 transition-all",
+                  "flex flex-col items-center justify-end p-2 rounded-lg border-2 transition-all",
                   isSelected
                     ? "border-indigo-500 bg-indigo-50"
                     : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
@@ -163,7 +169,7 @@ export function LayoutTypeSelector({ calculator }: Props) {
                   isSelected={isSelected}
                 />
                 <span className={cn(
-                  "text-xs font-medium mt-1",
+                  "text-xs font-medium mt-2",
                   isSelected ? "text-indigo-700" : "text-gray-600"
                 )}>
                   {option.label}

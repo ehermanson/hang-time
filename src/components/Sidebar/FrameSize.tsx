@@ -10,6 +10,70 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Frame } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+// Visual preview of hanging type
+function HangingTypePreview({
+  type,
+  isSelected,
+}: {
+  type: HangingType
+  isSelected: boolean
+}) {
+  const frameColor = isSelected ? 'stroke-pink-500' : 'stroke-gray-400'
+  const frameFill = isSelected ? 'fill-pink-50' : 'fill-white'
+  const hookColor = isSelected ? 'fill-pink-500' : 'fill-gray-500'
+  const wireColor = isSelected ? 'stroke-pink-400' : 'stroke-gray-400'
+
+  const w = 48
+  const h = 36
+  const frameX = 6
+  const frameY = 8
+  const frameW = 36
+  const frameH = 24
+  const hookY = frameY + 6
+  const hookR = 2.5
+
+  return (
+    <svg width={w} height={h} className="flex-shrink-0">
+      {/* Frame */}
+      <rect
+        x={frameX}
+        y={frameY}
+        width={frameW}
+        height={frameH}
+        className={`${frameColor} ${frameFill}`}
+        strokeWidth={2}
+        rx={1}
+      />
+
+      {type === 'center' ? (
+        <>
+          {/* Single hook indicator */}
+          <circle cx={w / 2} cy={hookY} r={hookR} className={hookColor} />
+          {/* Wire to top */}
+          <line x1={w / 2} y1={hookY - hookR} x2={w / 2} y2={2} className={wireColor} strokeWidth={1.5} />
+        </>
+      ) : (
+        <>
+          {/* Left hook */}
+          <circle cx={frameX + 8} cy={hookY} r={hookR} className={hookColor} />
+          {/* Right hook */}
+          <circle cx={frameX + frameW - 8} cy={hookY} r={hookR} className={hookColor} />
+          {/* Wire from left hook to top center */}
+          <line x1={frameX + 8} y1={hookY - hookR} x2={w / 2} y2={2} className={wireColor} strokeWidth={1.5} />
+          {/* Wire from right hook to top center */}
+          <line x1={frameX + frameW - 8} y1={hookY - hookR} x2={w / 2} y2={2} className={wireColor} strokeWidth={1.5} />
+        </>
+      )}
+    </svg>
+  )
+}
+
+const HANGING_OPTIONS: { value: HangingType; label: string }[] = [
+  { value: 'center', label: 'Center' },
+  { value: 'dual', label: 'Dual' },
+]
 
 const FRAME_TEMPLATES = [
   { value: '4x6', label: '4×6"', width: 4, height: 6 },
@@ -105,22 +169,36 @@ export function FrameSize({ calculator }: Props) {
         </div>
       </div>
 
-      <div className={`grid ${state.hangingType === 'dual' ? 'grid-cols-2' : 'grid-cols-1'} gap-2 mt-3`}>
-        <div className="space-y-1.5">
-          <Label>Hanging Type</Label>
-          <Select value={state.hangingType} onValueChange={(v) => setHangingType(v as HangingType)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="center">Center (single hook)</SelectItem>
-              <SelectItem value="dual">Dual (two hooks)</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="mt-3 space-y-1.5">
+        <Label>Hanging Type</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {HANGING_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setHangingType(option.value)}
+              className={cn(
+                "flex flex-col items-center p-2 rounded-lg border-2 transition-all",
+                state.hangingType === option.value
+                  ? "border-pink-500 bg-pink-50"
+                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+              )}
+            >
+              <HangingTypePreview
+                type={option.value}
+                isSelected={state.hangingType === option.value}
+              />
+              <span className={cn(
+                "text-xs font-medium mt-1",
+                state.hangingType === option.value ? "text-pink-700" : "text-gray-600"
+              )}>
+                {option.label}
+              </span>
+            </button>
+          ))}
         </div>
         {state.hangingType === 'dual' && (
-          <div className="space-y-1.5">
-            <Label>Hook Inset</Label>
+          <div className="pt-2">
+            <Label>Hook Inset ({state.unit})</Label>
             <Input
               type="number"
               step="0.125"
@@ -128,6 +206,7 @@ export function FrameSize({ calculator }: Props) {
               max={parseFloat((u(state.frameWidth) / 2).toFixed(3))}
               value={parseFloat(u(state.hookInset).toFixed(3))}
               onChange={(e) => setHookInset(fromU(parseFloat(e.target.value) || 0))}
+              className="mt-1.5"
             />
           </div>
         )}
