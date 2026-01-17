@@ -23,7 +23,8 @@ export function WallDimensions({ calculator }: Props) {
           <Label>Width ({state.unit})</Label>
           <Input
             type="number"
-            value={parseFloat(u(state.wallWidth).toFixed(1))}
+            step="0.125"
+            value={parseFloat(u(state.wallWidth).toFixed(3))}
             onChange={(e) => setWallWidth(fromU(parseFloat(e.target.value) || 0))}
           />
         </div>
@@ -31,7 +32,8 @@ export function WallDimensions({ calculator }: Props) {
           <Label>Height ({state.unit})</Label>
           <Input
             type="number"
-            value={parseFloat(u(state.wallHeight).toFixed(1))}
+            step="0.125"
+            value={parseFloat(u(state.wallHeight).toFixed(3))}
             onChange={(e) => setWallHeight(fromU(parseFloat(e.target.value) || 0))}
           />
         </div>

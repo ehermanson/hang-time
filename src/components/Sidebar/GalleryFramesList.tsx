@@ -34,7 +34,8 @@ export function GalleryFramesList({ calculator }: Props) {
               <Label className="text-xs">Snap Gap ({state.unit})</Label>
               <Input
                 type="number"
-                value={parseFloat(u(state.gallerySpacing).toFixed(1))}
+                step="0.125"
+                value={parseFloat(u(state.gallerySpacing).toFixed(3))}
                 onChange={(e) => setGallerySpacing(fromU(parseFloat(e.target.value) || 0))}
                 className="h-8"
               />
@@ -89,7 +90,8 @@ export function GalleryFramesList({ calculator }: Props) {
             <Label className="text-xs">Width ({state.unit})</Label>
             <Input
               type="number"
-              value={parseFloat(u(state.furnitureWidth).toFixed(1))}
+              step="0.125"
+              value={parseFloat(u(state.furnitureWidth).toFixed(3))}
               onChange={(e) => setFurnitureWidth(fromU(parseFloat(e.target.value) || 0))}
               className="h-8"
             />
@@ -98,7 +100,8 @@ export function GalleryFramesList({ calculator }: Props) {
             <Label className="text-xs">Height ({state.unit})</Label>
             <Input
               type="number"
-              value={parseFloat(u(state.furnitureHeight).toFixed(1))}
+              step="0.125"
+              value={parseFloat(u(state.furnitureHeight).toFixed(3))}
               onChange={(e) => setFurnitureHeight(fromU(parseFloat(e.target.value) || 0))}
               className="h-8"
             />
@@ -107,7 +110,8 @@ export function GalleryFramesList({ calculator }: Props) {
             <Label className="text-xs">X Offset ({state.unit})</Label>
             <Input
               type="number"
-              value={parseFloat(u(state.furnitureX).toFixed(1))}
+              step="0.125"
+              value={parseFloat(u(state.furnitureX).toFixed(3))}
               onChange={(e) => setFurnitureX(fromU(parseFloat(e.target.value) || 0))}
               className="h-8"
             />
@@ -161,7 +165,8 @@ export function GalleryFramesList({ calculator }: Props) {
                 <Label className="text-[10px]">W</Label>
                 <Input
                   type="number"
-                  value={parseFloat(u(frame.width).toFixed(1))}
+                  step="0.125"
+                  value={parseFloat(u(frame.width).toFixed(3))}
                   onChange={(e) => updateGalleryFrame(frame.id, 'width', fromU(parseFloat(e.target.value) || 0))}
                   className="h-8"
                 />
@@ -170,7 +175,8 @@ export function GalleryFramesList({ calculator }: Props) {
                 <Label className="text-[10px]">H</Label>
                 <Input
                   type="number"
-                  value={parseFloat(u(frame.height).toFixed(1))}
+                  step="0.125"
+                  value={parseFloat(u(frame.height).toFixed(3))}
                   onChange={(e) => updateGalleryFrame(frame.id, 'height', fromU(parseFloat(e.target.value) || 0))}
                   className="h-8"
                 />
@@ -179,7 +185,8 @@ export function GalleryFramesList({ calculator }: Props) {
                 <Label className="text-[10px]">Offset</Label>
                 <Input
                   type="number"
-                  value={parseFloat(u(frame.hangingOffset).toFixed(1))}
+                  step="0.125"
+                  value={parseFloat(u(frame.hangingOffset).toFixed(3))}
                   onChange={(e) => updateGalleryFrame(frame.id, 'hangingOffset', fromU(parseFloat(e.target.value) || 0))}
                   className="h-8"
                 />

@@ -78,7 +78,9 @@ export function FrameSize({ calculator }: Props) {
           <Label>Width</Label>
           <Input
             type="number"
-            value={parseFloat(u(state.frameWidth).toFixed(1))}
+            step="0.125"
+            min={0.125}
+            value={parseFloat(u(state.frameWidth).toFixed(3))}
             onChange={(e) => setFrameWidth(fromU(parseFloat(e.target.value) || 0))}
           />
         </div>
@@ -86,7 +88,9 @@ export function FrameSize({ calculator }: Props) {
           <Label>Height</Label>
           <Input
             type="number"
-            value={parseFloat(u(state.frameHeight).toFixed(1))}
+            step="0.125"
+            min={0.125}
+            value={parseFloat(u(state.frameHeight).toFixed(3))}
             onChange={(e) => setFrameHeight(fromU(parseFloat(e.target.value) || 0))}
           />
         </div>
@@ -94,7 +98,9 @@ export function FrameSize({ calculator }: Props) {
           <Label>Hook Offset</Label>
           <Input
             type="number"
-            value={parseFloat(u(state.hangingOffset).toFixed(1))}
+            step="0.125"
+            max={parseFloat(u(state.frameHeight).toFixed(3))}
+            value={parseFloat(u(state.hangingOffset).toFixed(3))}
             onChange={(e) => setHangingOffset(fromU(parseFloat(e.target.value) || 0))}
           />
         </div>
@@ -118,7 +124,10 @@ export function FrameSize({ calculator }: Props) {
             <Label>Hook Inset</Label>
             <Input
               type="number"
-              value={parseFloat(u(state.hookInset).toFixed(1))}
+              step="0.125"
+              min={0}
+              max={parseFloat((u(state.frameWidth) / 2).toFixed(3))}
+              value={parseFloat(u(state.hookInset).toFixed(3))}
               onChange={(e) => setHookInset(fromU(parseFloat(e.target.value) || 0))}
             />
           </div>
@@ -129,7 +138,9 @@ export function FrameSize({ calculator }: Props) {
           <Label>Horizontal Spacing</Label>
           <Input
             type="number"
-            value={parseFloat(u(state.hSpacing).toFixed(1))}
+            step="0.125"
+            min={0}
+            value={parseFloat(u(state.hSpacing).toFixed(3))}
             onChange={(e) => setHSpacing(fromU(parseFloat(e.target.value) || 0))}
           />
         </div>
@@ -137,7 +148,9 @@ export function FrameSize({ calculator }: Props) {
           <Label>Vertical Spacing</Label>
           <Input
             type="number"
-            value={parseFloat(u(state.vSpacing).toFixed(1))}
+            step="0.125"
+            min={0}
+            value={parseFloat(u(state.vSpacing).toFixed(3))}
             onChange={(e) => setVSpacing(fromU(parseFloat(e.target.value) || 0))}
           />
         </div>

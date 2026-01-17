@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { SavedLayout } from '@/types'
 import {
   Dialog,
@@ -5,16 +6,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Trash2 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Input } from '@/components/ui/input'
+import { FolderOpen, Trash2, Pencil, Check, X } from 'lucide-react'
 
 interface SavedLayoutsDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
   layouts: SavedLayout[]
   onLoad: (layout: SavedLayout) => void
   onDelete: (id: string) => void
+  onRename: (id: string, newTitle: string) => { success: boolean; error?: string }
 }
 
 function formatDate(timestamp: number): string {
@@ -26,14 +29,74 @@ function formatDate(timestamp: number): string {
 }
 
 export function SavedLayoutsDialog({
-  open,
-  onOpenChange,
   layouts,
   onLoad,
   onDelete,
+  onRename,
 }: SavedLayoutsDialogProps) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
+  const [editError, setEditError] = useState<string | null>(null)
+
+  const startEditing = (layout: SavedLayout, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingId(layout.id)
+    setEditValue(layout.title)
+    setEditError(null)
+  }
+
+  const cancelEditing = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingId(null)
+    setEditValue('')
+    setEditError(null)
+  }
+
+  const saveEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!editingId) return
+
+    const result = onRename(editingId, editValue)
+    if (result.success) {
+      setEditingId(null)
+      setEditValue('')
+      setEditError(null)
+    } else {
+      setEditError(result.error || 'Failed to rename')
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.stopPropagation()
+      if (!editingId) return
+      const result = onRename(editingId, editValue)
+      if (result.success) {
+        setEditingId(null)
+        setEditValue('')
+        setEditError(null)
+      } else {
+        setEditError(result.error || 'Failed to rename')
+      }
+    } else if (e.key === 'Escape') {
+      setEditingId(null)
+      setEditValue('')
+      setEditError(null)
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="flex-1">
+              <FolderOpen className="size-4" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Saved layouts</TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Saved Layouts</DialogTitle>
@@ -53,27 +116,80 @@ export function SavedLayoutsDialog({
               <div
                 key={layout.id}
                 className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer transition-colors"
-                onClick={() => onLoad(layout)}
+                onClick={() => editingId !== layout.id && onLoad(layout)}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 truncate">
-                    {layout.title}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {formatDate(layout.createdAt)}
-                  </div>
+                  {editingId === layout.id ? (
+                    <div className="space-y-1" onClick={(e) => e.stopPropagation()}>
+                      <Input
+                        value={editValue}
+                        onChange={(e) => {
+                          setEditValue(e.target.value)
+                          setEditError(null)
+                        }}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
+                        className={`h-8 ${editError ? 'border-red-500' : ''}`}
+                      />
+                      {editError && (
+                        <p className="text-xs text-red-500">{editError}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="font-medium text-gray-900 truncate">
+                        {layout.title}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {formatDate(layout.createdAt)}
+                      </div>
+                    </>
+                  )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-2 text-gray-400 hover:text-red-600 hover:bg-red-50"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDelete(layout.id)
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center ml-2">
+                  {editingId === layout.id ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        onClick={saveEdit}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-400 hover:text-gray-600"
+                        onClick={cancelEditing}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-400 hover:text-indigo-600 hover:bg-indigo-50"
+                        onClick={(e) => startEditing(layout, e)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-400 hover:text-red-600 hover:bg-red-50"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDelete(layout.id)
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>

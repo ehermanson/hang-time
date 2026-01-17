@@ -62,7 +62,8 @@ export function HorizontalPosition({ calculator }: Props) {
           </Label>
           <Input
             type="number"
-            value={parseFloat(u(state.hAnchorValue).toFixed(1))}
+            step="0.125"
+            value={parseFloat(u(state.hAnchorValue).toFixed(3))}
             onChange={(e) => setHAnchorValue(fromU(parseFloat(e.target.value) || 0))}
           />
         </div>

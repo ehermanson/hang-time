@@ -73,7 +73,8 @@ export function VerticalPosition({ calculator }: Props) {
           </Label>
           <Input
             type="number"
-            value={parseFloat(u(state.anchorValue).toFixed(1))}
+            step="0.125"
+            value={parseFloat(u(state.anchorValue).toFixed(3))}
             onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
           />
         </div>
@@ -88,7 +89,8 @@ export function VerticalPosition({ calculator }: Props) {
                 <Label className="text-xs">Width ({state.unit})</Label>
                 <Input
                   type="number"
-                  value={parseFloat(u(state.furnitureWidth).toFixed(1))}
+                  step="0.125"
+                  value={parseFloat(u(state.furnitureWidth).toFixed(3))}
                   onChange={(e) => setFurnitureWidth(fromU(parseFloat(e.target.value) || 0))}
                 />
               </div>
@@ -96,7 +98,8 @@ export function VerticalPosition({ calculator }: Props) {
                 <Label className="text-xs">Height ({state.unit})</Label>
                 <Input
                   type="number"
-                  value={parseFloat(u(state.furnitureHeight).toFixed(1))}
+                  step="0.125"
+                  value={parseFloat(u(state.furnitureHeight).toFixed(3))}
                   onChange={(e) => setFurnitureHeight(fromU(parseFloat(e.target.value) || 0))}
                 />
               </div>
@@ -105,7 +108,8 @@ export function VerticalPosition({ calculator }: Props) {
               <Label className="text-xs">Offset from center ({state.unit})</Label>
               <Input
                 type="number"
-                value={parseFloat(u(state.furnitureX).toFixed(1))}
+                step="0.125"
+                value={parseFloat(u(state.furnitureX).toFixed(3))}
                 onChange={(e) => setFurnitureX(fromU(parseFloat(e.target.value) || 0))}
               />
               <p className="text-xs text-gray-500">0 = centered, negative = left, positive = right</p>
@@ -126,7 +130,8 @@ export function VerticalPosition({ calculator }: Props) {
             <Label>Gap above furniture ({state.unit})</Label>
             <Input
               type="number"
-              value={parseFloat(u(state.anchorValue).toFixed(1))}
+              step="0.125"
+              value={parseFloat(u(state.anchorValue).toFixed(3))}
               onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
             />
           </div>

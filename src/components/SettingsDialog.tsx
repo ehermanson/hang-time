@@ -6,16 +6,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import { Ruler } from 'lucide-react'
+import { Ruler, Settings } from 'lucide-react'
+import { Button } from './ui/button'
 
 const UNIT_STORAGE_KEY = 'picture-hanging-unit'
 
 interface SettingsDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
   unit: Unit
   onUnitChange: (unit: Unit) => void
 }
@@ -26,8 +27,6 @@ const unitOptions: { value: Unit; label: string; desc: string }[] = [
 ]
 
 export function SettingsDialog({
-  open,
-  onOpenChange,
   unit,
   onUnitChange,
 }: SettingsDialogProps) {
@@ -37,7 +36,17 @@ export function SettingsDialog({
   }, [unit])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="flex-1">
+              <Settings className="size-4" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Settings</TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
@@ -69,7 +78,7 @@ export function SettingsDialog({
                     type="radio"
                     name="unit"
                     checked={unit === opt.value}
-                    onChange={() => {}}
+                    onChange={() => { }}
                     className="accent-indigo-600"
                   />
                   <div>

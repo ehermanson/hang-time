@@ -10,12 +10,22 @@ export const fromDisplayUnit = (value: number, unit: 'in' | 'cm'): number => {
   return unit === 'in' ? value : value / INCH_TO_CM
 }
 
+// Format with up to 3 decimal places, trimming trailing zeros
+const formatNumber = (value: number, maxDecimals: number): string => {
+  const fixed = value.toFixed(maxDecimals)
+  // Remove trailing zeros after decimal point
+  return fixed.replace(/\.?0+$/, '')
+}
+
 export const formatMeasurement = (value: number, unit: 'in' | 'cm'): string => {
-  return unit === 'in' ? `${value.toFixed(1)}"` : `${value.toFixed(1)} cm`
+  // Inches: up to 3 decimals (1/8" = 0.125), cm: up to 1 decimal
+  const decimals = unit === 'in' ? 3 : 1
+  return unit === 'in' ? `${formatNumber(value, decimals)}"` : `${formatNumber(value, decimals)} cm`
 }
 
 export const formatShort = (value: number, unit: 'in' | 'cm'): string => {
-  return unit === 'in' ? `${value.toFixed(1)}"` : `${value.toFixed(0)}cm`
+  const decimals = unit === 'in' ? 3 : 1
+  return unit === 'in' ? `${formatNumber(value, decimals)}"` : `${formatNumber(value, decimals)}cm`
 }
 
 export function calculateLayoutPositions(state: CalculatorState): FramePosition[] {
