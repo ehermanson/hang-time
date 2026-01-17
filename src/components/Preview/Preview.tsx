@@ -9,11 +9,10 @@ import {
   PointerSensor,
   KeyboardSensor,
 } from '@dnd-kit/core'
+import { Minus, Plus, Maximize2 } from 'lucide-react'
 import type { UseCalculatorReturn } from '@/hooks/useCalculator'
 import type { GalleryFrame } from '@/types'
 import { formatMeasurement, formatShort, toDisplayUnit } from '@/utils/calculations'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Eye } from 'lucide-react'
 
 interface PreviewProps {
   calculator: UseCalculatorReturn
@@ -23,6 +22,7 @@ interface DraggableFrameProps {
   frame: GalleryFrame
   scale: number
   padding: number
+  pan: { x: number; y: number }
   isSelected: boolean
   isPrimary: boolean
   onSelect: (id: number, shiftKey: boolean) => void
@@ -34,6 +34,7 @@ function DraggableFrame({
   frame,
   scale,
   padding,
+  pan,
   isSelected,
   isPrimary,
   onSelect,
@@ -54,8 +55,8 @@ function DraggableFrame({
 
   const style: React.CSSProperties = {
     position: 'absolute',
-    left: padding + displayX * scale,
-    top: padding + displayY * scale,
+    left: padding + pan.x + displayX * scale,
+    top: padding + pan.y + displayY * scale,
     width: frame.width * scale,
     height: frame.height * scale,
     cursor: isDragging ? 'grabbing' : 'grab',
@@ -150,7 +151,6 @@ export function Preview({ calculator }: PreviewProps) {
   const {
     state,
     layoutPositions,
-    totalFrames,
     updateGalleryFramePosition,
     moveGalleryFrames,
     toggleFrameSelection,
@@ -158,7 +158,14 @@ export function Preview({ calculator }: PreviewProps) {
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [containerWidth, setContainerWidth] = useState(600)
+  const [containerSize, setContainerSize] = useState({ width: 600, height: 400 })
+
+  // Zoom and pan state
+  const [zoom, setZoom] = useState(1) // 1 = fit to view
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [isPanning, setIsPanning] = useState(false)
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 })
+
   // Track reference hook (shows wall measurements) and compare hook (shows distance from reference)
   const [referenceHook, setReferenceHook] = useState<{ frameId: number; hookIndex: number } | null>(null)
   const [compareHook, setCompareHook] = useState<{ frameId: number; hookIndex: number } | null>(null)
@@ -169,17 +176,28 @@ export function Preview({ calculator }: PreviewProps) {
     [state.unit]
   )
 
-  // Calculate dimensions - wall fills available width, height adjusts to maintain aspect ratio
+  // Calculate dimensions - wall fits to available space (accounting for sidebar)
   const padding = 60
-  const scale = useMemo(() => {
-    const availableWidth = containerWidth - padding * 2
-    return availableWidth / state.wallWidth
-  }, [containerWidth, state.wallWidth])
+  const SIDEBAR_WIDTH = 360 // sidebar width + margin
 
-  const canvasWidth = containerWidth
-  const canvasHeight = state.wallHeight * scale + padding * 2
-  const offsetX = padding
-  const offsetY = padding
+  // Base scale: fits wall to available space
+  const baseScale = useMemo(() => {
+    // Account for sidebar overlap on the left
+    const availableWidth = containerSize.width - SIDEBAR_WIDTH - padding * 2
+    const availableHeight = containerSize.height - padding * 2
+
+    // Fit wall to available space (scale to fit both dimensions)
+    const scaleX = availableWidth / state.wallWidth
+    const scaleY = availableHeight / state.wallHeight
+    return Math.min(scaleX, scaleY, (containerSize.width - padding * 2) / state.wallWidth)
+  }, [containerSize.width, containerSize.height, state.wallWidth, state.wallHeight])
+
+  // Effective scale = base scale * zoom
+  const scale = baseScale * zoom
+
+  // Canvas fills the container, wall is positioned with pan offset
+  const canvasWidth = containerSize.width
+  const canvasHeight = containerSize.height
 
   // Handle canvas click to select hooks for measurement display
   // Regular click = set reference hook, Shift+click = set compare hook
@@ -196,6 +214,10 @@ export function Preview({ calculator }: PreviewProps) {
 
     const hookRadius = 12 // Slightly larger than visual for easier clicking
     const isShiftClick = e.shiftKey
+
+    // Account for pan offset when calculating hook positions
+    const offsetX = padding + pan.x
+    const offsetY = padding + pan.y
 
     // Check if click is on any hook
     for (const frame of layoutPositions) {
@@ -237,16 +259,19 @@ export function Preview({ calculator }: PreviewProps) {
     // Click elsewhere clears selection (back to first hook default)
     setReferenceHook(null)
     setCompareHook(null)
-  }, [state.layoutType, layoutPositions, scale, referenceHook])
+  }, [state.layoutType, layoutPositions, scale, referenceHook, pan])
 
-  // Track container width
+  // Track container size
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width)
+        setContainerSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        })
       }
     })
     observer.observe(container)
@@ -902,6 +927,91 @@ export function Preview({ calculator }: PreviewProps) {
     useSensor(KeyboardSensor)
   )
 
+  // Calculate centered pan position
+  const getCenteredPan = useCallback(() => {
+    const wallWidth = state.wallWidth * baseScale
+    const wallHeight = state.wallHeight * baseScale
+    const availableWidth = containerSize.width - SIDEBAR_WIDTH
+    const centerX = SIDEBAR_WIDTH + (availableWidth - wallWidth) / 2 - padding
+    const centerY = (containerSize.height - wallHeight) / 2 - padding
+    return { x: Math.max(0, centerX), y: Math.max(0, centerY) }
+  }, [state.wallWidth, state.wallHeight, baseScale, containerSize])
+
+  // Fit to view function - centers wall in available space
+  const fitToView = useCallback(() => {
+    setZoom(1)
+    setPan(getCenteredPan())
+  }, [getCenteredPan])
+
+  // Set initial pan position when container size stabilizes
+  const [hasInitialized, setHasInitialized] = useState(false)
+  useEffect(() => {
+    if (!hasInitialized && containerSize.width > 100 && containerSize.height > 100) {
+      setPan(getCenteredPan())
+      setHasInitialized(true)
+    }
+  }, [hasInitialized, containerSize, getCenteredPan])
+
+  // Wheel zoom handler - zoom centered on cursor
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault()
+
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    // Cursor position in container
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
+
+    // Zoom factor (faster zoom with Ctrl/Cmd key)
+    const zoomSpeed = e.ctrlKey || e.metaKey ? 1.15 : 1.1
+    const delta = e.deltaY > 0 ? 1 / zoomSpeed : zoomSpeed
+    const newZoom = Math.max(0.1, Math.min(10, zoom * delta))
+
+    // Adjust pan to zoom centered on cursor
+    const scaleChange = newZoom / zoom
+    const newPanX = mouseX - (mouseX - pan.x) * scaleChange
+    const newPanY = mouseY - (mouseY - pan.y) * scaleChange
+
+    setZoom(newZoom)
+    setPan({ x: newPanX, y: newPanY })
+  }, [zoom, pan])
+
+  // Attach wheel listener with passive: false
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    container.addEventListener('wheel', handleWheel, { passive: false })
+    return () => container.removeEventListener('wheel', handleWheel)
+  }, [handleWheel])
+
+  // Pan handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Left-click or middle-click to pan
+    if (e.button === 0 || e.button === 1) {
+      setIsPanning(true)
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
+    }
+  }, [pan])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isPanning) return
+    setPan({
+      x: e.clientX - panStart.x,
+      y: e.clientY - panStart.y,
+    })
+  }, [isPanning, panStart])
+
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false)
+  }, [])
+
+  // Also handle mouse leave to stop panning
+  const handleMouseLeave = useCallback(() => {
+    setIsPanning(false)
+  }, [])
+
   // Draw background on canvas (wall, rulers, furniture - but NOT frames for gallery mode)
   useEffect(() => {
     const canvas = canvasRef.current
@@ -921,8 +1031,9 @@ export function Preview({ calculator }: PreviewProps) {
     ctx.fillStyle = '#fafafa'
     ctx.fillRect(0, 0, canvasWidth, canvasHeight)
 
-    const offsetX = padding
-    const offsetY = padding
+    // Apply pan offset to wall position
+    const offsetX = padding + pan.x
+    const offsetY = padding + pan.y
 
     // Draw wall background
     ctx.fillStyle = '#fff'
@@ -1368,43 +1479,6 @@ export function Preview({ calculator }: PreviewProps) {
       }
     }
 
-    // Legend
-    ctx.fillStyle = '#666'
-    ctx.font = '11px -apple-system, sans-serif'
-    ctx.textAlign = 'left'
-
-    const legendY = canvasHeight - 20
-
-    ctx.beginPath()
-    ctx.arc(offsetX, legendY, 5, 0, Math.PI * 2)
-    ctx.fillStyle = '#ef4444'
-    ctx.fill()
-    ctx.fillStyle = '#666'
-    ctx.fillText('= Hook/nail position', offsetX + 12, legendY + 4)
-
-    ctx.strokeStyle = '#22c55e'
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.moveTo(offsetX + 130, legendY)
-    ctx.lineTo(offsetX + 150, legendY)
-    ctx.stroke()
-    ctx.fillStyle = '#666'
-    ctx.fillText('= From wall/floor', offsetX + 158, legendY + 4)
-
-    ctx.strokeStyle = '#06b6d4'
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.moveTo(offsetX + 260, legendY)
-    ctx.lineTo(offsetX + 280, legendY)
-    ctx.stroke()
-    ctx.fillStyle = '#666'
-    ctx.fillText('= Comparison', offsetX + 288, legendY + 4)
-
-    // Click hint
-    ctx.fillStyle = '#999'
-    ctx.font = 'italic 10px -apple-system, sans-serif'
-    ctx.textAlign = 'right'
-    ctx.fillText('Click hook for measurements, Shift+click to compare', canvasWidth - 20, legendY + 4)
   }, [
     layoutPositions,
     state,
@@ -1416,66 +1490,107 @@ export function Preview({ calculator }: PreviewProps) {
     alignmentGuides,
     referenceHook,
     compareHook,
+    pan,
+    zoom,
   ])
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <span className="w-6 h-6 rounded flex items-center justify-center bg-blue-100 text-blue-600">
-            <Eye className="h-3.5 w-3.5" />
-          </span>
-          Visual Preview (To Scale)
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div
-          ref={containerRef}
-          className="relative bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden"
-          style={{ height: canvasHeight }}
+    <div
+      ref={containerRef}
+      className="absolute inset-0 overflow-hidden"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+    >
+      <div
+        className="relative"
+        style={{ height: canvasHeight, width: canvasWidth }}
+      >
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0"
+          style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+          onClick={handleCanvasClick}
+        />
+
+        {/* Gallery mode: render frames as DOM elements with dnd-kit */}
+        {state.layoutType === 'gallery' && (
+          <DndContext
+            sensors={sensors}
+            onDragMove={handleDragMove}
+            onDragEnd={handleDragEnd}
+          >
+            {state.galleryFrames.map((frame) => (
+              <DraggableFrame
+                key={frame.id}
+                frame={frame}
+                scale={scale}
+                padding={padding}
+                pan={pan}
+                isSelected={state.selectedFrames.includes(frame.id)}
+                isPrimary={state.selectedFrame === frame.id}
+                onSelect={toggleFrameSelection}
+                fmtShort={fmtShort}
+                previewPosition={dragPreviews.get(frame.id) || null}
+              />
+            ))}
+          </DndContext>
+        )}
+      </div>
+
+      {/* Legend - bottom center (only for non-gallery modes) */}
+      {state.layoutType !== 'gallery' && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-gray-200/50 dark:border-white/10">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+            <span className="text-xs text-gray-600 dark:text-white/70">Hook position</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-0.5 bg-green-500" />
+            <span className="text-xs text-gray-600 dark:text-white/70">From wall/floor</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-0.5 bg-cyan-500" />
+            <span className="text-xs text-gray-600 dark:text-white/70">Comparison</span>
+          </div>
+          <span className="text-xs text-gray-400 dark:text-white/40 italic">Click hook to measure, Shift+click to compare</span>
+        </div>
+      )}
+
+      {/* Zoom controls - bottom right */}
+      <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl px-2 py-1.5 shadow-lg border border-gray-200/50 dark:border-white/10">
+        <button
+          onClick={() => setZoom(z => Math.max(0.1, z * 0.8))}
+          className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+          title="Zoom out"
         >
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 cursor-pointer"
-            onClick={handleCanvasClick}
-          />
+          <Minus className="h-4 w-4 text-gray-600 dark:text-white/70" />
+        </button>
 
-          {/* Gallery mode: render frames as DOM elements with dnd-kit */}
-          {state.layoutType === 'gallery' && (
-            <DndContext
-              sensors={sensors}
-              onDragMove={handleDragMove}
-              onDragEnd={handleDragEnd}
-            >
-              {state.galleryFrames.map((frame) => (
-                <DraggableFrame
-                  key={frame.id}
-                  frame={frame}
-                  scale={scale}
-                  padding={padding}
-                  isSelected={state.selectedFrames.includes(frame.id)}
-                  isPrimary={state.selectedFrame === frame.id}
-                  onSelect={toggleFrameSelection}
-                  fmtShort={fmtShort}
-                  previewPosition={dragPreviews.get(frame.id) || null}
-                />
-              ))}
-            </DndContext>
-          )}
-        </div>
+        <span className="text-xs font-medium text-gray-600 dark:text-white/70 min-w-[3rem] text-center">
+          {Math.round(zoom * 100)}%
+        </span>
 
-        <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-800">
-          <strong>Preview is to scale.</strong> Wall: {fmt(state.wallWidth)} × {fmt(state.wallHeight)} |
-          {state.layoutType === 'gallery'
-            ? ` ${state.galleryFrames.length} frames`
-            : ` ${totalFrames} frames (${state.layoutType === 'grid' ? `${state.gridRows}×${state.gridCols}` : `1×${state.gridCols}`})`}
-          {state.layoutType === 'gallery' ? (
-            <> — Drag frames to reposition, magenta lines show alignments</>
-          ) : (
-            <> — <strong>Click</strong> a hook for measurements, <strong>Shift+click</strong> another to compare distances</>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        <button
+          onClick={() => setZoom(z => Math.min(10, z * 1.25))}
+          className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+          title="Zoom in"
+        >
+          <Plus className="h-4 w-4 text-gray-600 dark:text-white/70" />
+        </button>
+
+        <div className="w-px h-4 bg-gray-200 dark:bg-white/10 mx-1" />
+
+        <button
+          onClick={fitToView}
+          className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+          title="Fit to view"
+        >
+          <Maximize2 className="h-4 w-4 text-gray-600 dark:text-white/70" />
+        </button>
+      </div>
+    </div>
   )
 }

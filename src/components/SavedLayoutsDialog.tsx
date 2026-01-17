@@ -106,7 +106,7 @@ export function SavedLayoutsDialog({
         </DialogHeader>
 
         {layouts.length === 0 ? (
-          <div className="py-8 text-center text-gray-500">
+          <div className="py-8 text-center text-gray-500 dark:text-white/50">
             <p>No saved layouts yet.</p>
             <p className="text-sm mt-1">Use the Save button to save your current layout.</p>
           </div>
@@ -115,7 +115,7 @@ export function SavedLayoutsDialog({
             {layouts.map((layout) => (
               <div
                 key={layout.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer transition-colors"
+                className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 dark:border-white/10 dark:bg-white/5 dark:hover:border-indigo-500 dark:hover:bg-indigo-500/20 cursor-pointer transition-colors"
                 onClick={() => editingId !== layout.id && onLoad(layout)}
               >
                 <div className="flex-1 min-w-0">
@@ -132,15 +132,15 @@ export function SavedLayoutsDialog({
                         className={`h-8 ${editError ? 'border-red-500' : ''}`}
                       />
                       {editError && (
-                        <p className="text-xs text-red-500">{editError}</p>
+                        <p className="text-xs text-red-500 dark:text-red-400">{editError}</p>
                       )}
                     </div>
                   ) : (
                     <>
-                      <div className="font-medium text-gray-900 truncate">
+                      <div className="font-medium text-gray-900 dark:text-white truncate">
                         {layout.title}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-white/50">
                         {formatDate(layout.createdAt)}
                       </div>
                     </>
@@ -152,7 +152,7 @@ export function SavedLayoutsDialog({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-500/20"
                         onClick={saveEdit}
                       >
                         <Check className="h-4 w-4" />
@@ -160,7 +160,7 @@ export function SavedLayoutsDialog({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 hover:text-gray-600 dark:text-white/40 dark:hover:text-white/60 dark:hover:bg-white/10"
                         onClick={cancelEditing}
                       >
                         <X className="h-4 w-4" />
@@ -171,7 +171,7 @@ export function SavedLayoutsDialog({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-gray-400 hover:text-indigo-600 hover:bg-indigo-50"
+                        className="text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:text-white/40 dark:hover:text-indigo-400 dark:hover:bg-indigo-500/20"
                         onClick={(e) => startEditing(layout, e)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -179,7 +179,7 @@ export function SavedLayoutsDialog({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-gray-400 hover:text-red-600 hover:bg-red-50"
+                        className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:text-white/40 dark:hover:text-red-400 dark:hover:bg-red-500/20"
                         onClick={(e) => {
                           e.stopPropagation()
                           onDelete(layout.id)

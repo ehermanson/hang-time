@@ -79,8 +79,8 @@ function LayoutPreview({
           className={cn(
             "rounded-sm",
             isFilled
-              ? isSelected ? "bg-indigo-500" : "bg-gray-400"
-              : "bg-gray-200 border border-dashed border-gray-300"
+              ? isSelected ? "bg-indigo-500 dark:bg-indigo-400" : "bg-gray-400 dark:bg-white/40"
+              : "bg-gray-200 border border-dashed border-gray-300 dark:bg-white/10 dark:border-white/20"
           )}
           style={{
             width: `${cellWidth}px`,
@@ -121,11 +121,11 @@ export function LayoutTypeSelector({ calculator }: Props) {
   }
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-4">
+    <div className="space-y-4">
       {/* Frame Count - Primary Input */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <span className="w-6 h-6 rounded flex items-center justify-center bg-indigo-100 text-indigo-600">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 mb-3 flex items-center gap-2">
+          <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
             <LayoutGrid className="h-3.5 w-3.5" />
           </span>
           Number of Frames
@@ -136,13 +136,13 @@ export function LayoutTypeSelector({ calculator }: Props) {
           max="20"
           value={state.frameCount}
           onChange={(e) => setFrameCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
-          className="text-lg font-medium text-center"
+          className="text-lg font-medium text-center bg-gray-50 border-gray-200 text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
         />
       </div>
 
       {/* Layout Options */}
       <div>
-        <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+        <h4 className="text-xs font-medium text-gray-500 dark:text-white/50 uppercase tracking-wide mb-2 flex items-center gap-1.5">
           <GripHorizontal className="h-3 w-3" />
           Arrangement
         </h4>
@@ -156,10 +156,10 @@ export function LayoutTypeSelector({ calculator }: Props) {
                 key={optionKey}
                 onClick={() => handleSelectLayout(option)}
                 className={cn(
-                  "flex flex-col items-center justify-end p-2 rounded-lg border-2 transition-all",
+                  "flex flex-col items-center justify-end p-2 rounded-lg border transition-all",
                   isSelected
-                    ? "border-indigo-500 bg-indigo-50"
-                    : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/20"
+                    : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
                 )}
               >
                 <LayoutPreview
@@ -170,7 +170,7 @@ export function LayoutTypeSelector({ calculator }: Props) {
                 />
                 <span className={cn(
                   "text-xs font-medium mt-2",
-                  isSelected ? "text-indigo-700" : "text-gray-600"
+                  isSelected ? "text-indigo-600 dark:text-indigo-300" : "text-gray-600 dark:text-white/60"
                 )}>
                   {option.label}
                 </span>
@@ -182,42 +182,42 @@ export function LayoutTypeSelector({ calculator }: Props) {
 
       {/* Custom Grid Controls */}
       {state.layoutType === 'grid' && (
-        <div className="pt-2 border-t border-gray-200">
-          <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+        <div className="pt-3 border-t border-gray-200 dark:border-white/10">
+          <h4 className="text-xs font-medium text-gray-500 dark:text-white/50 uppercase tracking-wide mb-2 flex items-center gap-1.5">
             <Settings2 className="h-3 w-3" />
             Custom Grid
           </h4>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">Rows</Label>
+              <Label className="text-xs text-gray-600 dark:text-white/60">Rows</Label>
               <Input
                 type="number"
                 min="1"
                 max="10"
                 value={state.gridRows}
                 onChange={(e) => setGridRows(Math.max(1, parseInt(e.target.value) || 1))}
-                className="h-8"
+                className="h-8 bg-gray-50 border-gray-200 text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Columns</Label>
+              <Label className="text-xs text-gray-600 dark:text-white/60">Columns</Label>
               <Input
                 type="number"
                 min="1"
                 max="10"
                 value={state.gridCols}
                 onChange={(e) => setGridCols(Math.max(1, parseInt(e.target.value) || 1))}
-                className="h-8"
+                className="h-8 bg-gray-50 border-gray-200 text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
               />
             </div>
           </div>
           {state.gridRows * state.gridCols > state.frameCount && (
-            <p className="text-xs text-amber-600 mt-2">
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
               {state.gridRows * state.gridCols - state.frameCount} empty spot{state.gridRows * state.gridCols - state.frameCount > 1 ? 's' : ''} in grid
             </p>
           )}
           {state.gridRows * state.gridCols < state.frameCount && (
-            <p className="text-xs text-amber-600 mt-2">
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
               Grid only fits {state.gridRows * state.gridCols} of {state.frameCount} frames
             </p>
           )}

@@ -11,9 +11,9 @@ export function WallDimensions({ calculator }: Props) {
   const { state, u, fromU, setWallWidth, setWallHeight } = calculator
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <span className="w-6 h-6 rounded flex items-center justify-center bg-blue-100 text-blue-600">
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
+        <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
           <Ruler className="h-3.5 w-3.5" />
         </span>
         Wall Dimensions

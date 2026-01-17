@@ -20,10 +20,10 @@ function HangingTypePreview({
   type: HangingType
   isSelected: boolean
 }) {
-  const frameColor = isSelected ? 'stroke-pink-500' : 'stroke-gray-400'
-  const frameFill = isSelected ? 'fill-pink-50' : 'fill-white'
-  const hookColor = isSelected ? 'fill-pink-500' : 'fill-gray-500'
-  const wireColor = isSelected ? 'stroke-pink-400' : 'stroke-gray-400'
+  const frameColor = isSelected ? 'stroke-pink-500 dark:stroke-pink-400' : 'stroke-gray-400 dark:stroke-white/40'
+  const frameFill = isSelected ? 'fill-pink-50 dark:fill-pink-500/20' : 'fill-gray-50 dark:fill-white/10'
+  const hookColor = isSelected ? 'fill-pink-500 dark:fill-pink-400' : 'fill-gray-400 dark:fill-white/50'
+  const wireColor = isSelected ? 'stroke-pink-400' : 'stroke-gray-400 dark:stroke-white/40'
 
   const w = 48
   const h = 36
@@ -112,15 +112,15 @@ export function FrameSize({ calculator }: Props) {
   }
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <span className="w-6 h-6 rounded flex items-center justify-center bg-pink-100 text-pink-600">
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
+        <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400">
           <Frame className="h-3.5 w-3.5" />
         </span>
         Frame Size
       </h3>
 
-      <div className="space-y-1.5 mb-3">
+      <div className="space-y-1.5">
         <Label>Template</Label>
         <Select value={currentTemplate || ''} onValueChange={handleTemplateChange}>
           <SelectTrigger>
@@ -177,10 +177,10 @@ export function FrameSize({ calculator }: Props) {
               key={option.value}
               onClick={() => setHangingType(option.value)}
               className={cn(
-                "flex flex-col items-center p-2 rounded-lg border-2 transition-all",
+                "flex flex-col items-center p-2 rounded-lg border transition-all",
                 state.hangingType === option.value
-                  ? "border-pink-500 bg-pink-50"
-                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                  ? "border-pink-500 bg-pink-50 dark:bg-pink-500/20"
+                  : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
               )}
             >
               <HangingTypePreview
@@ -189,7 +189,7 @@ export function FrameSize({ calculator }: Props) {
               />
               <span className={cn(
                 "text-xs font-medium mt-1",
-                state.hangingType === option.value ? "text-pink-700" : "text-gray-600"
+                state.hangingType === option.value ? "text-pink-600 dark:text-pink-300" : "text-gray-600 dark:text-white/60"
               )}>
                 {option.label}
               </span>

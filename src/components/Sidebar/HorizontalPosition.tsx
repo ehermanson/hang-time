@@ -13,8 +13,8 @@ function DistributionPreview({
   mode: Distribution
   isSelected: boolean
 }) {
-  const frameColor = isSelected ? 'fill-indigo-500' : 'fill-gray-400'
-  const wallColor = isSelected ? 'stroke-indigo-300' : 'stroke-gray-300'
+  const frameColor = isSelected ? 'fill-amber-500 dark:fill-amber-400' : 'fill-gray-400 dark:fill-white/40'
+  const wallColor = isSelected ? 'stroke-amber-300 dark:stroke-amber-400' : 'stroke-gray-300 dark:stroke-white/30'
 
   const w = 48
   const h = 24
@@ -80,16 +80,16 @@ export function HorizontalPosition({ calculator }: Props) {
   const { state, u, fromU, setHAnchorType, setHAnchorValue, setHDistribution, setHSpacing } = calculator
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <span className="w-6 h-6 rounded flex items-center justify-center bg-indigo-100 text-indigo-600">
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
+        <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
           <MoveHorizontal className="h-3.5 w-3.5" />
         </span>
         Horizontal Position
       </h3>
 
       {/* Distribution Mode */}
-      <div className="space-y-1.5 mb-3">
+      <div className="space-y-1.5">
         <Label>Distribution</Label>
         <div className="grid grid-cols-4 gap-1.5">
           {DISTRIBUTION_OPTIONS.map((option) => (
@@ -97,10 +97,10 @@ export function HorizontalPosition({ calculator }: Props) {
               key={option.value}
               onClick={() => setHDistribution(option.value)}
               className={cn(
-                "flex flex-col items-center p-1.5 rounded-lg border-2 transition-all",
+                "flex flex-col items-center p-1.5 rounded-lg border transition-all",
                 state.hDistribution === option.value
-                  ? "border-indigo-500 bg-indigo-50"
-                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                  ? "border-amber-500 bg-amber-50 dark:bg-amber-500/20"
+                  : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
               )}
             >
               <DistributionPreview
@@ -109,7 +109,7 @@ export function HorizontalPosition({ calculator }: Props) {
               />
               <span className={cn(
                 "text-[10px] font-medium mt-1",
-                state.hDistribution === option.value ? "text-indigo-700" : "text-gray-600"
+                state.hDistribution === option.value ? "text-amber-600 dark:text-amber-300" : "text-gray-600 dark:text-white/60"
               )}>
                 {option.label}
               </span>
@@ -121,15 +121,15 @@ export function HorizontalPosition({ calculator }: Props) {
       {/* Anchor options - only show for fixed distribution */}
       {state.hDistribution === 'fixed' && (
         <>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 mt-3">
             {options.map((opt) => (
               <label
                 key={opt.value}
                 className={cn(
-                  "flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors",
+                  "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
                   state.hAnchorType === opt.value
-                    ? "border-indigo-600 bg-indigo-50"
-                    : "border-gray-200 hover:border-indigo-400 hover:bg-gray-50"
+                    ? "border-amber-500 bg-amber-50 dark:bg-amber-500/20"
+                    : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
                 )}
                 onClick={() => {
                   setHAnchorType(opt.value)
@@ -140,11 +140,11 @@ export function HorizontalPosition({ calculator }: Props) {
                   type="radio"
                   checked={state.hAnchorType === opt.value}
                   onChange={() => {}}
-                  className="mt-1 accent-indigo-600"
+                  className="mt-1 accent-amber-600 dark:accent-amber-500"
                 />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">{opt.label}</div>
-                  <div className="text-xs text-gray-500">{opt.desc}</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">{opt.label}</div>
+                  <div className="text-xs text-gray-500 dark:text-white/50">{opt.desc}</div>
                 </div>
               </label>
             ))}
@@ -152,9 +152,7 @@ export function HorizontalPosition({ calculator }: Props) {
 
           {state.hAnchorType !== 'center' && (
             <div className="space-y-1.5 mt-3">
-              <Label>
-                Distance from {state.hAnchorType} edge ({state.unit})
-              </Label>
+              <Label>Distance from {state.hAnchorType} edge ({state.unit})</Label>
               <Input
                 type="number"
                 step="0.125"

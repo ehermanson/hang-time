@@ -1,5 +1,7 @@
 export type Unit = 'in' | 'cm'
 
+export type Theme = 'light' | 'dark'
+
 export type LayoutType = 'grid' | 'row' | 'gallery'
 
 export type AnchorType = 'floor' | 'ceiling' | 'center' | 'furniture'

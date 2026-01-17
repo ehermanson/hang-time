@@ -82,7 +82,12 @@ export function SaveLayoutDialog({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="sm" className="flex-1" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            disabled
+          >
             <Save className="size-4" />
           </Button>
         </TooltipTrigger>
@@ -115,10 +120,10 @@ export function SaveLayoutDialog({
 
           {mode === 'update' ? (
             <>
-              <div className="py-2 text-sm text-gray-600">
+              <div className="py-2 text-sm text-gray-600 dark:text-white/60">
                 Update the existing layout with your changes, or save as a new layout.
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
               <DialogFooter className="flex-col sm:flex-col gap-2">
                 <Button onClick={handleUpdate} className="w-full">
                   Update "{loadedLayout.title}"
@@ -127,7 +132,9 @@ export function SaveLayoutDialog({
                   Save as New Layout
                 </Button>
                 <DialogClose asChild>
-                  <Button variant="ghost" className="w-full">Cancel</Button>
+                  <Button variant="ghost" className="w-full">
+                    Cancel
+                  </Button>
                 </DialogClose>
               </DialogFooter>
             </>
@@ -148,14 +155,16 @@ export function SaveLayoutDialog({
                   className={nameTaken ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
                 {nameTaken && (
-                  <p className="text-sm text-red-500">A layout with this name already exists</p>
+                  <p className="text-sm text-red-500 dark:text-red-400">A layout with this name already exists</p>
                 )}
                 {error && !nameTaken && (
-                  <p className="text-sm text-red-500">{error}</p>
+                  <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
                 )}
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setMode('update')}>Back</Button>
+                <Button variant="outline" onClick={() => setMode('update')}>
+                  Back
+                </Button>
                 <Button onClick={handleSave} disabled={!canSave}>
                   Save as New
                 </Button>
@@ -203,16 +212,18 @@ export function SaveLayoutDialog({
             className={nameTaken ? 'border-red-500 focus-visible:ring-red-500' : ''}
           />
           {nameTaken && (
-            <p className="text-sm text-red-500">A layout with this name already exists</p>
+            <p className="text-sm text-red-500 dark:text-red-400">A layout with this name already exists</p>
           )}
           {error && !nameTaken && (
-            <p className="text-sm text-red-500">{error}</p>
+            <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
           )}
         </div>
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline">
+              Cancel
+            </Button>
           </DialogClose>
           <Button onClick={handleSave} disabled={!canSave}>
             Save Layout

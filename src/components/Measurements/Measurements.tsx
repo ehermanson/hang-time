@@ -1,6 +1,5 @@
 import type { UseCalculatorReturn } from '@/hooks/useCalculator'
 import { formatMeasurement, formatShort, toDisplayUnit } from '@/utils/calculations'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { Ruler } from 'lucide-react'
 
@@ -15,63 +14,61 @@ export function Measurements({ calculator }: MeasurementsProps) {
   const fmtShort = (val: number) => formatShort(toDisplayUnit(val, state.unit), state.unit)
 
   return (
-    <Card className="max-h-[280px] overflow-hidden">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <span className="w-6 h-6 rounded flex items-center justify-center bg-amber-100 text-amber-600">
-            <Ruler className="h-3.5 w-3.5" />
-          </span>
-          Hook Placement Measurements
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="overflow-y-auto max-h-[200px]">
-        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
-          {layoutPositions.map((frame) => (
-            <div
-              key={frame.id}
-              className={cn(
-                "p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 transition-all",
-                state.selectedFrame === frame.id && "from-indigo-100 to-indigo-200",
-                state.layoutType === 'gallery' && "cursor-pointer hover:shadow-md"
-              )}
-              onClick={() => state.layoutType === 'gallery' && setSelectedFrame(frame.id)}
-            >
-              <h3 className="text-sm font-semibold text-purple-800 mb-2">
-                {frame.name} {state.layoutType === 'grid' && `(Row ${(frame.row ?? 0) + 1}, Col ${(frame.col ?? 0) + 1})`}
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="text-center p-2 bg-white rounded-md">
-                  <div className="text-lg font-bold text-indigo-600">{fmt(frame.fromLeft)}</div>
-                  <div className="text-[10px] text-gray-500">
-                    {frame.hookGap ? 'Left hook from edge' : 'From left edge'}
-                  </div>
-                </div>
-                {frame.hookGap ? (
-                  <div className="text-center p-2 bg-white rounded-md">
-                    <div className="text-lg font-bold text-orange-500">{fmt(frame.hookGap)}</div>
-                    <div className="text-[10px] text-gray-500">Hook gap</div>
-                  </div>
-                ) : (
-                  <div className="text-center p-2 bg-white rounded-md">
-                    <div className="text-lg font-bold text-amber-500">{fmt(frame.fromCeiling)}</div>
-                    <div className="text-[10px] text-gray-500">From ceiling (down)</div>
-                  </div>
-                )}
-                <div className="text-center p-2 bg-white rounded-md">
-                  <div className="text-lg font-bold text-green-500">{fmt(frame.fromFloor)}</div>
-                  <div className="text-[10px] text-gray-500">From floor (up)</div>
-                </div>
-                <div className="text-center p-2 bg-white rounded-md">
-                  <div className="text-lg font-bold text-gray-500">
-                    {fmtShort(frame.width)} × {fmtShort(frame.height)}
-                  </div>
-                  <div className="text-[10px] text-gray-500">Frame size</div>
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
+        <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+          <Ruler className="h-3.5 w-3.5" />
+        </span>
+        Hook Placement
+      </h3>
+      <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+        {layoutPositions.map((frame) => (
+          <div
+            key={frame.id}
+            className={cn(
+              "p-3 rounded-lg border transition-all",
+              state.selectedFrame === frame.id
+                ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/20"
+                : "border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/5",
+              state.layoutType === 'gallery' && "cursor-pointer hover:border-gray-300 dark:hover:border-white/20"
+            )}
+            onClick={() => state.layoutType === 'gallery' && setSelectedFrame(frame.id)}
+          >
+            <h4 className="text-xs font-medium text-gray-700 dark:text-white/80 mb-2">
+              {frame.name} {state.layoutType === 'grid' && `(Row ${(frame.row ?? 0) + 1}, Col ${(frame.col ?? 0) + 1})`}
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="text-center p-2 bg-white dark:bg-white/5 rounded-md">
+                <div className="text-base font-bold text-indigo-600 dark:text-indigo-400">{fmt(frame.fromLeft)}</div>
+                <div className="text-[10px] text-gray-500 dark:text-white/50">
+                  {frame.hookGap ? 'Left hook from edge' : 'From left edge'}
                 </div>
               </div>
+              {frame.hookGap ? (
+                <div className="text-center p-2 bg-white dark:bg-white/5 rounded-md">
+                  <div className="text-base font-bold text-orange-500 dark:text-orange-400">{fmt(frame.hookGap)}</div>
+                  <div className="text-[10px] text-gray-500 dark:text-white/50">Hook gap</div>
+                </div>
+              ) : (
+                <div className="text-center p-2 bg-white dark:bg-white/5 rounded-md">
+                  <div className="text-base font-bold text-amber-500 dark:text-amber-400">{fmt(frame.fromCeiling)}</div>
+                  <div className="text-[10px] text-gray-500 dark:text-white/50">From ceiling</div>
+                </div>
+              )}
+              <div className="text-center p-2 bg-white dark:bg-white/5 rounded-md">
+                <div className="text-base font-bold text-emerald-500 dark:text-emerald-400">{fmt(frame.fromFloor)}</div>
+                <div className="text-[10px] text-gray-500 dark:text-white/50">From floor</div>
+              </div>
+              <div className="text-center p-2 bg-white dark:bg-white/5 rounded-md">
+                <div className="text-base font-bold text-gray-500 dark:text-white/60">
+                  {fmtShort(frame.width)} × {fmtShort(frame.height)}
+                </div>
+                <div className="text-[10px] text-gray-500 dark:text-white/50">Frame size</div>
+              </div>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
