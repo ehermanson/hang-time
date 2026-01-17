@@ -1,4 +1,4 @@
-import type { CalculatorState, FramePosition, SalonFrame } from '@/types'
+import type { CalculatorState, FramePosition, GalleryFrame } from '@/types'
 
 export const INCH_TO_CM = 2.54
 
@@ -21,6 +21,7 @@ export const formatShort = (value: number, unit: 'in' | 'cm'): string => {
 export function calculateLayoutPositions(state: CalculatorState): FramePosition[] {
   const {
     layoutType,
+    frameCount,
     gridRows,
     gridCols,
     frameWidth,
@@ -34,14 +35,14 @@ export function calculateLayoutPositions(state: CalculatorState): FramePosition[
     hAnchorValue,
     wallWidth,
     wallHeight,
-    salonFrames,
+    galleryFrames,
     furnitureHeight,
     furnitureX,
     furnitureCentered,
   } = state
 
-  if (layoutType === 'salon') {
-    return salonFrames.map((f: SalonFrame) => {
+  if (layoutType === 'gallery') {
+    return galleryFrames.map((f: GalleryFrame) => {
       const hookX = f.x + f.width / 2
       const hookY = f.y + f.hangingOffset
       return {
@@ -103,16 +104,20 @@ export function calculateLayoutPositions(state: CalculatorState): FramePosition[
   }
 
   const positions: FramePosition[] = []
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
+  const maxFrames = Math.min(frameCount, rows * cols)
+  let frameNum = 0
+
+  for (let row = 0; row < rows && frameNum < maxFrames; row++) {
+    for (let col = 0; col < cols && frameNum < maxFrames; col++) {
       const x = startX + col * (frameWidth + hSpacing)
       const y = startY + row * (frameHeight + vSpacing)
       const hookX = x + frameWidth / 2
       const hookY = y + hangingOffset
 
+      frameNum++
       positions.push({
-        id: row * cols + col + 1,
-        name: `Frame ${row * cols + col + 1}`,
+        id: frameNum,
+        name: `Frame ${frameNum}`,
         row,
         col,
         x,

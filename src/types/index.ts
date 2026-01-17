@@ -1,12 +1,12 @@
 export type Unit = 'in' | 'cm'
 
-export type LayoutType = 'grid' | 'row' | 'salon'
+export type LayoutType = 'grid' | 'row' | 'gallery'
 
 export type AnchorType = 'floor' | 'ceiling' | 'center' | 'furniture'
 
 export type HorizontalAnchorType = 'center' | 'left' | 'right'
 
-export interface SalonFrame {
+export interface GalleryFrame {
   id: number
   name: string
   width: number
@@ -45,6 +45,7 @@ export interface CalculatorState {
 
   // Layout
   layoutType: LayoutType
+  frameCount: number  // Primary input: how many frames to hang
   gridRows: number
   gridCols: number
 
@@ -61,9 +62,12 @@ export interface CalculatorState {
   hAnchorType: HorizontalAnchorType
   hAnchorValue: number
 
-  // Salon mode
-  salonFrames: SalonFrame[]
+  // Gallery mode
+  galleryFrames: GalleryFrame[]
   selectedFrame: number | null
+  selectedFrames: number[] // For multi-select
+  gallerySpacing: number // Gap between frames for snapping
+  gallerySnapping: boolean // Enable/disable snapping
 
   // Furniture positioning (when anchorType === 'furniture')
   furnitureWidth: number

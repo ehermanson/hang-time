@@ -32,9 +32,9 @@ export function Measurements({ calculator }: MeasurementsProps) {
               className={cn(
                 "p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 transition-all",
                 state.selectedFrame === frame.id && "from-indigo-100 to-indigo-200",
-                state.layoutType === 'salon' && "cursor-pointer hover:shadow-md"
+                state.layoutType === 'gallery' && "cursor-pointer hover:shadow-md"
               )}
-              onClick={() => state.layoutType === 'salon' && setSelectedFrame(frame.id)}
+              onClick={() => state.layoutType === 'gallery' && setSelectedFrame(frame.id)}
             >
               <h3 className="text-sm font-semibold text-purple-800 mb-2">
                 {frame.name} {state.layoutType === 'grid' && `(Row ${(frame.row ?? 0) + 1}, Col ${(frame.col ?? 0) + 1})`}
