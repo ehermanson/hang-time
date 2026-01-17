@@ -11,7 +11,19 @@ import { SaveLayoutDialog } from '@/components/SaveLayoutDialog'
 import { SavedLayoutsDialog } from '@/components/SavedLayoutsDialog'
 import { SettingsDialog } from '@/components/SettingsDialog'
 import { Button } from '@/components/ui/button'
-import { Frame, Link, Check, Save, FolderOpen, Settings } from 'lucide-react'
+import { Link, Check, Save, FolderOpen, Settings } from 'lucide-react'
+
+function Logo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" fill="none" className={className}>
+      <rect width="32" height="32" rx="6" fill="#4f46e5"/>
+      <rect x="7" y="9" width="18" height="16" rx="1" stroke="white" strokeWidth="2" fill="none"/>
+      <rect x="10" y="12" width="12" height="10" rx="0.5" stroke="white" strokeWidth="1" opacity="0.6" fill="none"/>
+      <path d="M11 9 L16 5 L21 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <circle cx="16" cy="5" r="1.5" fill="white"/>
+    </svg>
+  )
+}
 
 interface SidebarProps {
   calculator: UseCalculatorReturn
@@ -35,7 +47,7 @@ export function Sidebar({ calculator }: SidebarProps) {
     <div className="flex flex-col w-[360px] h-screen bg-white border-r border-gray-200 max-md:w-full max-md:max-h-[50vh] max-md:border-r-0 max-md:border-b">
       <div className="p-5 border-b border-gray-200">
         <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-          <Frame className="h-5 w-5 text-indigo-600" />
+          <Logo className="h-6 w-6" />
           Hang Time
         </h1>
         <p className="text-sm text-gray-500 mt-1">Picture perfect picture placement</p>
