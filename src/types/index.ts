@@ -6,6 +6,8 @@ export type AnchorType = 'floor' | 'ceiling' | 'center' | 'furniture'
 
 export type HorizontalAnchorType = 'center' | 'left' | 'right'
 
+export type HangingType = 'center' | 'dual'
+
 export interface GalleryFrame {
   id: number
   name: string
@@ -26,9 +28,13 @@ export interface FramePosition {
   width: number
   height: number
   hangingOffset: number
+  // For center hanging: hookX is the single hook position
+  // For dual hanging: hookX is the LEFT hook, hookX2 is the RIGHT hook
   hookX: number
+  hookX2?: number  // Only set for dual hanging
   hookY: number
-  fromLeft: number
+  hookGap?: number // Distance between hooks (for dual)
+  fromLeft: number  // Distance from wall left to first hook
   fromTop: number
   fromFloor: number
   fromRight: number
@@ -52,7 +58,9 @@ export interface CalculatorState {
   // Frame configuration (for grid/row)
   frameWidth: number
   frameHeight: number
-  hangingOffset: number
+  hangingOffset: number  // Distance from top of frame to hanging point
+  hangingType: HangingType  // 'center' (single hook) or 'dual' (two hooks)
+  hookInset: number  // For dual: distance from frame edge to each hook
   hSpacing: number
   vSpacing: number
 

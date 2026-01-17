@@ -42,15 +42,24 @@ export function Measurements({ calculator }: MeasurementsProps) {
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-center p-2 bg-white rounded-md">
                   <div className="text-lg font-bold text-indigo-600">{fmt(frame.fromLeft)}</div>
-                  <div className="text-[10px] text-gray-500">From left edge</div>
+                  <div className="text-[10px] text-gray-500">
+                    {frame.hookGap ? 'Left hook from edge' : 'From left edge'}
+                  </div>
                 </div>
+                {frame.hookGap ? (
+                  <div className="text-center p-2 bg-white rounded-md">
+                    <div className="text-lg font-bold text-orange-500">{fmt(frame.hookGap)}</div>
+                    <div className="text-[10px] text-gray-500">Hook gap</div>
+                  </div>
+                ) : (
+                  <div className="text-center p-2 bg-white rounded-md">
+                    <div className="text-lg font-bold text-amber-500">{fmt(frame.fromCeiling)}</div>
+                    <div className="text-[10px] text-gray-500">From ceiling (down)</div>
+                  </div>
+                )}
                 <div className="text-center p-2 bg-white rounded-md">
                   <div className="text-lg font-bold text-green-500">{fmt(frame.fromFloor)}</div>
                   <div className="text-[10px] text-gray-500">From floor (up)</div>
-                </div>
-                <div className="text-center p-2 bg-white rounded-md">
-                  <div className="text-lg font-bold text-amber-500">{fmt(frame.fromCeiling)}</div>
-                  <div className="text-[10px] text-gray-500">From ceiling (down)</div>
                 </div>
                 <div className="text-center p-2 bg-white rounded-md">
                   <div className="text-lg font-bold text-gray-500">

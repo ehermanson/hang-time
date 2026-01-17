@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useQueryState, useQueryStates, parseAsInteger, parseAsFloat, parseAsStringLiteral, parseAsJson } from 'nuqs'
-import type { CalculatorState, FramePosition, GalleryFrame, Unit, LayoutType, AnchorType, HorizontalAnchorType } from '@/types'
+import type { CalculatorState, FramePosition, GalleryFrame, Unit, LayoutType, AnchorType, HorizontalAnchorType, HangingType } from '@/types'
 import { calculateLayoutPositions, toDisplayUnit, fromDisplayUnit } from '@/utils/calculations'
 
 const UNIT_STORAGE_KEY = 'picture-hanging-unit'
@@ -52,6 +52,8 @@ const frameParsers = {
   fw: parseAsFloat.withDefault(12),
   fh: parseAsFloat.withDefault(12),
   ho: parseAsFloat.withDefault(2),
+  ht: parseAsStringLiteral(['center', 'dual'] as const).withDefault('center'),
+  hi: parseAsFloat.withDefault(3), // hook inset from edge for dual hanging
   hs: parseAsFloat.withDefault(3),
   vs: parseAsFloat.withDefault(3),
 }
@@ -103,6 +105,8 @@ export function useCalculator() {
     frameWidth: frame.fw,
     frameHeight: frame.fh,
     hangingOffset: frame.ho,
+    hangingType: frame.ht as HangingType,
+    hookInset: frame.hi,
     hSpacing: frame.hs,
     vSpacing: frame.vs,
     anchorType: position.at as AnchorType,
@@ -151,6 +155,8 @@ export function useCalculator() {
   const setFrameWidth = (value: number) => setFrame({ fw: value })
   const setFrameHeight = (value: number) => setFrame({ fh: value })
   const setHangingOffset = (value: number) => setFrame({ ho: value })
+  const setHangingType = (value: HangingType) => setFrame({ ht: value })
+  const setHookInset = (value: number) => setFrame({ hi: value })
   const setHSpacing = (value: number) => setFrame({ hs: value })
   const setVSpacing = (value: number) => setFrame({ vs: value })
   const setAnchorType = (value: AnchorType) => setPosition({ at: value })
@@ -323,6 +329,8 @@ export function useCalculator() {
     setFrameWidth,
     setFrameHeight,
     setHangingOffset,
+    setHangingType,
+    setHookInset,
     setHSpacing,
     setVSpacing,
     setAnchorType,

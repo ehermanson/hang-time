@@ -27,6 +27,8 @@ export function calculateLayoutPositions(state: CalculatorState): FramePosition[
     frameWidth,
     frameHeight,
     hangingOffset,
+    hangingType,
+    hookInset,
     hSpacing,
     vSpacing,
     anchorType,
@@ -111,8 +113,22 @@ export function calculateLayoutPositions(state: CalculatorState): FramePosition[
     for (let col = 0; col < cols && frameNum < maxFrames; col++) {
       const x = startX + col * (frameWidth + hSpacing)
       const y = startY + row * (frameHeight + vSpacing)
-      const hookX = x + frameWidth / 2
       const hookY = y + hangingOffset
+
+      // Calculate hook positions based on hanging type
+      let hookX: number
+      let hookX2: number | undefined
+      let hookGap: number | undefined
+
+      if (hangingType === 'dual') {
+        // Dual hooks: positioned inset from each edge
+        hookX = x + hookInset  // Left hook
+        hookX2 = x + frameWidth - hookInset  // Right hook
+        hookGap = frameWidth - (2 * hookInset)  // Gap between hooks
+      } else {
+        // Center hook (default)
+        hookX = x + frameWidth / 2
+      }
 
       frameNum++
       positions.push({
@@ -126,11 +142,13 @@ export function calculateLayoutPositions(state: CalculatorState): FramePosition[
         height: frameHeight,
         hangingOffset,
         hookX,
+        hookX2,
         hookY,
-        fromLeft: hookX,
+        hookGap,
+        fromLeft: hookX,  // Distance to first (left) hook
         fromTop: hookY,
         fromFloor: wallHeight - hookY,
-        fromRight: wallWidth - hookX,
+        fromRight: wallWidth - (hookX2 ?? hookX),  // Distance from right hook (or center)
         fromCeiling: hookY,
       })
     }

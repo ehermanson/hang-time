@@ -159,6 +159,9 @@ export function Preview({ calculator }: PreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(600)
+  // Track reference hook (shows wall measurements) and compare hook (shows distance from reference)
+  const [referenceHook, setReferenceHook] = useState<{ frameId: number; hookIndex: number } | null>(null)
+  const [compareHook, setCompareHook] = useState<{ frameId: number; hookIndex: number } | null>(null)
 
   const fmt = (val: number) => formatMeasurement(toDisplayUnit(val, state.unit), state.unit)
   const fmtShort = useCallback(
@@ -166,16 +169,75 @@ export function Preview({ calculator }: PreviewProps) {
     [state.unit]
   )
 
-  // Calculate dimensions
+  // Calculate dimensions - wall fills available width, height adjusts to maintain aspect ratio
   const padding = 60
-  const availableHeight = 500
   const scale = useMemo(() => {
     const availableWidth = containerWidth - padding * 2
-    return Math.min(availableWidth / state.wallWidth, availableHeight / state.wallHeight)
-  }, [containerWidth, state.wallWidth, state.wallHeight])
+    return availableWidth / state.wallWidth
+  }, [containerWidth, state.wallWidth])
 
-  const canvasWidth = state.wallWidth * scale + padding * 2
+  const canvasWidth = containerWidth
   const canvasHeight = state.wallHeight * scale + padding * 2
+  const offsetX = padding
+  const offsetY = padding
+
+  // Handle canvas click to select hooks for measurement display
+  // Regular click = set reference hook, Shift+click = set compare hook
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (state.layoutType === 'gallery') return // Gallery mode uses DOM elements
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const rect = canvas.getBoundingClientRect()
+    const dpr = window.devicePixelRatio || 1
+    const clickX = (e.clientX - rect.left) * dpr
+    const clickY = (e.clientY - rect.top) * dpr
+
+    const hookRadius = 12 // Slightly larger than visual for easier clicking
+    const isShiftClick = e.shiftKey
+
+    // Check if click is on any hook
+    for (const frame of layoutPositions) {
+      const hookX1 = offsetX + frame.hookX * scale
+      const hookY = offsetY + frame.hookY * scale
+
+      // Check first hook
+      const dist1 = Math.hypot((clickX / dpr) - hookX1, (clickY / dpr) - hookY)
+      if (dist1 <= hookRadius) {
+        const hookData = { frameId: frame.id, hookIndex: 0 }
+        if (isShiftClick && referenceHook) {
+          // Shift+click: set as compare hook (if we have a reference)
+          setCompareHook(hookData)
+        } else {
+          // Regular click: set as reference, clear compare
+          setReferenceHook(hookData)
+          setCompareHook(null)
+        }
+        return
+      }
+
+      // Check second hook if dual
+      if (frame.hookX2 !== undefined) {
+        const hookX2 = offsetX + frame.hookX2 * scale
+        const dist2 = Math.hypot((clickX / dpr) - hookX2, (clickY / dpr) - hookY)
+        if (dist2 <= hookRadius) {
+          const hookData = { frameId: frame.id, hookIndex: 1 }
+          if (isShiftClick && referenceHook) {
+            setCompareHook(hookData)
+          } else {
+            setReferenceHook(hookData)
+            setCompareHook(null)
+          }
+          return
+        }
+      }
+    }
+
+    // Click elsewhere clears selection (back to first hook default)
+    setReferenceHook(null)
+    setCompareHook(null)
+  }, [state.layoutType, layoutPositions, scale, referenceHook])
 
   // Track container width
   useEffect(() => {
@@ -1062,15 +1124,30 @@ export function Preview({ calculator }: PreviewProps) {
         ctx.lineWidth = 1
         ctx.strokeRect(fx + matInset, fy + matInset, fw - matInset * 2, fh - matInset * 2)
 
-        const hookX = fx + fw / 2
+        // Draw hook(s) - use actual positions from frame
         const hookY = fy + frame.hangingOffset * scale
+        const hookX1 = offsetX + frame.hookX * scale
+
+        // Draw first (or only) hook
         ctx.beginPath()
-        ctx.arc(hookX, hookY, 6, 0, Math.PI * 2)
+        ctx.arc(hookX1, hookY, 6, 0, Math.PI * 2)
         ctx.fillStyle = '#ef4444'
         ctx.fill()
         ctx.strokeStyle = '#fff'
         ctx.lineWidth = 2
         ctx.stroke()
+
+        // Draw second hook if dual hanging
+        if (frame.hookX2 !== undefined) {
+          const hookX2 = offsetX + frame.hookX2 * scale
+          ctx.beginPath()
+          ctx.arc(hookX2, hookY, 6, 0, Math.PI * 2)
+          ctx.fillStyle = '#ef4444'
+          ctx.fill()
+          ctx.strokeStyle = '#fff'
+          ctx.lineWidth = 2
+          ctx.stroke()
+        }
 
         ctx.fillStyle = '#666'
         ctx.font = 'bold 11px -apple-system, sans-serif'
@@ -1088,38 +1165,206 @@ export function Preview({ calculator }: PreviewProps) {
         ctx.restore()
       })
 
-      // Measurement lines for first frame
-      if (layoutPositions.length > 0) {
-        const f = layoutPositions[0]
-        const hookX = offsetX + f.hookX * scale
+      // Helper to draw full measurements for a specific hook
+      const drawFullMeasurements = (f: typeof layoutPositions[0], hookIndex: number) => {
+        const hookX = offsetX + (hookIndex === 1 && f.hookX2 ? f.hookX2 : f.hookX) * scale
         const hookY = offsetY + f.hookY * scale
+        const fromLeft = hookIndex === 1 && f.hookX2 ? f.hookX2 : f.fromLeft
 
         ctx.strokeStyle = '#22c55e'
         ctx.lineWidth = 1
         ctx.setLineDash([3, 3])
 
+        // Line from wall left to hook
         ctx.beginPath()
         ctx.moveTo(offsetX, hookY)
         ctx.lineTo(hookX, hookY)
         ctx.stroke()
 
+        // Vertical line from hook to floor
         ctx.beginPath()
         ctx.moveTo(hookX, hookY)
         ctx.lineTo(hookX, offsetY + state.wallHeight * scale)
         ctx.stroke()
 
         ctx.setLineDash([])
-        ctx.fillStyle = '#22c55e'
-        ctx.font = 'bold 11px -apple-system, sans-serif'
+        ctx.font = 'bold 10px -apple-system, sans-serif'
         ctx.textAlign = 'center'
 
-        ctx.fillText(fmt(f.fromLeft), offsetX + (f.fromLeft * scale) / 2, hookY - 6)
+        // "From left" label with background
+        const fromLeftText = fmt(fromLeft)
+        const fromLeftX = offsetX + (fromLeft * scale) / 2
+        const fromLeftWidth = ctx.measureText(fromLeftText).width
+        ctx.fillStyle = '#fff'
+        ctx.fillRect(fromLeftX - fromLeftWidth / 2 - 2, hookY - 14, fromLeftWidth + 4, 12)
+        ctx.fillStyle = '#22c55e'
+        ctx.fillText(fromLeftText, fromLeftX, hookY - 5)
 
+        // "From floor" label (rotated)
         ctx.save()
-        ctx.translate(hookX + 12, offsetY + state.wallHeight * scale - (f.fromFloor * scale) / 2)
+        ctx.font = 'bold 10px -apple-system, sans-serif'
+        const fromFloorText = fmt(f.fromFloor)
+        const fromFloorY = offsetY + state.wallHeight * scale - (f.fromFloor * scale) / 2
+        ctx.translate(hookX + 10, fromFloorY)
         ctx.rotate(-Math.PI / 2)
-        ctx.fillText(fmt(f.fromFloor), 0, 0)
+        const floorTextWidth = ctx.measureText(fromFloorText).width
+        ctx.fillStyle = '#fff'
+        ctx.fillRect(-floorTextWidth / 2 - 2, -9, floorTextWidth + 4, 12)
+        ctx.fillStyle = '#22c55e'
+        ctx.fillText(fromFloorText, 0, 0)
         ctx.restore()
+      }
+
+      // Always show hook gap for dual hooks (for all frames)
+      layoutPositions.forEach((f) => {
+        if (f.hookX2 !== undefined && f.hookGap !== undefined) {
+          const hookX = offsetX + f.hookX * scale
+          const hookX2 = offsetX + f.hookX2 * scale
+          const hookY = offsetY + f.hookY * scale
+
+          ctx.strokeStyle = '#f59e0b' // Amber for gap
+          ctx.lineWidth = 1
+          ctx.setLineDash([3, 3])
+          ctx.beginPath()
+          ctx.moveTo(hookX, hookY)
+          ctx.lineTo(hookX2, hookY)
+          ctx.stroke()
+          ctx.setLineDash([])
+
+          // Hook gap measurement label
+          const gapText = fmt(f.hookGap)
+          const textX = (hookX + hookX2) / 2
+          ctx.font = 'bold 10px -apple-system, sans-serif'
+          const textWidth = ctx.measureText(gapText).width
+          ctx.fillStyle = '#fff'
+          ctx.beginPath()
+          ctx.roundRect(textX - textWidth / 2 - 4, hookY - 7, textWidth + 8, 14, 3)
+          ctx.fill()
+          ctx.fillStyle = '#f59e0b'
+          ctx.textAlign = 'center'
+          ctx.fillText(gapText, textX, hookY + 4)
+        }
+      })
+
+      // Draw full measurements for reference hook (first by default)
+      if (referenceHook) {
+        const frame = layoutPositions.find(f => f.id === referenceHook.frameId)
+        if (frame) {
+          drawFullMeasurements(frame, referenceHook.hookIndex)
+
+          // Show contextual tooltip if no compare hook selected yet
+          if (!compareHook) {
+            const hookX = offsetX + (referenceHook.hookIndex === 1 && frame.hookX2 ? frame.hookX2 : frame.hookX) * scale
+            const hookY = offsetY + frame.hookY * scale
+
+            const tooltipText = 'Shift+click another hook to compare'
+            ctx.font = '11px -apple-system, sans-serif'
+            const textWidth = ctx.measureText(tooltipText).width
+
+            // Position tooltip above the hook
+            const tooltipX = hookX
+            const tooltipY = hookY - 25
+
+            // Draw tooltip background
+            ctx.fillStyle = '#1f2937'
+            ctx.beginPath()
+            ctx.roundRect(tooltipX - textWidth / 2 - 8, tooltipY - 12, textWidth + 16, 22, 4)
+            ctx.fill()
+
+            // Draw arrow pointing down
+            ctx.beginPath()
+            ctx.moveTo(tooltipX - 6, tooltipY + 10)
+            ctx.lineTo(tooltipX + 6, tooltipY + 10)
+            ctx.lineTo(tooltipX, tooltipY + 16)
+            ctx.closePath()
+            ctx.fill()
+
+            // Draw text
+            ctx.fillStyle = '#fff'
+            ctx.textAlign = 'center'
+            ctx.fillText(tooltipText, tooltipX, tooltipY + 2)
+          }
+        }
+      } else if (layoutPositions.length > 0) {
+        // Default: show first hook measurements
+        drawFullMeasurements(layoutPositions[0], 0)
+      }
+
+      // Draw comparison measurements between reference and compare hooks
+      if (referenceHook && compareHook) {
+        const refFrame = layoutPositions.find(f => f.id === referenceHook.frameId)
+        const cmpFrame = layoutPositions.find(f => f.id === compareHook.frameId)
+
+        if (refFrame && cmpFrame) {
+          // Get hook positions
+          const refX = referenceHook.hookIndex === 1 && refFrame.hookX2 ? refFrame.hookX2 : refFrame.hookX
+          const refY = refFrame.hookY
+          const cmpX = compareHook.hookIndex === 1 && cmpFrame.hookX2 ? cmpFrame.hookX2 : cmpFrame.hookX
+          const cmpY = cmpFrame.hookY
+
+          // Screen positions
+          const refScreenX = offsetX + refX * scale
+          const refScreenY = offsetY + refY * scale
+          const cmpScreenX = offsetX + cmpX * scale
+          const cmpScreenY = offsetY + cmpY * scale
+
+          // Calculate deltas
+          const deltaX = cmpX - refX
+          const deltaY = cmpY - refY
+
+          // Draw connecting line (cyan/teal for comparison)
+          ctx.strokeStyle = '#06b6d4'
+          ctx.lineWidth = 2
+          ctx.setLineDash([5, 3])
+          ctx.beginPath()
+          ctx.moveTo(refScreenX, refScreenY)
+          ctx.lineTo(cmpScreenX, cmpScreenY)
+          ctx.stroke()
+          ctx.setLineDash([])
+
+          // Draw reference hook highlight (ring)
+          ctx.strokeStyle = '#06b6d4'
+          ctx.lineWidth = 3
+          ctx.beginPath()
+          ctx.arc(refScreenX, refScreenY, 10, 0, Math.PI * 2)
+          ctx.stroke()
+
+          // Draw compare hook highlight (filled ring)
+          ctx.strokeStyle = '#06b6d4'
+          ctx.lineWidth = 3
+          ctx.beginPath()
+          ctx.arc(cmpScreenX, cmpScreenY, 10, 0, Math.PI * 2)
+          ctx.stroke()
+
+          // Format distance labels
+          const hText = Math.abs(deltaX) > 0.1 ? `${fmt(Math.abs(deltaX))} horizontal` : ''
+          const vText = Math.abs(deltaY) > 0.1 ? `${fmt(Math.abs(deltaY))} vertical` : ''
+
+          // Draw label at midpoint
+          const midX = (refScreenX + cmpScreenX) / 2
+          const midY = (refScreenY + cmpScreenY) / 2
+
+          ctx.font = 'bold 11px -apple-system, sans-serif'
+          ctx.textAlign = 'center'
+
+          // Build label text
+          const labels = [hText, vText].filter(Boolean)
+          const labelText = labels.join(', ')
+
+          if (labelText) {
+            const textWidth = ctx.measureText(labelText).width
+
+            // Draw background pill
+            ctx.fillStyle = '#06b6d4'
+            ctx.beginPath()
+            ctx.roundRect(midX - textWidth / 2 - 8, midY - 10, textWidth + 16, 20, 4)
+            ctx.fill()
+
+            // Draw text
+            ctx.fillStyle = '#fff'
+            ctx.fillText(labelText, midX, midY + 4)
+          }
+        }
       }
     }
 
@@ -1140,21 +1385,26 @@ export function Preview({ calculator }: PreviewProps) {
     ctx.strokeStyle = '#22c55e'
     ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(offsetX + 150, legendY)
-    ctx.lineTo(offsetX + 170, legendY)
+    ctx.moveTo(offsetX + 130, legendY)
+    ctx.lineTo(offsetX + 150, legendY)
     ctx.stroke()
     ctx.fillStyle = '#666'
-    ctx.fillText('= Measurements', offsetX + 178, legendY + 4)
+    ctx.fillText('= From wall/floor', offsetX + 158, legendY + 4)
 
-    // Alignment guide legend (magenta)
-    ctx.strokeStyle = '#ff00ff'
+    ctx.strokeStyle = '#06b6d4'
     ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(offsetX + 300, legendY)
-    ctx.lineTo(offsetX + 320, legendY)
+    ctx.moveTo(offsetX + 260, legendY)
+    ctx.lineTo(offsetX + 280, legendY)
     ctx.stroke()
     ctx.fillStyle = '#666'
-    ctx.fillText('= Alignment guide', offsetX + 328, legendY + 4)
+    ctx.fillText('= Comparison', offsetX + 288, legendY + 4)
+
+    // Click hint
+    ctx.fillStyle = '#999'
+    ctx.font = 'italic 10px -apple-system, sans-serif'
+    ctx.textAlign = 'right'
+    ctx.fillText('Click hook for measurements, Shift+click to compare', canvasWidth - 20, legendY + 4)
   }, [
     layoutPositions,
     state,
@@ -1164,6 +1414,8 @@ export function Preview({ calculator }: PreviewProps) {
     fmtShort,
     fmt,
     alignmentGuides,
+    referenceHook,
+    compareHook,
   ])
 
   return (
@@ -1182,7 +1434,11 @@ export function Preview({ calculator }: PreviewProps) {
           className="relative bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden"
           style={{ height: canvasHeight }}
         >
-          <canvas ref={canvasRef} className="absolute inset-0" />
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 cursor-pointer"
+            onClick={handleCanvasClick}
+          />
 
           {/* Gallery mode: render frames as DOM elements with dnd-kit */}
           {state.layoutType === 'gallery' && (
@@ -1213,8 +1469,10 @@ export function Preview({ calculator }: PreviewProps) {
           {state.layoutType === 'gallery'
             ? ` ${state.galleryFrames.length} frames`
             : ` ${totalFrames} frames (${state.layoutType === 'grid' ? `${state.gridRows}×${state.gridCols}` : `1×${state.gridCols}`})`}
-          {state.layoutType === 'gallery' && (
+          {state.layoutType === 'gallery' ? (
             <> — Drag frames to reposition, magenta lines show alignments</>
+          ) : (
+            <> — <strong>Click</strong> a hook for measurements, <strong>Shift+click</strong> another to compare distances</>
           )}
         </div>
       </CardContent>

@@ -1,4 +1,5 @@
 import type { UseCalculatorReturn } from '@/hooks/useCalculator'
+import type { HangingType } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -30,6 +31,7 @@ export function FrameSize({ calculator }: Props) {
   const {
     state, u, fromU,
     setFrameWidth, setFrameHeight, setHangingOffset,
+    setHangingType, setHookInset,
     setHSpacing, setVSpacing
   } = calculator
 
@@ -89,13 +91,38 @@ export function FrameSize({ calculator }: Props) {
           />
         </div>
         <div className="space-y-1.5">
-          <Label>Wire Offset</Label>
+          <Label>Hook Offset</Label>
           <Input
             type="number"
             value={parseFloat(u(state.hangingOffset).toFixed(1))}
             onChange={(e) => setHangingOffset(fromU(parseFloat(e.target.value) || 0))}
           />
         </div>
+      </div>
+
+      <div className={`grid ${state.hangingType === 'dual' ? 'grid-cols-2' : 'grid-cols-1'} gap-2 mt-3`}>
+        <div className="space-y-1.5">
+          <Label>Hanging Type</Label>
+          <Select value={state.hangingType} onValueChange={(v) => setHangingType(v as HangingType)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="center">Center (single hook)</SelectItem>
+              <SelectItem value="dual">Dual (two hooks)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {state.hangingType === 'dual' && (
+          <div className="space-y-1.5">
+            <Label>Hook Inset</Label>
+            <Input
+              type="number"
+              value={parseFloat(u(state.hookInset).toFixed(1))}
+              onChange={(e) => setHookInset(fromU(parseFloat(e.target.value) || 0))}
+            />
+          </div>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-3 mt-3">
         <div className="space-y-1.5">
