@@ -35,6 +35,9 @@ export function calculateLayoutPositions(state: CalculatorState): FramePosition[
     wallWidth,
     wallHeight,
     salonFrames,
+    furnitureHeight,
+    furnitureX,
+    furnitureCentered,
   } = state
 
   if (layoutType === 'salon') {
@@ -82,6 +85,18 @@ export function calculateLayoutPositions(state: CalculatorState): FramePosition[
     startY = (wallHeight - totalHeight) / 2
   } else if (anchorType === 'ceiling') {
     startY = anchorValue
+  } else if (anchorType === 'furniture') {
+    // Position above furniture with gap (anchorValue)
+    // furnitureTop is the Y coordinate of the furniture's top edge
+    const furnitureTop = wallHeight - furnitureHeight
+    startY = furnitureTop - anchorValue - totalHeight
+
+    // If furniture centering is enabled, override horizontal positioning
+    if (furnitureCentered) {
+      // furnitureX is offset of furniture center from wall center
+      const furnitureCenterX = (wallWidth / 2) + furnitureX
+      startX = furnitureCenterX - totalWidth / 2
+    }
   } else {
     // From floor: anchorValue is distance from floor to BOTTOM of arrangement
     startY = wallHeight - anchorValue - totalHeight

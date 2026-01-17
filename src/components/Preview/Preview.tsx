@@ -119,6 +119,14 @@ export function Preview({ calculator }: PreviewProps) {
         ctx.moveTo(offsetX, lineY)
         ctx.lineTo(offsetX + state.wallWidth * scale, lineY)
         ctx.stroke()
+      } else if (state.anchorType === 'furniture') {
+        // Draw line at furniture top + gap
+        const furnitureTop = state.wallHeight - state.furnitureHeight
+        const lineY = offsetY + (furnitureTop - state.anchorValue) * scale
+        ctx.beginPath()
+        ctx.moveTo(offsetX, lineY)
+        ctx.lineTo(offsetX + state.wallWidth * scale, lineY)
+        ctx.stroke()
       } else {
         const lineY = offsetY + (state.wallHeight - state.anchorValue) * scale
         ctx.beginPath()
@@ -128,6 +136,44 @@ export function Preview({ calculator }: PreviewProps) {
       }
     }
     ctx.setLineDash([])
+
+    // Draw furniture when in furniture mode
+    if (state.anchorType === 'furniture') {
+      // Calculate furniture position
+      // furnitureX is offset from wall center
+      const furnitureCenterX = (state.wallWidth / 2) + state.furnitureX
+      const furnitureLeft = furnitureCenterX - state.furnitureWidth / 2
+      const furnitureTop = state.wallHeight - state.furnitureHeight
+
+      const fx = offsetX + furnitureLeft * scale
+      const fy = offsetY + furnitureTop * scale
+      const fw = state.furnitureWidth * scale
+      const fh = state.furnitureHeight * scale
+
+      // Furniture shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.08)'
+      ctx.fillRect(fx + 2, fy + 2, fw, fh)
+
+      // Furniture body
+      ctx.fillStyle = '#e5e7eb'
+      ctx.fillRect(fx, fy, fw, fh)
+
+      // Furniture border
+      ctx.strokeStyle = '#9ca3af'
+      ctx.lineWidth = 2
+      ctx.strokeRect(fx, fy, fw, fh)
+
+      // Furniture label
+      ctx.fillStyle = '#6b7280'
+      ctx.font = 'bold 11px -apple-system, sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('FURNITURE', fx + fw / 2, fy + fh / 2 + 4)
+
+      // Dimension labels
+      ctx.font = '10px -apple-system, sans-serif'
+      ctx.fillStyle = '#6b7280'
+      ctx.fillText(fmtShort(state.furnitureWidth), fx + fw / 2, fy - 6)
+    }
 
     // Draw frames
     layoutPositions.forEach((frame) => {

@@ -2,7 +2,7 @@ export type Unit = 'in' | 'cm'
 
 export type LayoutType = 'grid' | 'row' | 'salon'
 
-export type AnchorType = 'floor' | 'ceiling' | 'center'
+export type AnchorType = 'floor' | 'ceiling' | 'center' | 'furniture'
 
 export type HorizontalAnchorType = 'center' | 'left' | 'right'
 
@@ -64,10 +64,24 @@ export interface CalculatorState {
   // Salon mode
   salonFrames: SalonFrame[]
   selectedFrame: number | null
+
+  // Furniture positioning (when anchorType === 'furniture')
+  furnitureWidth: number
+  furnitureHeight: number
+  furnitureX: number // Offset from wall center (0 = centered)
+  furnitureCentered: boolean // Center frames above furniture
 }
 
 export interface DragState {
   id: number
   startX: number
   startY: number
+}
+
+export interface SavedLayout {
+  id: string
+  title: string
+  url: string // Query string portion of URL
+  createdAt: number
+  updatedAt: number
 }

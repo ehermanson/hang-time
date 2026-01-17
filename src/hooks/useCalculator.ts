@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { useQueryState, useQueryStates, parseAsInteger, parseAsFloat, parseAsStringLiteral, parseAsJson } from 'nuqs'
 import type { CalculatorState, FramePosition, SalonFrame, Unit, LayoutType, AnchorType, HorizontalAnchorType } from '@/types'
 import { calculateLayoutPositions, toDisplayUnit, fromDisplayUnit } from '@/utils/calculations'
 
@@ -8,28 +9,95 @@ const DEFAULT_SALON_FRAMES: SalonFrame[] = [
   { id: 3, name: 'Frame 3', width: 14, height: 18, hangingOffset: 2.5, x: 65, y: 28 },
 ]
 
-const initialState: CalculatorState = {
-  unit: 'in',
-  wallWidth: 120,
-  wallHeight: 96,
-  layoutType: 'grid',
-  gridRows: 3,
-  gridCols: 3,
-  frameWidth: 12,
-  frameHeight: 12,
-  hangingOffset: 2,
-  hSpacing: 3,
-  vSpacing: 3,
-  anchorType: 'floor',
-  anchorValue: 57,
-  hAnchorType: 'center',
-  hAnchorValue: 0,
-  salonFrames: DEFAULT_SALON_FRAMES,
-  selectedFrame: null,
+// Validator for SalonFrame array
+const salonFramesValidator = (value: unknown): SalonFrame[] | null => {
+  if (!Array.isArray(value)) return null
+  for (const item of value) {
+    if (typeof item !== 'object' || item === null) return null
+    if (typeof item.id !== 'number') return null
+    if (typeof item.name !== 'string') return null
+    if (typeof item.width !== 'number') return null
+    if (typeof item.height !== 'number') return null
+    if (typeof item.hangingOffset !== 'number') return null
+    if (typeof item.x !== 'number') return null
+    if (typeof item.y !== 'number') return null
+  }
+  return value as SalonFrame[]
+}
+
+// Parser definitions grouped by concern
+const wallParsers = {
+  u: parseAsStringLiteral(['in', 'cm'] as const).withDefault('in'),
+  ww: parseAsFloat.withDefault(120),
+  wh: parseAsFloat.withDefault(96),
+}
+
+const layoutParsers = {
+  lt: parseAsStringLiteral(['grid', 'row', 'salon'] as const).withDefault('grid'),
+  gr: parseAsInteger.withDefault(3),
+  gc: parseAsInteger.withDefault(3),
+}
+
+const frameParsers = {
+  fw: parseAsFloat.withDefault(12),
+  fh: parseAsFloat.withDefault(12),
+  ho: parseAsFloat.withDefault(2),
+  hs: parseAsFloat.withDefault(3),
+  vs: parseAsFloat.withDefault(3),
+}
+
+const positionParsers = {
+  at: parseAsStringLiteral(['floor', 'ceiling', 'center', 'furniture'] as const).withDefault('floor'),
+  av: parseAsFloat.withDefault(57),
+  hat: parseAsStringLiteral(['center', 'left', 'right'] as const).withDefault('center'),
+  hav: parseAsFloat.withDefault(0),
+}
+
+const furnitureParsers = {
+  fuw: parseAsFloat.withDefault(48),
+  fuh: parseAsFloat.withDefault(30),
+  fux: parseAsFloat.withDefault(0),
+  fuc: parseAsStringLiteral(['true', 'false'] as const).withDefault('true'),
 }
 
 export function useCalculator() {
-  const [state, setState] = useState<CalculatorState>(initialState)
+  // URL-synced state grouped by concern
+  const [wall, setWall] = useQueryStates(wallParsers)
+  const [layout, setLayout] = useQueryStates(layoutParsers)
+  const [frame, setFrame] = useQueryStates(frameParsers)
+  const [position, setPosition] = useQueryStates(positionParsers)
+  const [furniture, setFurniture] = useQueryStates(furnitureParsers)
+  const [salonFrames, setSalonFrames] = useQueryState('sf',
+    parseAsJson(salonFramesValidator).withDefault(DEFAULT_SALON_FRAMES)
+  )
+
+  // Local state (transient UI state, not persisted to URL)
+  const [selectedFrame, setSelectedFrame] = useState<number | null>(null)
+
+  // Construct state object for calculations
+  const state: CalculatorState = useMemo(() => ({
+    unit: wall.u as Unit,
+    wallWidth: wall.ww,
+    wallHeight: wall.wh,
+    layoutType: layout.lt as LayoutType,
+    gridRows: layout.gr,
+    gridCols: layout.gc,
+    frameWidth: frame.fw,
+    frameHeight: frame.fh,
+    hangingOffset: frame.ho,
+    hSpacing: frame.hs,
+    vSpacing: frame.vs,
+    anchorType: position.at as AnchorType,
+    anchorValue: position.av,
+    hAnchorType: position.hat as HorizontalAnchorType,
+    hAnchorValue: position.hav,
+    salonFrames,
+    selectedFrame,
+    furnitureWidth: furniture.fuw,
+    furnitureHeight: furniture.fuh,
+    furnitureX: furniture.fux,
+    furnitureCentered: furniture.fuc === 'true',
+  }), [wall, layout, frame, position, furniture, salonFrames, selectedFrame])
 
   // Unit conversion helpers
   const u = useCallback((val: number) => toDisplayUnit(val, state.unit), [state.unit])
@@ -46,70 +114,64 @@ export function useCalculator() {
     ? state.salonFrames.length
     : state.gridRows * state.gridCols
 
-  // Setters
-  const setUnit = (unit: Unit) => setState(s => ({ ...s, unit }))
-  const setWallWidth = (wallWidth: number) => setState(s => ({ ...s, wallWidth }))
-  const setWallHeight = (wallHeight: number) => setState(s => ({ ...s, wallHeight }))
-  const setLayoutType = (layoutType: LayoutType) => setState(s => ({ ...s, layoutType }))
-  const setGridRows = (gridRows: number) => setState(s => ({ ...s, gridRows }))
-  const setGridCols = (gridCols: number) => setState(s => ({ ...s, gridCols }))
-  const setFrameWidth = (frameWidth: number) => setState(s => ({ ...s, frameWidth }))
-  const setFrameHeight = (frameHeight: number) => setState(s => ({ ...s, frameHeight }))
-  const setHangingOffset = (hangingOffset: number) => setState(s => ({ ...s, hangingOffset }))
-  const setHSpacing = (hSpacing: number) => setState(s => ({ ...s, hSpacing }))
-  const setVSpacing = (vSpacing: number) => setState(s => ({ ...s, vSpacing }))
-  const setAnchorType = (anchorType: AnchorType) => setState(s => ({ ...s, anchorType }))
-  const setAnchorValue = (anchorValue: number) => setState(s => ({ ...s, anchorValue }))
-  const setHAnchorType = (hAnchorType: HorizontalAnchorType) => setState(s => ({ ...s, hAnchorType }))
-  const setHAnchorValue = (hAnchorValue: number) => setState(s => ({ ...s, hAnchorValue }))
-  const setSelectedFrame = (selectedFrame: number | null) => setState(s => ({ ...s, selectedFrame }))
+  // Setters that maintain the original API
+  const setUnit = (value: Unit) => setWall({ u: value })
+  const setWallWidth = (value: number) => setWall({ ww: value })
+  const setWallHeight = (value: number) => setWall({ wh: value })
+  const setLayoutType = (value: LayoutType) => setLayout({ lt: value })
+  const setGridRows = (value: number) => setLayout({ gr: value })
+  const setGridCols = (value: number) => setLayout({ gc: value })
+  const setFrameWidth = (value: number) => setFrame({ fw: value })
+  const setFrameHeight = (value: number) => setFrame({ fh: value })
+  const setHangingOffset = (value: number) => setFrame({ ho: value })
+  const setHSpacing = (value: number) => setFrame({ hs: value })
+  const setVSpacing = (value: number) => setFrame({ vs: value })
+  const setAnchorType = (value: AnchorType) => setPosition({ at: value })
+  const setAnchorValue = (value: number) => setPosition({ av: value })
+  const setHAnchorType = (value: HorizontalAnchorType) => setPosition({ hat: value })
+  const setHAnchorValue = (value: number) => setPosition({ hav: value })
+  const setFurnitureWidth = (value: number) => setFurniture({ fuw: value })
+  const setFurnitureHeight = (value: number) => setFurniture({ fuh: value })
+  const setFurnitureX = (value: number) => setFurniture({ fux: value })
+  const setFurnitureCentered = (value: boolean) => setFurniture({ fuc: value ? 'true' : 'false' })
 
   // Salon frame management
   const addSalonFrame = () => {
-    setState(s => {
-      const newId = Math.max(0, ...s.salonFrames.map(f => f.id)) + 1
-      return {
-        ...s,
-        salonFrames: [
-          ...s.salonFrames,
-          {
-            id: newId,
-            name: `Frame ${newId}`,
-            width: 12,
-            height: 16,
-            hangingOffset: 2,
-            x: 20 + (newId * 5) % 60,
-            y: 20 + (newId * 5) % 40,
-          },
-        ],
-      }
-    })
+    const newId = Math.max(0, ...salonFrames.map(f => f.id)) + 1
+    setSalonFrames([
+      ...salonFrames,
+      {
+        id: newId,
+        name: `Frame ${newId}`,
+        width: 12,
+        height: 16,
+        hangingOffset: 2,
+        x: 20 + (newId * 5) % 60,
+        y: 20 + (newId * 5) % 40,
+      },
+    ])
   }
 
   const updateSalonFrame = (id: number, field: keyof SalonFrame, value: string | number) => {
-    setState(s => ({
-      ...s,
-      salonFrames: s.salonFrames.map(f =>
+    setSalonFrames(
+      salonFrames.map(f =>
         f.id === id ? { ...f, [field]: field === 'name' ? value : (parseFloat(String(value)) || 0) } : f
-      ),
-    }))
+      )
+    )
   }
 
   const removeSalonFrame = (id: number) => {
-    setState(s => ({
-      ...s,
-      salonFrames: s.salonFrames.filter(f => f.id !== id),
-      selectedFrame: s.selectedFrame === id ? null : s.selectedFrame,
-    }))
+    setSalonFrames(salonFrames.filter(f => f.id !== id))
+    if (selectedFrame === id) {
+      setSelectedFrame(null)
+    }
   }
 
   const updateSalonFramePosition = (id: number, x: number, y: number) => {
-    setState(s => ({
-      ...s,
-      salonFrames: s.salonFrames.map(f =>
-        f.id === id ? { ...f, x, y } : f
-      ),
-    }))
+    setSalonFrames(
+      salonFrames.map(f => f.id === id ? { ...f, x, y } : f
+      )
+    )
   }
 
   return {
@@ -133,6 +195,10 @@ export function useCalculator() {
     setAnchorValue,
     setHAnchorType,
     setHAnchorValue,
+    setFurnitureWidth,
+    setFurnitureHeight,
+    setFurnitureX,
+    setFurnitureCentered,
     setSelectedFrame,
     addSalonFrame,
     updateSalonFrame,

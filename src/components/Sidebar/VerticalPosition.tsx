@@ -12,10 +12,21 @@ const options: { value: AnchorType; label: string; desc: string; defaultValue: n
   { value: 'floor', label: 'From Floor', desc: 'Eye-level standard: 57"', defaultValue: 57 },
   { value: 'ceiling', label: 'From Ceiling', desc: 'Gap from ceiling (e.g., 6")', defaultValue: 6 },
   { value: 'center', label: 'Center on Wall', desc: 'Vertically centered', defaultValue: 0 },
+  { value: 'furniture', label: 'Above Furniture', desc: 'Position above a piece of furniture', defaultValue: 8 },
 ]
 
 export function VerticalPosition({ calculator }: Props) {
-  const { state, u, fromU, setAnchorType, setAnchorValue } = calculator
+  const {
+    state,
+    u,
+    fromU,
+    setAnchorType,
+    setAnchorValue,
+    setFurnitureWidth,
+    setFurnitureHeight,
+    setFurnitureX,
+    setFurnitureCentered,
+  } = calculator
 
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -52,7 +63,7 @@ export function VerticalPosition({ calculator }: Props) {
         ))}
       </div>
 
-      {state.anchorType !== 'center' && (
+      {state.anchorType !== 'center' && state.anchorType !== 'furniture' && (
         <div className="space-y-1.5 mt-3">
           <Label>
             {state.anchorType === 'floor' ? 'Distance from floor' : 'Distance from ceiling'} ({state.unit})
@@ -62,6 +73,60 @@ export function VerticalPosition({ calculator }: Props) {
             value={parseFloat(u(state.anchorValue).toFixed(1))}
             onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
           />
+        </div>
+      )}
+
+      {state.anchorType === 'furniture' && (
+        <div className="mt-3 space-y-3">
+          <div className="bg-white rounded-md border border-gray-200 p-3 space-y-3">
+            <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">Furniture Dimensions</div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Width ({state.unit})</Label>
+                <Input
+                  type="number"
+                  value={parseFloat(u(state.furnitureWidth).toFixed(1))}
+                  onChange={(e) => setFurnitureWidth(fromU(parseFloat(e.target.value) || 0))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Height ({state.unit})</Label>
+                <Input
+                  type="number"
+                  value={parseFloat(u(state.furnitureHeight).toFixed(1))}
+                  onChange={(e) => setFurnitureHeight(fromU(parseFloat(e.target.value) || 0))}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Offset from center ({state.unit})</Label>
+              <Input
+                type="number"
+                value={parseFloat(u(state.furnitureX).toFixed(1))}
+                onChange={(e) => setFurnitureX(fromU(parseFloat(e.target.value) || 0))}
+              />
+              <p className="text-xs text-gray-500">0 = centered, negative = left, positive = right</p>
+            </div>
+          </div>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={state.furnitureCentered}
+              onChange={(e) => setFurnitureCentered(e.target.checked)}
+              className="accent-indigo-600"
+            />
+            <span className="text-sm text-gray-700">Center frames above furniture</span>
+          </label>
+
+          <div className="space-y-1.5">
+            <Label>Gap above furniture ({state.unit})</Label>
+            <Input
+              type="number"
+              value={parseFloat(u(state.anchorValue).toFixed(1))}
+              onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
+            />
+          </div>
         </div>
       )}
     </div>
