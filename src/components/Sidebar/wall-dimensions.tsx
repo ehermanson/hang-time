@@ -1,4 +1,4 @@
-import type { UseCalculatorReturn } from '@/hooks/useCalculator'
+import type { UseCalculatorReturn } from '@/hooks/use-calculator'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'

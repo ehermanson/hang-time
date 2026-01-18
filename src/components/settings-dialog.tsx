@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { Unit, Theme } from '@/types'
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme } from '@/hooks/use-theme'
 import {
   Dialog,
   DialogContent,

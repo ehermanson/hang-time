@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { Minus, Plus, Maximize2, HelpCircle } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import type { UseCalculatorReturn } from '@/hooks/useCalculator'
+import type { UseCalculatorReturn } from '@/hooks/use-calculator'
 import { formatMeasurement, formatShort, toDisplayUnit } from '@/utils/calculations'
 import { Button } from '@/components/ui/button'
 

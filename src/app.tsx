@@ -1,7 +1,7 @@
-import { useCalculator } from '@/hooks/useCalculator'
-import { ThemeProvider, useTheme } from '@/hooks/useTheme'
-import { Sidebar } from '@/components/Sidebar'
-import { Preview } from '@/components/Preview'
+import { useCalculator } from '@/hooks/use-calculator'
+import { ThemeProvider, useTheme } from '@/hooks/use-theme'
+import { Sidebar } from '@/components/sidebar/sidebar'
+import { Preview } from '@/components/preview'
 import { cn } from '@/lib/utils'
 
 function AppContent() {

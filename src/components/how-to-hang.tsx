@@ -1,4 +1,4 @@
-import type { UseCalculatorReturn } from '@/hooks/useCalculator'
+import type { UseCalculatorReturn } from '@/hooks/use-calculator'
 import { formatMeasurement, toDisplayUnit } from '@/utils/calculations'
 import { ListChecks } from 'lucide-react'
 

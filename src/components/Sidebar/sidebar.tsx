@@ -1,16 +1,16 @@
 import { useState, useRef } from 'react'
-import type { UseCalculatorReturn } from '@/hooks/useCalculator'
-import { useSavedLayouts } from '@/hooks/useSavedLayouts'
-import { WallDimensions } from './WallDimensions'
-import { LayoutTypeSelector } from './LayoutTypeSelector'
-import { FrameSize } from './FrameSize'
-import { VerticalPosition } from './VerticalPosition'
-import { HorizontalPosition } from './HorizontalPosition'
-import { SaveLayoutDialog } from '@/components/SaveLayoutDialog'
-import { SavedLayoutsDialog } from '@/components/SavedLayoutsDialog'
-import { SettingsDialog } from '@/components/SettingsDialog'
-import { Measurements } from '@/components/Measurements'
-import { HowToHang } from '@/components/HowToHang'
+import type { UseCalculatorReturn } from '@/hooks/use-calculator'
+import { useSavedLayouts } from '@/hooks/use-saved-layouts'
+import { WallDimensions } from './wall-dimensions'
+import { LayoutTypeSelector } from './layout-type-selector'
+import { FrameSize } from './frame-size'
+import { VerticalPosition } from './vertical-position'
+import { HorizontalPosition } from './horizontal-position'
+import { SaveLayoutDialog } from '@/components/save-layout-dialog'
+import { SavedLayoutsDialog } from '@/components/saved-layouts-dialog'
+import { SettingsDialog } from '@/components/settings-dialog'
+import { Measurements } from '@/components/measurements'
+import { HowToHang } from '@/components/how-to-hang'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Link, Check, Bookmark, Pencil, X, PanelLeftClose, PanelLeft, Ruler, Hammer } from 'lucide-react'
@@ -126,7 +126,7 @@ export function Sidebar({ calculator }: SidebarProps) {
               <Logo className="h-8 w-8" />
               <div>
                 <h1 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Hang Time</h1>
-                <p className="text-[11px] text-gray-500 dark:text-white/50 -mt-0.5">Pixel Perfect Picture Placement</p>
+                <p className="text-[11px] text-gray-500 dark:text-white/50 -mt-0.5 italic">Pixel Perfect Picture Placement</p>
               </div>
             </div>
             <TooltipProvider delayDuration={100}>

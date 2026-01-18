@@ -25,7 +25,8 @@ This is a React/TypeScript picture hanging calculator that helps users calculate
 ### Tech Stack
 - React 18 with TypeScript
 - Vite for bundling
-- Tailwind CSS with Radix UI primitives
+- Tailwind CSS with shadcn/ui
+    - ALWAYS check for a shadcn component before creating your own
 - Cloudflare Workers for deployment
 
 ### State Management Pattern
@@ -39,25 +40,29 @@ Components receive the calculator object via props and call setters to update st
 
 ### Layout Modes
 
-Three layout types with different calculation logic (`src/utils/calculations.ts`):
+Two layout types with different calculation logic (`src/utils/calculations.ts`):
 - **Grid**: Frames arranged in rows/columns with configurable spacing
 - **Row**: Single row of frames
-- **Salon**: Free-form placement with drag-and-drop positioning
 
 ### Key Types (`src/types/index.ts`)
 
 - `CalculatorState` - Main app state
 - `FramePosition` - Calculated position/measurements for each frame
-- `SalonFrame` - Individual frame in salon mode with x/y/width/height
 - `Unit` - 'in' | 'cm'
-- `LayoutType` - 'grid' | 'row' | 'salon'
+- `LayoutType` - 'grid' | 'row'
 
 ### Component Organization
 
-- `src/components/Sidebar/` - Input controls for all configuration
-- `src/components/Preview/` - Canvas-based visual wall preview with rulers and measurement overlays
-- `src/components/Measurements/` - Detailed measurement display for each frame
+- `src/components/Sidebar/` - Input controls for all configuration (has internal sub-components)
+- `src/components/Preview.tsx` - Canvas-based visual wall preview with rulers and measurement overlays
+- `src/components/Measurements.tsx` - Detailed measurement display for each frame
 - `src/components/ui/` - Radix UI component wrappers
+
+### File Naming Conventions
+
+- Use `kebab-case` for all file names (e.g., `how-to-hang.tsx`, `use-calculator.ts`)
+- No barrel files (`index.ts`) for single-export modules - just use the file directly with a named export
+- Only use directories for components with multiple internal sub-components (e.g., `Sidebar/`)
 
 ### Cloudflare Workers Setup
 

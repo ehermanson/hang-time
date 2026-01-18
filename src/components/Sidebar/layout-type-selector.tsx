@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { UseCalculatorReturn } from '@/hooks/useCalculator'
+import type { UseCalculatorReturn } from '@/hooks/use-calculator'
 import type { LayoutType } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'

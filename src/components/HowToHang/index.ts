@@ -1,1 +1,0 @@
-export { HowToHang } from './HowToHang'

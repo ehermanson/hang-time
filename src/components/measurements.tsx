@@ -1,4 +1,4 @@
-import type { UseCalculatorReturn } from '@/hooks/useCalculator'
+import type { UseCalculatorReturn } from '@/hooks/use-calculator'
 import { formatMeasurement, formatShort, toDisplayUnit } from '@/utils/calculations'
 import { Ruler } from 'lucide-react'
 

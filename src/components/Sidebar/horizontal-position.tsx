@@ -1,4 +1,4 @@
-import type { UseCalculatorReturn } from '@/hooks/useCalculator'
+import type { UseCalculatorReturn } from '@/hooks/use-calculator'
 import type { HorizontalAnchorType, Distribution } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
