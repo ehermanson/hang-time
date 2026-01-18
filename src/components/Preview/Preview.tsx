@@ -9,10 +9,12 @@ import {
   PointerSensor,
   KeyboardSensor,
 } from '@dnd-kit/core'
-import { Minus, Plus, Maximize2 } from 'lucide-react'
+import { Minus, Plus, Maximize2, HelpCircle } from 'lucide-react'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import type { UseCalculatorReturn } from '@/hooks/useCalculator'
 import type { GalleryFrame } from '@/types'
 import { formatMeasurement, formatShort, toDisplayUnit } from '@/utils/calculations'
+import { Button } from '@/components/ui/button'
 
 interface PreviewProps {
   calculator: UseCalculatorReturn
@@ -91,13 +93,12 @@ function DraggableFrame({
       />
       {/* Frame body */}
       <div
-        className={`absolute inset-0 border-2 ${
-          isPrimary
-            ? 'border-indigo-600 bg-indigo-50'
-            : isSelected
+        className={`absolute inset-0 border-2 ${isPrimary
+          ? 'border-indigo-600 bg-indigo-50'
+          : isSelected
             ? 'border-indigo-400 bg-indigo-50/70'
             : 'border-gray-800 bg-gray-50'
-        } ${isDragging ? 'shadow-lg ring-2 ring-indigo-300' : ''}`}
+          } ${isDragging ? 'shadow-lg ring-2 ring-indigo-300' : ''}`}
       >
         {/* Inner mat */}
         <div
@@ -297,7 +298,7 @@ export function Preview({ calculator }: PreviewProps) {
   ): boolean => {
     // Add gap to create a buffer zone
     return !(ax + aw + gap <= bx || bx + bw + gap <= ax ||
-             ay + ah + gap <= by || by + bh + gap <= ay)
+      ay + ah + gap <= by || by + bh + gap <= ay)
   }
 
   // Check if a position overlaps with any other frame
@@ -927,15 +928,15 @@ export function Preview({ calculator }: PreviewProps) {
     useSensor(KeyboardSensor)
   )
 
-  // Calculate centered pan position
+  // Calculate initial pan position - wall near top, centered horizontally
   const getCenteredPan = useCallback(() => {
     const wallWidth = state.wallWidth * baseScale
-    const wallHeight = state.wallHeight * baseScale
     const availableWidth = containerSize.width - SIDEBAR_WIDTH
     const centerX = SIDEBAR_WIDTH + (availableWidth - wallWidth) / 2 - padding
-    const centerY = (containerSize.height - wallHeight) / 2 - padding
-    return { x: Math.max(0, centerX), y: Math.max(0, centerY) }
-  }, [state.wallWidth, state.wallHeight, baseScale, containerSize])
+    // Position wall near top with minimal offset (just enough for ruler/ceiling label)
+    const topY = 0
+    return { x: Math.max(0, centerX), y: topY }
+  }, [state.wallWidth, baseScale, containerSize])
 
   // Fit to view function - centers wall in available space
   const fitToView = useCallback(() => {
@@ -1540,22 +1541,39 @@ export function Preview({ calculator }: PreviewProps) {
         )}
       </div>
 
-      {/* Legend - bottom center (only for non-gallery modes) */}
+      {/* Help button - top right (only for non-gallery modes) */}
       {state.layoutType !== 'gallery' && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg border border-gray-200/50 dark:border-white/10">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-            <span className="text-xs text-gray-600 dark:text-white/70">Hook position</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-5 h-0.5 bg-green-500" />
-            <span className="text-xs text-gray-600 dark:text-white/70">From wall/floor</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-5 h-0.5 bg-cyan-500" />
-            <span className="text-xs text-gray-600 dark:text-white/70">Comparison</span>
-          </div>
-          <span className="text-xs text-gray-400 dark:text-white/40 italic">Click hook to measure, Shift+click to compare</span>
+        <div className="absolute top-4 right-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white/90 hover:bg-white dark:bg-slate-900/90 dark:hover:bg-slate-800 backdrop-blur-xl shadow-2xl border border-gray-200 dark:border-white/10"
+              >
+                <HelpCircle className="size-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-64">
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
+                  <span className="text-xs text-gray-600 dark:text-white/70">Hook position</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-0.5 bg-green-500 shrink-0" />
+                  <span className="text-xs text-gray-600 dark:text-white/70">Distance from wall/floor</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-0.5 bg-cyan-500 shrink-0" />
+                  <span className="text-xs text-gray-600 dark:text-white/70">Hook comparison</span>
+                </div>
+                <div className="border-t border-gray-200 dark:border-white/10 pt-2 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-white/50">
+                    Click a hook to see measurements.<br />
+                    Shift+click another to compare.
+                  </p>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       )}
 
