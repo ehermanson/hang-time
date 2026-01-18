@@ -7,6 +7,7 @@ import {
   PanelLeftClose,
   Pencil,
   Ruler,
+  SlidersHorizontal,
   X,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -341,12 +342,13 @@ export function Sidebar({ calculator }: SidebarProps) {
           <button
             onClick={() => setActiveTab('config')}
             className={cn(
-              'flex-1 py-2.5 text-xs font-medium transition-colors',
+              'flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
               activeTab === 'config'
                 ? 'text-gray-900 bg-gray-100 dark:text-white dark:bg-white/10'
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5',
             )}
           >
+            <SlidersHorizontal className="h-3 w-3" />
             Configure
           </button>
           <button
@@ -378,7 +380,7 @@ export function Sidebar({ calculator }: SidebarProps) {
         {/* Tab content */}
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'config' && (
-            <div className="p-4 space-y-6">
+            <div className="p-4 space-y-4">
               <WallDimensions calculator={calculator} />
               <LayoutTypeSelector calculator={calculator} />
 

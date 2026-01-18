@@ -16,7 +16,7 @@ export function WallDimensions({ calculator }: Props) {
   const { state, u, fromU, setWallWidth, setWallHeight } = calculator;
 
   return (
-    <Collapsible defaultOpen>
+    <Collapsible defaultOpen className="pb-4 border-b border-gray-200 dark:border-white/10">
       <CollapsibleTrigger className="w-full group">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
           <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
