@@ -18,6 +18,7 @@ import { SavedLayoutsDialog } from '@/components/saved-layouts-dialog';
 import { SettingsDialog } from '@/components/settings-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -88,8 +89,6 @@ interface SidebarProps {
   calculator: UseCalculatorReturn;
 }
 
-type TabType = 'config' | 'measurements' | 'howto';
-
 export function Sidebar({ calculator }: SidebarProps) {
   const { state } = calculator;
   const {
@@ -112,7 +111,6 @@ export function Sidebar({ calculator }: SidebarProps) {
     null,
   );
   const [isMinimized, setIsMinimized] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>('config');
   const bookmarkInputRef = useRef<HTMLInputElement>(null);
 
   const currentLayout = existingLayoutForCurrentConfig || loadedLayout;
@@ -225,7 +223,7 @@ export function Sidebar({ calculator }: SidebarProps) {
             >
               <Bookmark
                 className={cn(
-                  'h-3.5 w-3.5 flex-shrink-0',
+                  'size-3.5 flex-shrink-0',
                   hasUnsavedChanges ? '' : 'fill-current',
                 )}
               />
@@ -247,18 +245,18 @@ export function Sidebar({ calculator }: SidebarProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-500/20"
+                    className="size-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-500/20"
                     onClick={saveBookmarkEdit}
                   >
-                    <Check className="h-3.5 w-3.5" />
+                    <Check className="size-3.5" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 dark:text-white/40 dark:hover:text-white/60"
+                    className="size-6 p-0 text-gray-400 hover:text-gray-600 dark:text-white/40 dark:hover:text-white/60"
                     onClick={cancelBookmarkEdit}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="size-3.5" />
                   </Button>
                 </div>
               ) : (
@@ -275,18 +273,18 @@ export function Sidebar({ calculator }: SidebarProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 text-current opacity-60 hover:opacity-100 flex-shrink-0 hover:bg-black/5 dark:hover:bg-white/10"
+                    className="size-6 p-0 text-current opacity-60 hover:opacity-100 flex-shrink-0 hover:bg-black/5 dark:hover:bg-white/10"
                     onClick={startBookmarkEdit}
                   >
-                    <Pencil className="h-3 w-3" />
+                    <Pencil className="size-3" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 text-current opacity-60 hover:opacity-100 flex-shrink-0 hover:bg-black/5 dark:hover:bg-white/10"
+                    className="size-6 p-0 text-current opacity-60 hover:opacity-100 flex-shrink-0 hover:bg-black/5 dark:hover:bg-white/10"
                     onClick={() => startFresh()}
                   >
-                    <X className="h-3 w-3" />
+                    <X className="size-3" />
                   </Button>
                 </>
               )}
@@ -305,9 +303,9 @@ export function Sidebar({ calculator }: SidebarProps) {
                     onClick={handleCopyLink}
                   >
                     {copied ? (
-                      <Check className="h-4 w-4" />
+                      <Check className="size-4" />
                     ) : (
-                      <Link className="h-4 w-4" />
+                      <Link className="size-4" />
                     )}
                   </Button>
                 </TooltipTrigger>
@@ -337,71 +335,53 @@ export function Sidebar({ calculator }: SidebarProps) {
           </TooltipProvider>
         </div>
 
-        {/* Tab bar */}
-        <div className="flex border-b border-gray-200 dark:border-white/10">
-          <button
-            onClick={() => setActiveTab('config')}
-            className={cn(
-              'flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
-              activeTab === 'config'
-                ? 'text-gray-900 bg-gray-100 dark:text-white dark:bg-white/10'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5',
-            )}
-          >
-            <SlidersHorizontal className="h-3 w-3" />
-            Configure
-          </button>
-          <button
-            onClick={() => setActiveTab('measurements')}
-            className={cn(
-              'flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
-              activeTab === 'measurements'
-                ? 'text-gray-900 bg-gray-100 dark:text-white dark:bg-white/10'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5',
-            )}
-          >
-            <Ruler className="h-3 w-3" />
-            Measure
-          </button>
-          <button
-            onClick={() => setActiveTab('howto')}
-            className={cn(
-              'flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
-              activeTab === 'howto'
-                ? 'text-gray-900 bg-gray-100 dark:text-white dark:bg-white/10'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5',
-            )}
-          >
-            <Hammer className="h-3 w-3" />
-            Hang
-          </button>
-        </div>
+        <Tabs defaultValue="config" >
+          <TabsList className="w-full h-auto p-0 bg-transparent rounded-none border-b border-gray-200 dark:border-white/10">
+            <TabsTrigger
+              value="config"
+              className="flex-1 py-2.5 rounded-none border-0 shadow-none text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5 data-[state=active]:text-gray-900 data-[state=active]:bg-gray-100 dark:data-[state=active]:text-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-none"
+            >
+              <SlidersHorizontal className="size-3" />
+              Configure
+            </TabsTrigger>
+            <TabsTrigger
+              value="measurements"
+              className="flex-1 py-2.5 rounded-none border-0 shadow-none text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5 data-[state=active]:text-gray-900 data-[state=active]:bg-gray-100 dark:data-[state=active]:text-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-none"
+            >
+              <Ruler className="size-3" />
+              Measure
+            </TabsTrigger>
+            <TabsTrigger
+              value="howto"
+              className="flex-1 py-2.5 rounded-none border-0 shadow-none text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5 data-[state=active]:text-gray-900 data-[state=active]:bg-gray-100 dark:data-[state=active]:text-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-none"
+            >
+              <Hammer className="size-3" />
+              Hang
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Tab content */}
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === 'config' && (
+          <TabsContent value="config" className="flex-1 overflow-y-auto mt-0">
             <div className="p-4 space-y-4">
               <WallDimensions calculator={calculator} />
               <LayoutTypeSelector calculator={calculator} />
-
               <FrameSize calculator={calculator} />
               <VerticalPosition calculator={calculator} />
               <HorizontalPosition calculator={calculator} />
             </div>
-          )}
+          </TabsContent>
 
-          {activeTab === 'measurements' && (
+          <TabsContent value="measurements" className="flex-1 overflow-y-auto mt-0">
             <div className="p-4">
               <Measurements calculator={calculator} />
             </div>
-          )}
+          </TabsContent>
 
-          {activeTab === 'howto' && (
+          <TabsContent value="howto" className="flex-1 overflow-y-auto mt-0">
             <div className="p-4">
               <HowToHang calculator={calculator} />
             </div>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
