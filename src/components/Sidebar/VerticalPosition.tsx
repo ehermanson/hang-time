@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import { MoveVertical, ChevronDown } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 
 // Visual preview of distribution mode (vertical orientation)
 function DistributionPreview({
@@ -161,7 +162,7 @@ export function VerticalPosition({ calculator }: Props) {
                     <input
                       type="radio"
                       checked={state.anchorType === opt.value}
-                      onChange={() => {}}
+                      onChange={() => { }}
                       className="mt-1 accent-emerald-600 dark:accent-emerald-500"
                     />
                     <div>
@@ -174,10 +175,11 @@ export function VerticalPosition({ calculator }: Props) {
 
               {state.anchorType !== 'center' && state.anchorType !== 'furniture' && (
                 <div className="space-y-1.5 mt-3">
-                  <Label>
+                  <Label htmlFor="anchorValue">
                     {state.anchorType === 'floor' ? 'Distance from floor' : 'Distance from ceiling'} ({state.unit})
                   </Label>
                   <Input
+                    id="anchorValue"
                     type="number"
                     step="0.125"
                     value={parseFloat(u(state.anchorValue).toFixed(3))}
@@ -192,8 +194,9 @@ export function VerticalPosition({ calculator }: Props) {
                     <div className="text-xs font-medium text-gray-600 dark:text-white/60 uppercase tracking-wide">Furniture Dimensions</div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <Label>Width ({state.unit})</Label>
+                        <Label htmlFor="furnitureWidth">Width ({state.unit})</Label>
                         <Input
+                          id="furnitureWidth"
                           type="number"
                           step="0.125"
                           value={parseFloat(u(state.furnitureWidth).toFixed(3))}
@@ -201,8 +204,9 @@ export function VerticalPosition({ calculator }: Props) {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label>Height ({state.unit})</Label>
+                        <Label htmlFor="furnitureHeight">Height ({state.unit})</Label>
                         <Input
+                          id="furnitureHeight"
                           type="number"
                           step="0.125"
                           value={parseFloat(u(state.furnitureHeight).toFixed(3))}
@@ -211,8 +215,9 @@ export function VerticalPosition({ calculator }: Props) {
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Offset from center ({state.unit})</Label>
+                      <Label htmlFor="furnitureX">Offset from center ({state.unit})</Label>
                       <Input
+                        id="furnitureX"
                         type="number"
                         step="0.125"
                         value={parseFloat(u(state.furnitureX).toFixed(3))}
@@ -222,19 +227,15 @@ export function VerticalPosition({ calculator }: Props) {
                     </div>
                   </div>
 
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={state.furnitureCentered}
-                      onChange={(e) => setFurnitureCentered(e.target.checked)}
-                      className="accent-emerald-600 dark:accent-emerald-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-white/70">Center frames above furniture</span>
-                  </label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox checked={state.furnitureCentered} id="furnitureCentered" onCheckedChange={setFurnitureCentered} />
+                    <Label htmlFor="furnitureCentered" className="text-sm text-gray-700 dark:text-white/70">Center frames above furniture</Label>
+                  </div>
 
                   <div className="space-y-1.5">
-                    <Label>Gap above furniture ({state.unit})</Label>
+                    <Label htmlFor="furnitureGap">Gap above furniture ({state.unit})</Label>
                     <Input
+                      id="furnitureGap"
                       type="number"
                       step="0.125"
                       value={parseFloat(u(state.anchorValue).toFixed(3))}

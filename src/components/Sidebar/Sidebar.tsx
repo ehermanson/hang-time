@@ -295,7 +295,7 @@ export function Sidebar({ calculator }: SidebarProps) {
         {/* Tab content */}
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'config' && (
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-6">
               <WallDimensions calculator={calculator} />
               <LayoutTypeSelector calculator={calculator} />
 
