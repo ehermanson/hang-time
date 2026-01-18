@@ -1,23 +1,30 @@
-import { useState } from 'react'
-import type { SavedLayout } from '@/types'
+import { Check, FolderOpen, Pencil, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Input } from '@/components/ui/input'
-import { FolderOpen, Trash2, Pencil, Check, X } from 'lucide-react'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import type { SavedLayout } from '@/types';
 
 interface SavedLayoutsDialogProps {
-  layouts: SavedLayout[]
-  onLoad: (layout: SavedLayout) => void
-  onDelete: (id: string) => void
-  onRename: (id: string, newTitle: string) => { success: boolean; error?: string }
+  layouts: SavedLayout[];
+  onLoad: (layout: SavedLayout) => void;
+  onDelete: (id: string) => void;
+  onRename: (
+    id: string,
+    newTitle: string,
+  ) => { success: boolean; error?: string };
 }
 
 function formatDate(timestamp: number): string {
@@ -25,7 +32,7 @@ function formatDate(timestamp: number): string {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  })
+  });
 }
 
 export function SavedLayoutsDialog({
@@ -34,56 +41,56 @@ export function SavedLayoutsDialog({
   onDelete,
   onRename,
 }: SavedLayoutsDialogProps) {
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editValue, setEditValue] = useState('')
-  const [editError, setEditError] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [editError, setEditError] = useState<string | null>(null);
 
   const startEditing = (layout: SavedLayout, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setEditingId(layout.id)
-    setEditValue(layout.title)
-    setEditError(null)
-  }
+    e.stopPropagation();
+    setEditingId(layout.id);
+    setEditValue(layout.title);
+    setEditError(null);
+  };
 
   const cancelEditing = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setEditingId(null)
-    setEditValue('')
-    setEditError(null)
-  }
+    e.stopPropagation();
+    setEditingId(null);
+    setEditValue('');
+    setEditError(null);
+  };
 
   const saveEdit = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!editingId) return
+    e.stopPropagation();
+    if (!editingId) return;
 
-    const result = onRename(editingId, editValue)
+    const result = onRename(editingId, editValue);
     if (result.success) {
-      setEditingId(null)
-      setEditValue('')
-      setEditError(null)
+      setEditingId(null);
+      setEditValue('');
+      setEditError(null);
     } else {
-      setEditError(result.error || 'Failed to rename')
+      setEditError(result.error || 'Failed to rename');
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      e.stopPropagation()
-      if (!editingId) return
-      const result = onRename(editingId, editValue)
+      e.stopPropagation();
+      if (!editingId) return;
+      const result = onRename(editingId, editValue);
       if (result.success) {
-        setEditingId(null)
-        setEditValue('')
-        setEditError(null)
+        setEditingId(null);
+        setEditValue('');
+        setEditError(null);
       } else {
-        setEditError(result.error || 'Failed to rename')
+        setEditError(result.error || 'Failed to rename');
       }
     } else if (e.key === 'Escape') {
-      setEditingId(null)
-      setEditValue('')
-      setEditError(null)
+      setEditingId(null);
+      setEditValue('');
+      setEditError(null);
     }
-  }
+  };
 
   return (
     <Dialog>
@@ -100,15 +107,15 @@ export function SavedLayoutsDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Saved Layouts</DialogTitle>
-          <DialogDescription>
-            Click a layout to load it.
-          </DialogDescription>
+          <DialogDescription>Click a layout to load it.</DialogDescription>
         </DialogHeader>
 
         {layouts.length === 0 ? (
           <div className="py-8 text-center text-gray-500 dark:text-white/50">
             <p>No saved layouts yet.</p>
-            <p className="text-sm mt-1">Use the Save button to save your current layout.</p>
+            <p className="text-sm mt-1">
+              Use the Save button to save your current layout.
+            </p>
           </div>
         ) : (
           <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -120,19 +127,24 @@ export function SavedLayoutsDialog({
               >
                 <div className="flex-1 min-w-0">
                   {editingId === layout.id ? (
-                    <div className="space-y-1" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="space-y-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Input
                         value={editValue}
                         onChange={(e) => {
-                          setEditValue(e.target.value)
-                          setEditError(null)
+                          setEditValue(e.target.value);
+                          setEditError(null);
                         }}
                         onKeyDown={handleKeyDown}
                         autoFocus
                         className={`h-8 ${editError ? 'border-red-500' : ''}`}
                       />
                       {editError && (
-                        <p className="text-xs text-red-500 dark:text-red-400">{editError}</p>
+                        <p className="text-xs text-red-500 dark:text-red-400">
+                          {editError}
+                        </p>
                       )}
                     </div>
                   ) : (
@@ -181,8 +193,8 @@ export function SavedLayoutsDialog({
                         size="sm"
                         className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:text-white/40 dark:hover:text-red-400 dark:hover:bg-red-500/20"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          onDelete(layout.id)
+                          e.stopPropagation();
+                          onDelete(layout.id);
                         }}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -196,5 +208,5 @@ export function SavedLayoutsDialog({
         )}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

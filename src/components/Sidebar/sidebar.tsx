@@ -1,98 +1,160 @@
-import { useState, useRef } from 'react'
-import type { UseCalculatorReturn } from '@/hooks/use-calculator'
-import { useSavedLayouts } from '@/hooks/use-saved-layouts'
-import { WallDimensions } from './wall-dimensions'
-import { LayoutTypeSelector } from './layout-type-selector'
-import { FrameSize } from './frame-size'
-import { VerticalPosition } from './vertical-position'
-import { HorizontalPosition } from './horizontal-position'
-import { SaveLayoutDialog } from '@/components/save-layout-dialog'
-import { SavedLayoutsDialog } from '@/components/saved-layouts-dialog'
-import { SettingsDialog } from '@/components/settings-dialog'
-import { Measurements } from '@/components/measurements'
-import { HowToHang } from '@/components/how-to-hang'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Link, Check, Bookmark, Pencil, X, PanelLeftClose, PanelLeft, Ruler, Hammer } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
+import {
+  Bookmark,
+  Check,
+  Hammer,
+  Link,
+  PanelLeft,
+  PanelLeftClose,
+  Pencil,
+  Ruler,
+  X,
+} from 'lucide-react';
+import { useRef, useState } from 'react';
+import { HowToHang } from '@/components/how-to-hang';
+import { Measurements } from '@/components/measurements';
+import { SaveLayoutDialog } from '@/components/save-layout-dialog';
+import { SavedLayoutsDialog } from '@/components/saved-layouts-dialog';
+import { SettingsDialog } from '@/components/settings-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import type { UseCalculatorReturn } from '@/hooks/use-calculator';
+import { useSavedLayouts } from '@/hooks/use-saved-layouts';
+import { cn } from '@/lib/utils';
+import { FrameSize } from './frame-size';
+import { HorizontalPosition } from './horizontal-position';
+import { LayoutTypeSelector } from './layout-type-selector';
+import { VerticalPosition } from './vertical-position';
+import { WallDimensions } from './wall-dimensions';
 
 function Logo({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" fill="none" className={className}>
       <rect width="32" height="32" rx="8" fill="url(#logo-gradient)" />
-      <rect x="7" y="9" width="18" height="16" rx="1.5" stroke="white" strokeWidth="2" fill="none" />
-      <rect x="10" y="12" width="12" height="10" rx="0.5" stroke="white" strokeWidth="1" opacity="0.5" fill="none" />
-      <path d="M11 9 L16 4 L21 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <rect
+        x="7"
+        y="9"
+        width="18"
+        height="16"
+        rx="1.5"
+        stroke="white"
+        strokeWidth="2"
+        fill="none"
+      />
+      <rect
+        x="10"
+        y="12"
+        width="12"
+        height="10"
+        rx="0.5"
+        stroke="white"
+        strokeWidth="1"
+        opacity="0.5"
+        fill="none"
+      />
+      <path
+        d="M11 9 L16 4 L21 9"
+        stroke="white"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
       <circle cx="16" cy="4" r="2" fill="white" />
       <defs>
-        <linearGradient id="logo-gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="logo-gradient"
+          x1="0"
+          y1="0"
+          x2="32"
+          y2="32"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="#6366f1" />
           <stop offset="1" stopColor="#8b5cf6" />
         </linearGradient>
       </defs>
     </svg>
-  )
+  );
 }
 
 interface SidebarProps {
-  calculator: UseCalculatorReturn
+  calculator: UseCalculatorReturn;
 }
 
-type TabType = 'config' | 'measurements' | 'howto'
+type TabType = 'config' | 'measurements' | 'howto';
 
 export function Sidebar({ calculator }: SidebarProps) {
-  const { state } = calculator
-  const { layouts, save, update, rename, remove, load, startFresh, isNameTaken, existingLayoutForCurrentConfig, loadedLayout, hasUnsavedChanges } = useSavedLayouts()
-  const [copied, setCopied] = useState(false)
-  const [editingBookmark, setEditingBookmark] = useState(false)
-  const [bookmarkEditValue, setBookmarkEditValue] = useState('')
-  const [bookmarkEditError, setBookmarkEditError] = useState<string | null>(null)
-  const [isMinimized, setIsMinimized] = useState(false)
-  const [activeTab, setActiveTab] = useState<TabType>('config')
-  const bookmarkInputRef = useRef<HTMLInputElement>(null)
+  const { state } = calculator;
+  const {
+    layouts,
+    save,
+    update,
+    rename,
+    remove,
+    load,
+    startFresh,
+    isNameTaken,
+    existingLayoutForCurrentConfig,
+    loadedLayout,
+    hasUnsavedChanges,
+  } = useSavedLayouts();
+  const [copied, setCopied] = useState(false);
+  const [editingBookmark, setEditingBookmark] = useState(false);
+  const [bookmarkEditValue, setBookmarkEditValue] = useState('');
+  const [bookmarkEditError, setBookmarkEditError] = useState<string | null>(
+    null,
+  );
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('config');
+  const bookmarkInputRef = useRef<HTMLInputElement>(null);
 
-  const currentLayout = existingLayoutForCurrentConfig || loadedLayout
+  const currentLayout = existingLayoutForCurrentConfig || loadedLayout;
 
   const startBookmarkEdit = () => {
-    if (!currentLayout) return
-    setEditingBookmark(true)
-    setBookmarkEditValue(currentLayout.title)
-    setBookmarkEditError(null)
-    setTimeout(() => bookmarkInputRef.current?.focus(), 0)
-  }
+    if (!currentLayout) return;
+    setEditingBookmark(true);
+    setBookmarkEditValue(currentLayout.title);
+    setBookmarkEditError(null);
+    setTimeout(() => bookmarkInputRef.current?.focus(), 0);
+  };
 
   const cancelBookmarkEdit = () => {
-    setEditingBookmark(false)
-    setBookmarkEditValue('')
-    setBookmarkEditError(null)
-  }
+    setEditingBookmark(false);
+    setBookmarkEditValue('');
+    setBookmarkEditError(null);
+  };
 
   const saveBookmarkEdit = () => {
-    if (!currentLayout) return
-    const result = rename(currentLayout.id, bookmarkEditValue)
+    if (!currentLayout) return;
+    const result = rename(currentLayout.id, bookmarkEditValue);
     if (result.success) {
-      setEditingBookmark(false)
-      setBookmarkEditValue('')
-      setBookmarkEditError(null)
+      setEditingBookmark(false);
+      setBookmarkEditValue('');
+      setBookmarkEditError(null);
     } else {
-      setBookmarkEditError(result.error || 'Failed to rename')
+      setBookmarkEditError(result.error || 'Failed to rename');
     }
-  }
+  };
 
   const handleBookmarkKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      saveBookmarkEdit()
+      saveBookmarkEdit();
     } else if (e.key === 'Escape') {
-      cancelBookmarkEdit()
+      cancelBookmarkEdit();
     }
-  }
+  };
 
   const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(window.location.href)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   // Minimized state - show just a floating button
   if (isMinimized) {
@@ -112,7 +174,7 @@ export function Sidebar({ calculator }: SidebarProps) {
           </Tooltip>
         </TooltipProvider>
       </div>
-    )
+    );
   }
 
   return (
@@ -125,8 +187,12 @@ export function Sidebar({ calculator }: SidebarProps) {
             <div className="flex items-center gap-2.5">
               <Logo className="h-8 w-8" />
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Hang Time</h1>
-                <p className="text-[11px] text-gray-500 dark:text-white/50 -mt-0.5 italic">Pixel Perfect Picture Placement</p>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                  Hang Time
+                </h1>
+                <p className="text-[11px] text-gray-500 dark:text-white/50 -mt-0.5 italic">
+                  Pixel Perfect Picture Placement
+                </p>
               </div>
             </div>
             <TooltipProvider delayDuration={100}>
@@ -148,26 +214,33 @@ export function Sidebar({ calculator }: SidebarProps) {
 
           {/* Current layout indicator */}
           {currentLayout && (
-            <div className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-xl text-sm",
-              hasUnsavedChanges
-                ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
-                : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
-            )}>
-              <Bookmark className={cn("h-3.5 w-3.5 flex-shrink-0", hasUnsavedChanges ? '' : 'fill-current')} />
+            <div
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-xl text-sm',
+                hasUnsavedChanges
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                  : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
+              )}
+            >
+              <Bookmark
+                className={cn(
+                  'h-3.5 w-3.5 flex-shrink-0',
+                  hasUnsavedChanges ? '' : 'fill-current',
+                )}
+              />
               {editingBookmark ? (
                 <div className="flex-1 flex items-center gap-1 min-w-0">
                   <Input
                     ref={bookmarkInputRef}
                     value={bookmarkEditValue}
                     onChange={(e) => {
-                      setBookmarkEditValue(e.target.value)
-                      setBookmarkEditError(null)
+                      setBookmarkEditValue(e.target.value);
+                      setBookmarkEditError(null);
                     }}
                     onKeyDown={handleBookmarkKeyDown}
                     className={cn(
-                      "h-6 text-sm flex-1 min-w-0 bg-white border-gray-300 text-gray-900 dark:bg-white/10 dark:border-white/20 dark:text-white",
-                      bookmarkEditError && 'border-red-500'
+                      'h-6 text-sm flex-1 min-w-0 bg-white border-gray-300 text-gray-900 dark:bg-white/10 dark:border-white/20 dark:text-white',
+                      bookmarkEditError && 'border-red-500',
                     )}
                   />
                   <Button
@@ -191,7 +264,12 @@ export function Sidebar({ calculator }: SidebarProps) {
                 <>
                   <span className="truncate flex-1 text-sm">
                     {currentLayout.title}
-                    {hasUnsavedChanges && <span className="text-amber-600 dark:text-amber-400"> *</span>}
+                    {hasUnsavedChanges && (
+                      <span className="text-amber-600 dark:text-amber-400">
+                        {' '}
+                        *
+                      </span>
+                    )}
                   </span>
                   <Button
                     variant="ghost"
@@ -225,10 +303,16 @@ export function Sidebar({ calculator }: SidebarProps) {
                     className="flex-1 bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
                     onClick={handleCopyLink}
                   >
-                    {copied ? <Check className="h-4 w-4" /> : <Link className="h-4 w-4" />}
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Link className="h-4 w-4" />
+                    )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>{copied ? 'Copied!' : 'Copy link'}</TooltipContent>
+                <TooltipContent>
+                  {copied ? 'Copied!' : 'Copy link'}
+                </TooltipContent>
               </Tooltip>
               <SaveLayoutDialog
                 onSave={save}
@@ -257,10 +341,10 @@ export function Sidebar({ calculator }: SidebarProps) {
           <button
             onClick={() => setActiveTab('config')}
             className={cn(
-              "flex-1 py-2.5 text-xs font-medium transition-colors",
+              'flex-1 py-2.5 text-xs font-medium transition-colors',
               activeTab === 'config'
                 ? 'text-gray-900 bg-gray-100 dark:text-white dark:bg-white/10'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5',
             )}
           >
             Configure
@@ -268,10 +352,10 @@ export function Sidebar({ calculator }: SidebarProps) {
           <button
             onClick={() => setActiveTab('measurements')}
             className={cn(
-              "flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5",
+              'flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
               activeTab === 'measurements'
                 ? 'text-gray-900 bg-gray-100 dark:text-white dark:bg-white/10'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5',
             )}
           >
             <Ruler className="h-3 w-3" />
@@ -280,10 +364,10 @@ export function Sidebar({ calculator }: SidebarProps) {
           <button
             onClick={() => setActiveTab('howto')}
             className={cn(
-              "flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5",
+              'flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
               activeTab === 'howto'
                 ? 'text-gray-900 bg-gray-100 dark:text-white dark:bg-white/10'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:text-white/50 dark:hover:text-white/70 dark:hover:bg-white/5',
             )}
           >
             <Hammer className="h-3 w-3" />
@@ -318,5 +402,5 @@ export function Sidebar({ calculator }: SidebarProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,28 +1,32 @@
-import { useState, useEffect } from 'react'
+import { Save } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription,
   DialogTrigger,
-  DialogClose,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Save } from 'lucide-react'
-import type { SavedLayout } from '@/types'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import type { SavedLayout } from '@/types';
 
 interface SaveLayoutDialogProps {
-  onSave: (title: string) => { success: boolean; error?: string }
-  onUpdate: (id: string) => { success: boolean; error?: string }
-  isNameTaken: (name: string, excludeId?: string) => boolean
-  existingLayoutForCurrentConfig: SavedLayout | null
-  loadedLayout: SavedLayout | null
-  hasUnsavedChanges: boolean
+  onSave: (title: string) => { success: boolean; error?: string };
+  onUpdate: (id: string) => { success: boolean; error?: string };
+  isNameTaken: (name: string, excludeId?: string) => boolean;
+  existingLayoutForCurrentConfig: SavedLayout | null;
+  loadedLayout: SavedLayout | null;
+  hasUnsavedChanges: boolean;
 }
 
 export function SaveLayoutDialog({
@@ -33,67 +37,62 @@ export function SaveLayoutDialog({
   loadedLayout,
   hasUnsavedChanges,
 }: SaveLayoutDialogProps) {
-  const [title, setTitle] = useState('')
-  const [isOpen, setIsOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [mode, setMode] = useState<'update' | 'new'>('update')
+  const [title, setTitle] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<'update' | 'new'>('update');
 
   // Check for duplicate name as user types
-  const nameTaken = title.trim() && isNameTaken(title)
+  const nameTaken = title.trim() && isNameTaken(title);
 
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (!isOpen) {
-      setTitle('')
-      setError(null)
-      setMode('update')
+      setTitle('');
+      setError(null);
+      setMode('update');
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   const handleSave = () => {
-    const result = onSave(title)
+    const result = onSave(title);
     if (result.success) {
-      setIsOpen(false)
+      setIsOpen(false);
     } else {
-      setError(result.error || 'Failed to save')
+      setError(result.error || 'Failed to save');
     }
-  }
+  };
 
   const handleUpdate = () => {
-    if (!loadedLayout) return
-    const result = onUpdate(loadedLayout.id)
+    if (!loadedLayout) return;
+    const result = onUpdate(loadedLayout.id);
     if (result.success) {
-      setIsOpen(false)
+      setIsOpen(false);
     } else {
-      setError(result.error || 'Failed to update')
+      setError(result.error || 'Failed to update');
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && title.trim() && !nameTaken) {
-      handleSave()
+      handleSave();
     }
-  }
+  };
 
-  const canSave = title.trim() && !nameTaken
+  const canSave = title.trim() && !nameTaken;
 
   // If already saved (exact match), just show disabled button
   if (existingLayoutForCurrentConfig) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            disabled
-          >
+          <Button variant="outline" size="sm" className="flex-1" disabled>
             <Save className="size-4" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Already saved</TooltipContent>
       </Tooltip>
-    )
+    );
   }
 
   // If viewing a loaded layout with unsaved changes, show dialog with update/save-as options
@@ -121,14 +120,23 @@ export function SaveLayoutDialog({
           {mode === 'update' ? (
             <>
               <div className="py-2 text-sm text-gray-600 dark:text-white/60">
-                Update the existing layout with your changes, or save as a new layout.
+                Update the existing layout with your changes, or save as a new
+                layout.
               </div>
-              {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
+              {error && (
+                <p className="text-sm text-red-500 dark:text-red-400">
+                  {error}
+                </p>
+              )}
               <DialogFooter className="flex-col sm:flex-col gap-2">
                 <Button onClick={handleUpdate} className="w-full">
                   Update "{loadedLayout.title}"
                 </Button>
-                <Button variant="outline" onClick={() => setMode('new')} className="w-full">
+                <Button
+                  variant="outline"
+                  onClick={() => setMode('new')}
+                  className="w-full"
+                >
                   Save as New Layout
                 </Button>
                 <DialogClose asChild>
@@ -146,19 +154,25 @@ export function SaveLayoutDialog({
                   id="layout-title"
                   value={title}
                   onChange={(e) => {
-                    setTitle(e.target.value)
-                    setError(null)
+                    setTitle(e.target.value);
+                    setError(null);
                   }}
                   onKeyDown={handleKeyDown}
                   placeholder="e.g., Living Room Gallery v2"
                   autoFocus
-                  className={nameTaken ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                  className={
+                    nameTaken ? 'border-red-500 focus-visible:ring-red-500' : ''
+                  }
                 />
                 {nameTaken && (
-                  <p className="text-sm text-red-500 dark:text-red-400">A layout with this name already exists</p>
+                  <p className="text-sm text-red-500 dark:text-red-400">
+                    A layout with this name already exists
+                  </p>
                 )}
                 {error && !nameTaken && (
-                  <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+                  <p className="text-sm text-red-500 dark:text-red-400">
+                    {error}
+                  </p>
                 )}
               </div>
               <DialogFooter>
@@ -173,7 +187,7 @@ export function SaveLayoutDialog({
           )}
         </DialogContent>
       </Dialog>
-    )
+    );
   }
 
   // Default: simple save dialog for new layout
@@ -203,16 +217,20 @@ export function SaveLayoutDialog({
             id="layout-title"
             value={title}
             onChange={(e) => {
-              setTitle(e.target.value)
-              setError(null)
+              setTitle(e.target.value);
+              setError(null);
             }}
             onKeyDown={handleKeyDown}
             placeholder="e.g., Living Room Gallery"
             autoFocus
-            className={nameTaken ? 'border-red-500 focus-visible:ring-red-500' : ''}
+            className={
+              nameTaken ? 'border-red-500 focus-visible:ring-red-500' : ''
+            }
           />
           {nameTaken && (
-            <p className="text-sm text-red-500 dark:text-red-400">A layout with this name already exists</p>
+            <p className="text-sm text-red-500 dark:text-red-400">
+              A layout with this name already exists
+            </p>
           )}
           {error && !nameTaken && (
             <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
@@ -221,9 +239,7 @@ export function SaveLayoutDialog({
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">
-              Cancel
-            </Button>
+            <Button variant="outline">Cancel</Button>
           </DialogClose>
           <Button onClick={handleSave} disabled={!canSave}>
             Save Layout
@@ -231,5 +247,5 @@ export function SaveLayoutDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

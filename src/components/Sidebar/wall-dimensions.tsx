@@ -1,15 +1,19 @@
-import type { UseCalculatorReturn } from '@/hooks/use-calculator'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
-import { Ruler, ChevronDown } from 'lucide-react'
+import { ChevronDown, Ruler } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { UseCalculatorReturn } from '@/hooks/use-calculator';
 
 interface Props {
-  calculator: UseCalculatorReturn
+  calculator: UseCalculatorReturn;
 }
 
 export function WallDimensions({ calculator }: Props) {
-  const { state, u, fromU, setWallWidth, setWallHeight } = calculator
+  const { state, u, fromU, setWallWidth, setWallHeight } = calculator;
 
   return (
     <Collapsible defaultOpen>
@@ -30,7 +34,9 @@ export function WallDimensions({ calculator }: Props) {
               type="number"
               step="0.125"
               value={parseFloat(u(state.wallWidth).toFixed(3))}
-              onChange={(e) => setWallWidth(fromU(parseFloat(e.target.value) || 0))}
+              onChange={(e) =>
+                setWallWidth(fromU(parseFloat(e.target.value) || 0))
+              }
             />
           </div>
           <div className="space-y-1.5">
@@ -39,11 +45,13 @@ export function WallDimensions({ calculator }: Props) {
               type="number"
               step="0.125"
               value={parseFloat(u(state.wallHeight).toFixed(3))}
-              onChange={(e) => setWallHeight(fromU(parseFloat(e.target.value) || 0))}
+              onChange={(e) =>
+                setWallHeight(fromU(parseFloat(e.target.value) || 0))
+              }
             />
           </div>
         </div>
       </CollapsibleContent>
     </Collapsible>
-  )
+  );
 }
