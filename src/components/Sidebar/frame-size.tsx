@@ -164,7 +164,10 @@ export function FrameSize({ calculator }: Props) {
   };
 
   return (
-    <Collapsible defaultOpen className="pb-4 border-b border-gray-200 dark:border-white/10">
+    <Collapsible
+      defaultOpen
+      className="pb-4 border-b border-gray-200 dark:border-white/10"
+    >
       <CollapsibleTrigger className="w-full group">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
           <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400">

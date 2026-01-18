@@ -127,7 +127,10 @@ export function LayoutTypeSelector({ calculator }: Props) {
   };
 
   return (
-    <Collapsible defaultOpen className="pb-4 border-b border-gray-200 dark:border-white/10">
+    <Collapsible
+      defaultOpen
+      className="pb-4 border-b border-gray-200 dark:border-white/10"
+    >
       <CollapsibleTrigger className="w-full group">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
           <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
