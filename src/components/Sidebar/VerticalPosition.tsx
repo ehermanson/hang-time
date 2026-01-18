@@ -2,8 +2,9 @@ import type { UseCalculatorReturn } from '@/hooks/useCalculator'
 import type { AnchorType, Distribution } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
-import { MoveVertical } from 'lucide-react'
+import { MoveVertical, ChevronDown } from 'lucide-react'
 
 // Visual preview of distribution mode (vertical orientation)
 function DistributionPreview({
@@ -95,165 +96,171 @@ export function VerticalPosition({ calculator }: Props) {
   const showDistribution = state.layoutType !== 'row'
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
-        <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
-          <MoveVertical className="h-3.5 w-3.5" />
-        </span>
-        Vertical Position
-      </h3>
-
-      {/* Distribution Mode - only for multi-row layouts */}
-      {showDistribution && (
-        <div className="space-y-1.5">
-          <Label>Distribution</Label>
-          <div className="grid grid-cols-4 gap-1.5">
-            {DISTRIBUTION_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setVDistribution(option.value)}
-                className={cn(
-                  "flex flex-col items-center p-1.5 rounded-lg border transition-all",
-                  state.vDistribution === option.value
-                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/20"
-                    : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
-                )}
-              >
-                <DistributionPreview
-                  mode={option.value}
-                  isSelected={state.vDistribution === option.value}
-                />
-                <span className={cn(
-                  "text-[10px] font-medium mt-1",
-                  state.vDistribution === option.value ? "text-emerald-600 dark:text-emerald-300" : "text-gray-600 dark:text-white/60"
-                )}>
-                  {option.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Anchor options - only show for fixed distribution (or row layout) */}
-      {(!showDistribution || state.vDistribution === 'fixed') && (
-        <>
-          <div className="flex flex-col gap-2 mt-3">
-            {options.map((opt) => (
-              <label
-                key={opt.value}
-                className={cn(
-                  "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                  state.anchorType === opt.value
-                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/20"
-                    : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
-                )}
-                onClick={() => {
-                  setAnchorType(opt.value)
-                  if (opt.value !== 'center') setAnchorValue(opt.defaultValue)
-                }}
-              >
-                <input
-                  type="radio"
-                  checked={state.anchorType === opt.value}
-                  onChange={() => {}}
-                  className="mt-1 accent-emerald-600 dark:accent-emerald-500"
-                />
-                <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">{opt.label}</div>
-                  <div className="text-xs text-gray-500 dark:text-white/50">{opt.desc}</div>
-                </div>
-              </label>
-            ))}
-          </div>
-
-          {state.anchorType !== 'center' && state.anchorType !== 'furniture' && (
-            <div className="space-y-1.5 mt-3">
-              <Label>
-                {state.anchorType === 'floor' ? 'Distance from floor' : 'Distance from ceiling'} ({state.unit})
-              </Label>
-              <Input
-                type="number"
-                step="0.125"
-                value={parseFloat(u(state.anchorValue).toFixed(3))}
-                onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
-              />
+    <Collapsible defaultOpen>
+      <CollapsibleTrigger className="w-full group">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
+          <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+            <MoveVertical className="h-3.5 w-3.5" />
+          </span>
+          Vertical Position
+          <ChevronDown className="h-4 w-4 ml-auto text-gray-400 transition-transform group-data-[state=closed]:-rotate-90" />
+        </h3>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="space-y-3 pt-3">
+          {/* Distribution Mode - only for multi-row layouts */}
+          {showDistribution && (
+            <div className="space-y-1.5">
+              <Label>Distribution</Label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {DISTRIBUTION_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setVDistribution(option.value)}
+                    className={cn(
+                      "flex flex-col items-center p-1.5 rounded-lg border transition-all",
+                      state.vDistribution === option.value
+                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/20"
+                        : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
+                    )}
+                  >
+                    <DistributionPreview
+                      mode={option.value}
+                      isSelected={state.vDistribution === option.value}
+                    />
+                    <span className={cn(
+                      "text-[10px] font-medium mt-1",
+                      state.vDistribution === option.value ? "text-emerald-600 dark:text-emerald-300" : "text-gray-600 dark:text-white/60"
+                    )}>
+                      {option.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
-          {state.anchorType === 'furniture' && (
-            <div className="mt-3 space-y-3">
-              <div className="bg-gray-100 dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 p-3 space-y-3">
-                <div className="text-xs font-medium text-gray-600 dark:text-white/60 uppercase tracking-wide">Furniture Dimensions</div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label>Width ({state.unit})</Label>
-                    <Input
-                      type="number"
-                      step="0.125"
-                      value={parseFloat(u(state.furnitureWidth).toFixed(3))}
-                      onChange={(e) => setFurnitureWidth(fromU(parseFloat(e.target.value) || 0))}
+          {/* Anchor options - only show for fixed distribution (or row layout) */}
+          {(!showDistribution || state.vDistribution === 'fixed') && (
+            <>
+              <div className="flex flex-col gap-2">
+                {options.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className={cn(
+                      "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                      state.anchorType === opt.value
+                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/20"
+                        : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
+                    )}
+                    onClick={() => {
+                      setAnchorType(opt.value)
+                      if (opt.value !== 'center') setAnchorValue(opt.defaultValue)
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      checked={state.anchorType === opt.value}
+                      onChange={() => {}}
+                      className="mt-1 accent-emerald-600 dark:accent-emerald-500"
                     />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Height ({state.unit})</Label>
-                    <Input
-                      type="number"
-                      step="0.125"
-                      value={parseFloat(u(state.furnitureHeight).toFixed(3))}
-                      onChange={(e) => setFurnitureHeight(fromU(parseFloat(e.target.value) || 0))}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Offset from center ({state.unit})</Label>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{opt.label}</div>
+                      <div className="text-xs text-gray-500 dark:text-white/50">{opt.desc}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              {state.anchorType !== 'center' && state.anchorType !== 'furniture' && (
+                <div className="space-y-1.5 mt-3">
+                  <Label>
+                    {state.anchorType === 'floor' ? 'Distance from floor' : 'Distance from ceiling'} ({state.unit})
+                  </Label>
                   <Input
                     type="number"
                     step="0.125"
-                    value={parseFloat(u(state.furnitureX).toFixed(3))}
-                    onChange={(e) => setFurnitureX(fromU(parseFloat(e.target.value) || 0))}
+                    value={parseFloat(u(state.anchorValue).toFixed(3))}
+                    onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
                   />
-                  <p className="text-xs text-gray-500 dark:text-white/50">0 = centered, negative = left, positive = right</p>
                 </div>
-              </div>
+              )}
 
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={state.furnitureCentered}
-                  onChange={(e) => setFurnitureCentered(e.target.checked)}
-                  className="accent-emerald-600 dark:accent-emerald-500"
-                />
-                <span className="text-sm text-gray-700 dark:text-white/70">Center frames above furniture</span>
-              </label>
+              {state.anchorType === 'furniture' && (
+                <div className="mt-3 space-y-3">
+                  <div className="bg-gray-100 dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 p-3 space-y-3">
+                    <div className="text-xs font-medium text-gray-600 dark:text-white/60 uppercase tracking-wide">Furniture Dimensions</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label>Width ({state.unit})</Label>
+                        <Input
+                          type="number"
+                          step="0.125"
+                          value={parseFloat(u(state.furnitureWidth).toFixed(3))}
+                          onChange={(e) => setFurnitureWidth(fromU(parseFloat(e.target.value) || 0))}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Height ({state.unit})</Label>
+                        <Input
+                          type="number"
+                          step="0.125"
+                          value={parseFloat(u(state.furnitureHeight).toFixed(3))}
+                          onChange={(e) => setFurnitureHeight(fromU(parseFloat(e.target.value) || 0))}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Offset from center ({state.unit})</Label>
+                      <Input
+                        type="number"
+                        step="0.125"
+                        value={parseFloat(u(state.furnitureX).toFixed(3))}
+                        onChange={(e) => setFurnitureX(fromU(parseFloat(e.target.value) || 0))}
+                      />
+                      <p className="text-xs text-gray-500 dark:text-white/50">0 = centered, negative = left, positive = right</p>
+                    </div>
+                  </div>
 
-              <div className="space-y-1.5">
-                <Label>Gap above furniture ({state.unit})</Label>
-                <Input
-                  type="number"
-                  step="0.125"
-                  value={parseFloat(u(state.anchorValue).toFixed(3))}
-                  onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
-                />
-              </div>
-            </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={state.furnitureCentered}
+                      onChange={(e) => setFurnitureCentered(e.target.checked)}
+                      className="accent-emerald-600 dark:accent-emerald-500"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-white/70">Center frames above furniture</span>
+                  </label>
+
+                  <div className="space-y-1.5">
+                    <Label>Gap above furniture ({state.unit})</Label>
+                    <Input
+                      type="number"
+                      step="0.125"
+                      value={parseFloat(u(state.anchorValue).toFixed(3))}
+                      onChange={(e) => setAnchorValue(fromU(parseFloat(e.target.value) || 0))}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Gap input for fixed distribution in multi-row layouts */}
+              {showDistribution && (
+                <div className="space-y-1.5 mt-3">
+                  <Label>Gap between rows ({state.unit})</Label>
+                  <Input
+                    type="number"
+                    step="0.125"
+                    min={0}
+                    value={parseFloat(u(state.vSpacing).toFixed(3))}
+                    onChange={(e) => setVSpacing(fromU(parseFloat(e.target.value) || 0))}
+                  />
+                </div>
+              )}
+            </>
           )}
-
-          {/* Gap input for fixed distribution in multi-row layouts */}
-          {showDistribution && (
-            <div className="space-y-1.5 mt-3">
-              <Label>Gap between rows ({state.unit})</Label>
-              <Input
-                type="number"
-                step="0.125"
-                min={0}
-                value={parseFloat(u(state.vSpacing).toFixed(3))}
-                onChange={(e) => setVSpacing(fromU(parseFloat(e.target.value) || 0))}
-              />
-            </div>
-          )}
-        </>
-      )}
-    </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }

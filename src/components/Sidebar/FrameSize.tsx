@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Frame } from 'lucide-react'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
+import { Frame, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Visual preview of hanging type
@@ -103,7 +104,15 @@ export function FrameSize({ calculator }: Props) {
     t => t.width === state.frameWidth && t.height === state.frameHeight
   )?.value
 
+  const isCustom = !currentTemplate
+
   const handleTemplateChange = (value: string) => {
+    if (value === 'custom') {
+      // Set to dimensions that don't match any template
+      setFrameWidth(10)
+      setFrameHeight(14)
+      return
+    }
     const template = FRAME_TEMPLATES.find(t => t.value === value)
     if (template) {
       setFrameWidth(template.width)
@@ -112,105 +121,117 @@ export function FrameSize({ calculator }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
-        <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400">
-          <Frame className="h-3.5 w-3.5" />
-        </span>
-        Frame Size
-      </h3>
+    <Collapsible defaultOpen>
+      <CollapsibleTrigger className="w-full group">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
+          <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400">
+            <Frame className="h-3.5 w-3.5" />
+          </span>
+          Frame Size
+          <ChevronDown className="h-4 w-4 ml-auto text-gray-400 transition-transform group-data-[state=closed]:-rotate-90" />
+        </h3>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="space-y-3 pt-3">
+          <div className="space-y-1.5">
+            <Label>Size</Label>
+            <Select value={currentTemplate || 'custom'} onValueChange={handleTemplateChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FRAME_TEMPLATES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="space-y-1.5">
-        <Label>Template</Label>
-        <Select value={currentTemplate || ''} onValueChange={handleTemplateChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="Choose a size..." />
-          </SelectTrigger>
-          <SelectContent>
-            {FRAME_TEMPLATES.map((t) => (
-              <SelectItem key={t.value} value={t.value}>
-                {t.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          {isCustom && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label>Width ({state.unit})</Label>
+                <Input
+                  type="number"
+                  step="0.125"
+                  min={0.125}
+                  value={parseFloat(u(state.frameWidth).toFixed(3))}
+                  onChange={(e) => setFrameWidth(fromU(parseFloat(e.target.value) || 0))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Height ({state.unit})</Label>
+                <Input
+                  type="number"
+                  step="0.125"
+                  min={0.125}
+                  value={parseFloat(u(state.frameHeight).toFixed(3))}
+                  onChange={(e) => setFrameHeight(fromU(parseFloat(e.target.value) || 0))}
+                />
+              </div>
+            </div>
+          )}
 
-      <div className="grid grid-cols-3 gap-2">
-        <div className="space-y-1.5">
-          <Label>Width</Label>
-          <Input
-            type="number"
-            step="0.125"
-            min={0.125}
-            value={parseFloat(u(state.frameWidth).toFixed(3))}
-            onChange={(e) => setFrameWidth(fromU(parseFloat(e.target.value) || 0))}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Height</Label>
-          <Input
-            type="number"
-            step="0.125"
-            min={0.125}
-            value={parseFloat(u(state.frameHeight).toFixed(3))}
-            onChange={(e) => setFrameHeight(fromU(parseFloat(e.target.value) || 0))}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Hook Offset</Label>
-          <Input
-            type="number"
-            step="0.125"
-            max={parseFloat(u(state.frameHeight).toFixed(3))}
-            value={parseFloat(u(state.hangingOffset).toFixed(3))}
-            onChange={(e) => setHangingOffset(fromU(parseFloat(e.target.value) || 0))}
-          />
-        </div>
-      </div>
-
-      <div className="mt-3 space-y-1.5">
-        <Label>Hanging Type</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {HANGING_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setHangingType(option.value)}
-              className={cn(
-                "flex flex-col items-center p-2 rounded-lg border transition-all",
-                state.hangingType === option.value
-                  ? "border-pink-500 bg-pink-50 dark:bg-pink-500/20"
-                  : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
-              )}
-            >
-              <HangingTypePreview
-                type={option.value}
-                isSelected={state.hangingType === option.value}
-              />
-              <span className={cn(
-                "text-xs font-medium mt-1",
-                state.hangingType === option.value ? "text-pink-600 dark:text-pink-300" : "text-gray-600 dark:text-white/60"
-              )}>
-                {option.label}
-              </span>
-            </button>
-          ))}
-        </div>
-        {state.hangingType === 'dual' && (
-          <div className="pt-2">
-            <Label>Hook Inset ({state.unit})</Label>
+          <div className="space-y-1.5">
+            <Label>Hook Offset ({state.unit}) </Label>
+            <span className="text-xs text-gray-500 dark:text-white/50 block">Distance from top edge of frame to hanging point</span>
             <Input
               type="number"
               step="0.125"
-              min={0}
-              max={parseFloat((u(state.frameWidth) / 2).toFixed(3))}
-              value={parseFloat(u(state.hookInset).toFixed(3))}
-              onChange={(e) => setHookInset(fromU(parseFloat(e.target.value) || 0))}
-              className="mt-1.5"
+              max={parseFloat(u(state.frameHeight).toFixed(3))}
+              value={parseFloat(u(state.hangingOffset).toFixed(3))}
+              onChange={(e) => setHangingOffset(fromU(parseFloat(e.target.value) || 0))}
             />
           </div>
-        )}
-      </div>
-    </div>
+
+          <div className="mt-3 space-y-1.5">
+            <Label>Hanging Type</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {HANGING_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setHangingType(option.value)}
+                  className={cn(
+                    "flex flex-col items-center p-2 rounded-lg border transition-all",
+                    state.hangingType === option.value
+                      ? "border-pink-500 bg-pink-50 dark:bg-pink-500/20"
+                      : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
+                  )}
+                >
+                  <HangingTypePreview
+                    type={option.value}
+                    isSelected={state.hangingType === option.value}
+                  />
+                  <span className={cn(
+                    "text-xs font-medium mt-1",
+                    state.hangingType === option.value ? "text-pink-600 dark:text-pink-300" : "text-gray-600 dark:text-white/60"
+                  )}>
+                    {option.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {state.hangingType === 'dual' && (
+              <div className="pt-2">
+                <Label>Hook Inset ({state.unit})</Label>
+                <span className="text-xs text-gray-500 dark:text-white/50 block">Distance from edge of frame to hanging point</span>
+                <Input
+                  type="number"
+                  step="0.125"
+                  min={0}
+                  max={parseFloat((u(state.frameWidth) / 2).toFixed(3))}
+                  value={parseFloat(u(state.hookInset).toFixed(3))}
+                  onChange={(e) => setHookInset(fromU(parseFloat(e.target.value) || 0))}
+                  className="mt-1.5"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }

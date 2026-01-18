@@ -2,8 +2,9 @@ import type { UseCalculatorReturn } from '@/hooks/useCalculator'
 import type { HorizontalAnchorType, Distribution } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
-import { MoveHorizontal } from 'lucide-react'
+import { MoveHorizontal, ChevronDown } from 'lucide-react'
 
 // Visual preview of distribution mode
 function DistributionPreview({
@@ -80,100 +81,106 @@ export function HorizontalPosition({ calculator }: Props) {
   const { state, u, fromU, setHAnchorType, setHAnchorValue, setHDistribution, setHSpacing } = calculator
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
-        <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-          <MoveHorizontal className="h-3.5 w-3.5" />
-        </span>
-        Horizontal Position
-      </h3>
-
-      {/* Distribution Mode */}
-      <div className="space-y-1.5">
-        <Label>Distribution</Label>
-        <div className="grid grid-cols-4 gap-1.5">
-          {DISTRIBUTION_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setHDistribution(option.value)}
-              className={cn(
-                "flex flex-col items-center p-1.5 rounded-lg border transition-all",
-                state.hDistribution === option.value
-                  ? "border-amber-500 bg-amber-50 dark:bg-amber-500/20"
-                  : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
-              )}
-            >
-              <DistributionPreview
-                mode={option.value}
-                isSelected={state.hDistribution === option.value}
-              />
-              <span className={cn(
-                "text-[10px] font-medium mt-1",
-                state.hDistribution === option.value ? "text-amber-600 dark:text-amber-300" : "text-gray-600 dark:text-white/60"
-              )}>
-                {option.label}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Anchor options - only show for fixed distribution */}
-      {state.hDistribution === 'fixed' && (
-        <>
-          <div className="flex flex-col gap-2 mt-3">
-            {options.map((opt) => (
-              <label
-                key={opt.value}
-                className={cn(
-                  "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                  state.hAnchorType === opt.value
-                    ? "border-amber-500 bg-amber-50 dark:bg-amber-500/20"
-                    : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
-                )}
-                onClick={() => {
-                  setHAnchorType(opt.value)
-                  if (opt.value !== 'center') setHAnchorValue(opt.defaultValue)
-                }}
-              >
-                <input
-                  type="radio"
-                  checked={state.hAnchorType === opt.value}
-                  onChange={() => {}}
-                  className="mt-1 accent-amber-600 dark:accent-amber-500"
-                />
-                <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">{opt.label}</div>
-                  <div className="text-xs text-gray-500 dark:text-white/50">{opt.desc}</div>
-                </div>
-              </label>
-            ))}
-          </div>
-
-          {state.hAnchorType !== 'center' && (
-            <div className="space-y-1.5 mt-3">
-              <Label>Distance from {state.hAnchorType} edge ({state.unit})</Label>
-              <Input
-                type="number"
-                step="0.125"
-                value={parseFloat(u(state.hAnchorValue).toFixed(3))}
-                onChange={(e) => setHAnchorValue(fromU(parseFloat(e.target.value) || 0))}
-              />
+    <Collapsible defaultOpen>
+      <CollapsibleTrigger className="w-full group">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
+          <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+            <MoveHorizontal className="h-3.5 w-3.5" />
+          </span>
+          Horizontal Position
+          <ChevronDown className="h-4 w-4 ml-auto text-gray-400 transition-transform group-data-[state=closed]:-rotate-90" />
+        </h3>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="space-y-3 pt-3">
+          {/* Distribution Mode */}
+          <div className="space-y-1.5">
+            <Label>Distribution</Label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {DISTRIBUTION_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setHDistribution(option.value)}
+                  className={cn(
+                    "flex flex-col items-center p-1.5 rounded-lg border transition-all",
+                    state.hDistribution === option.value
+                      ? "border-amber-500 bg-amber-50 dark:bg-amber-500/20"
+                      : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
+                  )}
+                >
+                  <DistributionPreview
+                    mode={option.value}
+                    isSelected={state.hDistribution === option.value}
+                  />
+                  <span className={cn(
+                    "text-[10px] font-medium mt-1",
+                    state.hDistribution === option.value ? "text-amber-600 dark:text-amber-300" : "text-gray-600 dark:text-white/60"
+                  )}>
+                    {option.label}
+                  </span>
+                </button>
+              ))}
             </div>
-          )}
-
-          <div className="space-y-1.5 mt-3">
-            <Label>Gap between frames ({state.unit})</Label>
-            <Input
-              type="number"
-              step="0.125"
-              min={0}
-              value={parseFloat(u(state.hSpacing).toFixed(3))}
-              onChange={(e) => setHSpacing(fromU(parseFloat(e.target.value) || 0))}
-            />
           </div>
-        </>
-      )}
-    </div>
+
+          {/* Anchor options - only show for fixed distribution */}
+          {state.hDistribution === 'fixed' && (
+            <>
+              <div className="flex flex-col gap-2">
+                {options.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className={cn(
+                      "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                      state.hAnchorType === opt.value
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-500/20"
+                        : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
+                    )}
+                    onClick={() => {
+                      setHAnchorType(opt.value)
+                      if (opt.value !== 'center') setHAnchorValue(opt.defaultValue)
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      checked={state.hAnchorType === opt.value}
+                      onChange={() => {}}
+                      className="mt-1 accent-amber-600 dark:accent-amber-500"
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{opt.label}</div>
+                      <div className="text-xs text-gray-500 dark:text-white/50">{opt.desc}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              {state.hAnchorType !== 'center' && (
+                <div className="space-y-1.5 mt-3">
+                  <Label>Distance from {state.hAnchorType} edge ({state.unit})</Label>
+                  <Input
+                    type="number"
+                    step="0.125"
+                    value={parseFloat(u(state.hAnchorValue).toFixed(3))}
+                    onChange={(e) => setHAnchorValue(fromU(parseFloat(e.target.value) || 0))}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1.5 mt-3">
+                <Label>Gap between frames ({state.unit})</Label>
+                <Input
+                  type="number"
+                  step="0.125"
+                  min={0}
+                  value={parseFloat(u(state.hSpacing).toFixed(3))}
+                  onChange={(e) => setHSpacing(fromU(parseFloat(e.target.value) || 0))}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
