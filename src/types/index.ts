@@ -2,7 +2,7 @@ export type Unit = 'in' | 'cm'
 
 export type Theme = 'light' | 'dark'
 
-export type LayoutType = 'grid' | 'row' | 'gallery'
+export type LayoutType = 'grid' | 'row'
 
 export type AnchorType = 'floor' | 'ceiling' | 'center' | 'furniture'
 
@@ -11,16 +11,6 @@ export type HorizontalAnchorType = 'center' | 'left' | 'right'
 export type HangingType = 'center' | 'dual'
 
 export type Distribution = 'fixed' | 'space-between' | 'space-evenly' | 'space-around'
-
-export interface GalleryFrame {
-  id: number
-  name: string
-  width: number
-  height: number
-  hangingOffset: number
-  x: number
-  y: number
-}
 
 export interface FramePosition {
   id: number
@@ -76,24 +66,11 @@ export interface CalculatorState {
   hAnchorType: HorizontalAnchorType
   hAnchorValue: number
 
-  // Gallery mode
-  galleryFrames: GalleryFrame[]
-  selectedFrame: number | null
-  selectedFrames: number[] // For multi-select
-  gallerySpacing: number // Gap between frames for snapping
-  gallerySnapping: boolean // Enable/disable snapping
-
   // Furniture positioning (when anchorType === 'furniture')
   furnitureWidth: number
   furnitureHeight: number
   furnitureX: number // Offset from wall center (0 = centered)
   furnitureCentered: boolean // Center frames above furniture
-}
-
-export interface DragState {
-  id: number
-  startX: number
-  startY: number
 }
 
 export interface SavedLayout {

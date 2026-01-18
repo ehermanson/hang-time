@@ -1,6 +1,5 @@
 import type { UseCalculatorReturn } from '@/hooks/useCalculator'
 import { formatMeasurement, formatShort, toDisplayUnit } from '@/utils/calculations'
-import { cn } from '@/lib/utils'
 import { Ruler } from 'lucide-react'
 
 interface MeasurementsProps {
@@ -8,7 +7,7 @@ interface MeasurementsProps {
 }
 
 export function Measurements({ calculator }: MeasurementsProps) {
-  const { state, layoutPositions, setSelectedFrame } = calculator
+  const { state, layoutPositions } = calculator
 
   const fmt = (val: number) => formatMeasurement(toDisplayUnit(val, state.unit), state.unit)
   const fmtShort = (val: number) => formatShort(toDisplayUnit(val, state.unit), state.unit)
@@ -25,14 +24,7 @@ export function Measurements({ calculator }: MeasurementsProps) {
         {layoutPositions.map((frame) => (
           <div
             key={frame.id}
-            className={cn(
-              "p-3 rounded-lg border transition-all",
-              state.selectedFrame === frame.id
-                ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/20"
-                : "border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/5",
-              state.layoutType === 'gallery' && "cursor-pointer hover:border-gray-300 dark:hover:border-white/20"
-            )}
-            onClick={() => state.layoutType === 'gallery' && setSelectedFrame(frame.id)}
+            className="p-3 rounded-lg border border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/5"
           >
             <h4 className="text-xs font-medium text-gray-700 dark:text-white/80 mb-2">
               {frame.name} {state.layoutType === 'grid' && `(Row ${(frame.row ?? 0) + 1}, Col ${(frame.col ?? 0) + 1})`}

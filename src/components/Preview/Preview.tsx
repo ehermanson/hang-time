@@ -1,18 +1,7 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
-import {
-  DndContext,
-  useDraggable,
-  DragEndEvent,
-  DragMoveEvent,
-  useSensor,
-  useSensors,
-  PointerSensor,
-  KeyboardSensor,
-} from '@dnd-kit/core'
 import { Minus, Plus, Maximize2, HelpCircle } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import type { UseCalculatorReturn } from '@/hooks/useCalculator'
-import type { GalleryFrame } from '@/types'
 import { formatMeasurement, formatShort, toDisplayUnit } from '@/utils/calculations'
 import { Button } from '@/components/ui/button'
 
@@ -20,142 +9,8 @@ interface PreviewProps {
   calculator: UseCalculatorReturn
 }
 
-interface DraggableFrameProps {
-  frame: GalleryFrame
-  scale: number
-  padding: number
-  pan: { x: number; y: number }
-  isSelected: boolean
-  isPrimary: boolean
-  onSelect: (id: number, shiftKey: boolean) => void
-  fmtShort: (val: number) => string
-  previewPosition?: { x: number; y: number } | null
-}
-
-function DraggableFrame({
-  frame,
-  scale,
-  padding,
-  pan,
-  isSelected,
-  isPrimary,
-  onSelect,
-  fmtShort,
-  previewPosition,
-}: DraggableFrameProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: frame.id,
-  })
-
-  // When dragging, use the snapped preview position instead of raw transform
-  const displayX = isDragging && previewPosition
-    ? previewPosition.x
-    : frame.x
-  const displayY = isDragging && previewPosition
-    ? previewPosition.y
-    : frame.y
-
-  const style: React.CSSProperties = {
-    position: 'absolute',
-    left: padding + pan.x + displayX * scale,
-    top: padding + pan.y + displayY * scale,
-    width: frame.width * scale,
-    height: frame.height * scale,
-    cursor: isDragging ? 'grabbing' : 'grab',
-    touchAction: 'none',
-    zIndex: isDragging ? 100 : isPrimary ? 10 : isSelected ? 5 : 1,
-    // Add slight transition for snap effect (but not when first picking up)
-    transition: isDragging ? 'left 0.05s ease-out, top 0.05s ease-out' : 'none',
-  }
-
-  const handleClick = (e: React.MouseEvent) => {
-    onSelect(frame.id, e.shiftKey)
-  }
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      onClick={handleClick}
-      className="select-none"
-    >
-      {/* Shadow */}
-      <div
-        className="absolute bg-black/10"
-        style={{
-          left: 3,
-          top: 3,
-          width: '100%',
-          height: '100%',
-        }}
-      />
-      {/* Frame body */}
-      <div
-        className={`absolute inset-0 border-2 ${isPrimary
-          ? 'border-indigo-600 bg-indigo-50'
-          : isSelected
-            ? 'border-indigo-400 bg-indigo-50/70'
-            : 'border-gray-800 bg-gray-50'
-          } ${isDragging ? 'shadow-lg ring-2 ring-indigo-300' : ''}`}
-      >
-        {/* Inner mat */}
-        <div
-          className="absolute border border-gray-300"
-          style={{
-            left: '10%',
-            top: '10%',
-            width: '80%',
-            height: '80%',
-          }}
-        />
-        {/* Hook indicator */}
-        <div
-          className="absolute w-3 h-3 bg-red-500 rounded-full border-2 border-white"
-          style={{
-            left: '50%',
-            top: frame.hangingOffset * scale,
-            transform: 'translateX(-50%)',
-          }}
-        />
-        {/* Frame label */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[11px] font-bold text-gray-600 truncate px-1">
-            {frame.name}
-          </span>
-        </div>
-      </div>
-      {/* Dimension labels */}
-      <div
-        className="absolute text-[10px] text-indigo-600 font-medium"
-        style={{ top: -14, left: '50%', transform: 'translateX(-50%)' }}
-      >
-        {fmtShort(frame.width)}
-      </div>
-      <div
-        className="absolute text-[10px] text-indigo-600 font-medium"
-        style={{
-          left: -6,
-          top: '50%',
-          transform: 'translateY(-50%) rotate(-90deg)',
-          transformOrigin: 'center',
-        }}
-      >
-        {fmtShort(frame.height)}
-      </div>
-    </div>
-  )
-}
-
 export function Preview({ calculator }: PreviewProps) {
-  const {
-    state,
-    layoutPositions,
-    updateGalleryFramePosition,
-    moveGalleryFrames,
-    toggleFrameSelection,
-  } = calculator
+  const { state, layoutPositions } = calculator
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -203,8 +58,6 @@ export function Preview({ calculator }: PreviewProps) {
   // Handle canvas click to select hooks for measurement display
   // Regular click = set reference hook, Shift+click = set compare hook
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (state.layoutType === 'gallery') return // Gallery mode uses DOM elements
-
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -260,7 +113,7 @@ export function Preview({ calculator }: PreviewProps) {
     // Click elsewhere clears selection (back to first hook default)
     setReferenceHook(null)
     setCompareHook(null)
-  }, [state.layoutType, layoutPositions, scale, referenceHook, pan])
+  }, [layoutPositions, scale, referenceHook, pan])
 
   // Track container size
   useEffect(() => {
@@ -278,655 +131,6 @@ export function Preview({ calculator }: PreviewProps) {
     observer.observe(container)
     return () => observer.disconnect()
   }, [])
-
-  // Alignment guide structure for Figma-style guides
-  interface AlignmentGuide {
-    type: 'top' | 'bottom' | 'centerY' | 'left' | 'right' | 'centerX'
-    position: number // Y for horizontal lines, X for vertical lines
-    start: number    // Start of the line (X for horizontal, Y for vertical)
-    end: number      // End of the line
-  }
-
-  // Track alignment guides for visual feedback
-  const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([])
-
-  // Check if two rectangles overlap
-  const rectsOverlap = (
-    ax: number, ay: number, aw: number, ah: number,
-    bx: number, by: number, bw: number, bh: number,
-    gap: number
-  ): boolean => {
-    // Add gap to create a buffer zone
-    return !(ax + aw + gap <= bx || bx + bw + gap <= ax ||
-      ay + ah + gap <= by || by + bh + gap <= ay)
-  }
-
-  // Check if a position overlaps with any other frame
-  const hasCollision = useCallback((
-    frame: GalleryFrame,
-    x: number,
-    y: number,
-    gap: number
-  ): boolean => {
-    for (const other of state.galleryFrames) {
-      if (other.id === frame.id) continue
-      if (rectsOverlap(x, y, frame.width, frame.height, other.x, other.y, other.width, other.height, gap)) {
-        return true
-      }
-    }
-    return false
-  }, [state.galleryFrames])
-
-  // Find the nearest valid position that doesn't overlap
-  const resolveCollision = useCallback((
-    frame: GalleryFrame,
-    desiredX: number,
-    desiredY: number
-  ): { x: number; y: number; snapLinesX: number[]; snapLinesY: number[] } => {
-    const gap = state.gallerySpacing
-
-    // Clamp to wall bounds first
-    let x = Math.max(0, Math.min(state.wallWidth - frame.width, desiredX))
-    let y = Math.max(0, Math.min(state.wallHeight - frame.height, desiredY))
-
-    // If no collision, check for optional alignment snaps
-    if (!hasCollision(frame, x, y, gap)) {
-      // Still apply alignment snaps (to wall center, other frame edges, etc.)
-      const snapThreshold = 15
-      const snapLinesX: number[] = []
-      const snapLinesY: number[] = []
-
-      // Wall center snap
-      const wallCenterX = state.wallWidth / 2
-      if (Math.abs(x + frame.width / 2 - wallCenterX) < snapThreshold) {
-        x = wallCenterX - frame.width / 2
-        snapLinesX.push(wallCenterX)
-      }
-
-      // Wall edge snaps
-      if (Math.abs(x) < snapThreshold) {
-        x = 0
-        snapLinesX.push(0)
-      } else if (Math.abs(x + frame.width - state.wallWidth) < snapThreshold) {
-        x = state.wallWidth - frame.width
-        snapLinesX.push(state.wallWidth)
-      }
-
-      if (Math.abs(y) < snapThreshold) {
-        y = 0
-        snapLinesY.push(0)
-      } else if (Math.abs(y + frame.height - state.wallHeight) < snapThreshold) {
-        y = state.wallHeight - frame.height
-        snapLinesY.push(state.wallHeight)
-      }
-
-      // Check alignment with other frames (only if not causing collision)
-      for (const other of state.galleryFrames) {
-        if (other.id === frame.id) continue
-
-        // Align left edges
-        if (Math.abs(x - other.x) < snapThreshold) {
-          const testX = other.x
-          if (!hasCollision(frame, testX, y, gap)) {
-            x = testX
-            snapLinesX.push(other.x)
-          }
-        }
-        // Align right edges
-        if (Math.abs(x + frame.width - (other.x + other.width)) < snapThreshold) {
-          const testX = other.x + other.width - frame.width
-          if (!hasCollision(frame, testX, y, gap)) {
-            x = testX
-            snapLinesX.push(other.x + other.width)
-          }
-        }
-        // Align top edges
-        if (Math.abs(y - other.y) < snapThreshold) {
-          const testY = other.y
-          if (!hasCollision(frame, x, testY, gap)) {
-            y = testY
-            snapLinesY.push(other.y)
-          }
-        }
-        // Align bottom edges
-        if (Math.abs(y + frame.height - (other.y + other.height)) < snapThreshold) {
-          const testY = other.y + other.height - frame.height
-          if (!hasCollision(frame, x, testY, gap)) {
-            y = testY
-            snapLinesY.push(other.y + other.height)
-          }
-        }
-      }
-
-      return { x, y, snapLinesX, snapLinesY }
-    }
-
-    // There's a collision - find the nearest valid position
-    interface ValidPosition {
-      x: number
-      y: number
-      distance: number
-      snapLineX?: number
-      snapLineY?: number
-    }
-
-    const validPositions: ValidPosition[] = []
-
-    // For each other frame, calculate valid positions adjacent to it
-    for (const other of state.galleryFrames) {
-      if (other.id === frame.id) continue
-
-      // Position to the right of other frame
-      const rightX = other.x + other.width + gap
-      if (rightX + frame.width <= state.wallWidth) {
-        // Try aligning tops
-        const testY1 = other.y
-        if (!hasCollision(frame, rightX, testY1, gap) && testY1 >= 0 && testY1 + frame.height <= state.wallHeight) {
-          const dist = Math.hypot(rightX - desiredX, testY1 - desiredY)
-          validPositions.push({ x: rightX, y: testY1, distance: dist, snapLineX: other.x + other.width, snapLineY: other.y })
-        }
-        // Try aligning bottoms
-        const testY2 = other.y + other.height - frame.height
-        if (!hasCollision(frame, rightX, testY2, gap) && testY2 >= 0 && testY2 + frame.height <= state.wallHeight) {
-          const dist = Math.hypot(rightX - desiredX, testY2 - desiredY)
-          validPositions.push({ x: rightX, y: testY2, distance: dist, snapLineX: other.x + other.width, snapLineY: other.y + other.height })
-        }
-        // Try keeping desired Y
-        if (!hasCollision(frame, rightX, y, gap)) {
-          const dist = Math.hypot(rightX - desiredX, 0)
-          validPositions.push({ x: rightX, y, distance: dist, snapLineX: other.x + other.width })
-        }
-      }
-
-      // Position to the left of other frame
-      const leftX = other.x - frame.width - gap
-      if (leftX >= 0) {
-        const testY1 = other.y
-        if (!hasCollision(frame, leftX, testY1, gap) && testY1 >= 0 && testY1 + frame.height <= state.wallHeight) {
-          const dist = Math.hypot(leftX - desiredX, testY1 - desiredY)
-          validPositions.push({ x: leftX, y: testY1, distance: dist, snapLineX: other.x, snapLineY: other.y })
-        }
-        const testY2 = other.y + other.height - frame.height
-        if (!hasCollision(frame, leftX, testY2, gap) && testY2 >= 0 && testY2 + frame.height <= state.wallHeight) {
-          const dist = Math.hypot(leftX - desiredX, testY2 - desiredY)
-          validPositions.push({ x: leftX, y: testY2, distance: dist, snapLineX: other.x, snapLineY: other.y + other.height })
-        }
-        if (!hasCollision(frame, leftX, y, gap)) {
-          const dist = Math.hypot(leftX - desiredX, 0)
-          validPositions.push({ x: leftX, y, distance: dist, snapLineX: other.x })
-        }
-      }
-
-      // Position below other frame
-      const belowY = other.y + other.height + gap
-      if (belowY + frame.height <= state.wallHeight) {
-        const testX1 = other.x
-        if (!hasCollision(frame, testX1, belowY, gap) && testX1 >= 0 && testX1 + frame.width <= state.wallWidth) {
-          const dist = Math.hypot(testX1 - desiredX, belowY - desiredY)
-          validPositions.push({ x: testX1, y: belowY, distance: dist, snapLineX: other.x, snapLineY: other.y + other.height })
-        }
-        const testX2 = other.x + other.width - frame.width
-        if (!hasCollision(frame, testX2, belowY, gap) && testX2 >= 0 && testX2 + frame.width <= state.wallWidth) {
-          const dist = Math.hypot(testX2 - desiredX, belowY - desiredY)
-          validPositions.push({ x: testX2, y: belowY, distance: dist, snapLineX: other.x + other.width, snapLineY: other.y + other.height })
-        }
-        if (!hasCollision(frame, x, belowY, gap)) {
-          const dist = Math.hypot(0, belowY - desiredY)
-          validPositions.push({ x, y: belowY, distance: dist, snapLineY: other.y + other.height })
-        }
-      }
-
-      // Position above other frame
-      const aboveY = other.y - frame.height - gap
-      if (aboveY >= 0) {
-        const testX1 = other.x
-        if (!hasCollision(frame, testX1, aboveY, gap) && testX1 >= 0 && testX1 + frame.width <= state.wallWidth) {
-          const dist = Math.hypot(testX1 - desiredX, aboveY - desiredY)
-          validPositions.push({ x: testX1, y: aboveY, distance: dist, snapLineX: other.x, snapLineY: other.y })
-        }
-        const testX2 = other.x + other.width - frame.width
-        if (!hasCollision(frame, testX2, aboveY, gap) && testX2 >= 0 && testX2 + frame.width <= state.wallWidth) {
-          const dist = Math.hypot(testX2 - desiredX, aboveY - desiredY)
-          validPositions.push({ x: testX2, y: aboveY, distance: dist, snapLineX: other.x + other.width, snapLineY: other.y })
-        }
-        if (!hasCollision(frame, x, aboveY, gap)) {
-          const dist = Math.hypot(0, aboveY - desiredY)
-          validPositions.push({ x, y: aboveY, distance: dist, snapLineY: other.y })
-        }
-      }
-    }
-
-    // Also try wall edges as escape positions
-    const wallPositions = [
-      { x: 0, y: desiredY },
-      { x: state.wallWidth - frame.width, y: desiredY },
-      { x: desiredX, y: 0 },
-      { x: desiredX, y: state.wallHeight - frame.height },
-      { x: 0, y: 0 },
-      { x: state.wallWidth - frame.width, y: 0 },
-      { x: 0, y: state.wallHeight - frame.height },
-      { x: state.wallWidth - frame.width, y: state.wallHeight - frame.height },
-    ]
-
-    for (const pos of wallPositions) {
-      const clampedX = Math.max(0, Math.min(state.wallWidth - frame.width, pos.x))
-      const clampedY = Math.max(0, Math.min(state.wallHeight - frame.height, pos.y))
-      if (!hasCollision(frame, clampedX, clampedY, gap)) {
-        const dist = Math.hypot(clampedX - desiredX, clampedY - desiredY)
-        validPositions.push({ x: clampedX, y: clampedY, distance: dist })
-      }
-    }
-
-    // Find the closest valid position
-    if (validPositions.length > 0) {
-      validPositions.sort((a, b) => a.distance - b.distance)
-      const best = validPositions[0]
-      const snapLinesX = best.snapLineX !== undefined ? [best.snapLineX] : []
-      const snapLinesY = best.snapLineY !== undefined ? [best.snapLineY] : []
-      return { x: best.x, y: best.y, snapLinesX, snapLinesY }
-    }
-
-    // Fallback: return original position (shouldn't happen in practice)
-    return { x: frame.x, y: frame.y, snapLinesX: [], snapLinesY: [] }
-  }, [state.galleryFrames, state.gallerySpacing, state.wallWidth, state.wallHeight, hasCollision])
-
-  // Unified function to calculate snapped position and alignment guides
-  const calculateSnappedPosition = useCallback((
-    frame: GalleryFrame,
-    desiredX: number,
-    desiredY: number
-  ): { x: number; y: number; guides: AlignmentGuide[] } => {
-    const gap = state.gallerySpacing
-    const snapThreshold = 20 // Increased for better detection
-    const guides: AlignmentGuide[] = []
-
-    // Start with clamped position
-    let x = Math.max(0, Math.min(state.wallWidth - frame.width, desiredX))
-    let y = Math.max(0, Math.min(state.wallHeight - frame.height, desiredY))
-
-    // Track snap targets with their distances
-    interface SnapTarget {
-      value: number       // The x or y value to snap to
-      distance: number    // How far from the current position
-      guideType: AlignmentGuide['type']
-      guidePosition: number
-    }
-
-    const xSnaps: SnapTarget[] = []
-    const ySnaps: SnapTarget[] = []
-
-    // Calculate frame edges at current position
-    const frameLeft = x
-    const frameRight = x + frame.width
-    const frameTop = y
-    const frameBottom = y + frame.height
-    const frameCenterX = x + frame.width / 2
-    const frameCenterY = y + frame.height / 2
-
-    // === WALL SNAPS ===
-    // Snap left edge to wall left
-    if (Math.abs(frameLeft) < snapThreshold) {
-      xSnaps.push({ value: 0, distance: Math.abs(frameLeft), guideType: 'left', guidePosition: 0 })
-    }
-    // Snap right edge to wall right
-    if (Math.abs(frameRight - state.wallWidth) < snapThreshold) {
-      xSnaps.push({ value: state.wallWidth - frame.width, distance: Math.abs(frameRight - state.wallWidth), guideType: 'right', guidePosition: state.wallWidth })
-    }
-    // Snap center to wall center X
-    const wallCenterX = state.wallWidth / 2
-    if (Math.abs(frameCenterX - wallCenterX) < snapThreshold) {
-      xSnaps.push({ value: wallCenterX - frame.width / 2, distance: Math.abs(frameCenterX - wallCenterX), guideType: 'centerX', guidePosition: wallCenterX })
-    }
-    // Snap top edge to wall top
-    if (Math.abs(frameTop) < snapThreshold) {
-      ySnaps.push({ value: 0, distance: Math.abs(frameTop), guideType: 'top', guidePosition: 0 })
-    }
-    // Snap bottom edge to wall bottom
-    if (Math.abs(frameBottom - state.wallHeight) < snapThreshold) {
-      ySnaps.push({ value: state.wallHeight - frame.height, distance: Math.abs(frameBottom - state.wallHeight), guideType: 'bottom', guidePosition: state.wallHeight })
-    }
-
-    // === FURNITURE SNAPS ===
-    if (state.furnitureWidth > 0 && state.furnitureHeight > 0) {
-      const furnitureCenterX = state.wallWidth / 2 + state.furnitureX
-      const furnitureLeft = furnitureCenterX - state.furnitureWidth / 2
-      const furnitureRight = furnitureCenterX + state.furnitureWidth / 2
-      const furnitureTop = state.wallHeight - state.furnitureHeight
-
-      // Snap frame center to furniture center
-      const toFurnitureCenterDist = Math.abs(frameCenterX - furnitureCenterX)
-      if (toFurnitureCenterDist < snapThreshold) {
-        xSnaps.push({ value: furnitureCenterX - frame.width / 2, distance: toFurnitureCenterDist, guideType: 'centerX', guidePosition: furnitureCenterX })
-      }
-      // Snap frame left to furniture left
-      const toFurnitureLeftDist = Math.abs(frameLeft - furnitureLeft)
-      if (toFurnitureLeftDist < snapThreshold) {
-        xSnaps.push({ value: furnitureLeft, distance: toFurnitureLeftDist, guideType: 'left', guidePosition: furnitureLeft })
-      }
-      // Snap frame right to furniture right
-      const toFurnitureRightDist = Math.abs(frameRight - furnitureRight)
-      if (toFurnitureRightDist < snapThreshold) {
-        xSnaps.push({ value: furnitureRight - frame.width, distance: toFurnitureRightDist, guideType: 'right', guidePosition: furnitureRight })
-      }
-      // Snap frame bottom to furniture top (with gap)
-      const aboveFurniture = furnitureTop - gap
-      const toAboveFurnitureDist = Math.abs(frameBottom - aboveFurniture)
-      if (toAboveFurnitureDist < snapThreshold) {
-        ySnaps.push({ value: furnitureTop - gap - frame.height, distance: toAboveFurnitureDist, guideType: 'bottom', guidePosition: aboveFurniture })
-      }
-    }
-
-    // === OTHER FRAME SNAPS ===
-    for (const other of state.galleryFrames) {
-      if (other.id === frame.id) continue
-
-      const otherLeft = other.x
-      const otherRight = other.x + other.width
-      const otherTop = other.y
-      const otherBottom = other.y + other.height
-      const otherCenterX = other.x + other.width / 2
-      const otherCenterY = other.y + other.height / 2
-
-      // === X-AXIS ALIGNMENT SNAPS ===
-      // Align left edges (frame.left = other.left)
-      const leftToLeftDist = Math.abs(frameLeft - otherLeft)
-      if (leftToLeftDist < snapThreshold) {
-        xSnaps.push({ value: otherLeft, distance: leftToLeftDist, guideType: 'left', guidePosition: otherLeft })
-      }
-      // Align right edges (frame.right = other.right)
-      const rightToRightDist = Math.abs(frameRight - otherRight)
-      if (rightToRightDist < snapThreshold) {
-        xSnaps.push({ value: otherRight - frame.width, distance: rightToRightDist, guideType: 'right', guidePosition: otherRight })
-      }
-      // Align centers X
-      const centerXDist = Math.abs(frameCenterX - otherCenterX)
-      if (centerXDist < snapThreshold) {
-        xSnaps.push({ value: otherCenterX - frame.width / 2, distance: centerXDist, guideType: 'centerX', guidePosition: otherCenterX })
-      }
-      // Align frame left to other center X
-      const leftToCenterXDist = Math.abs(frameLeft - otherCenterX)
-      if (leftToCenterXDist < snapThreshold) {
-        xSnaps.push({ value: otherCenterX, distance: leftToCenterXDist, guideType: 'left', guidePosition: otherCenterX })
-      }
-      // Align frame right to other center X
-      const rightToCenterXDist = Math.abs(frameRight - otherCenterX)
-      if (rightToCenterXDist < snapThreshold) {
-        xSnaps.push({ value: otherCenterX - frame.width, distance: rightToCenterXDist, guideType: 'right', guidePosition: otherCenterX })
-      }
-
-      // === X-AXIS GAP SNAPS ===
-      // Snap frame to the RIGHT of other (frame.left = other.right + gap)
-      const snapToRightOfOther = otherRight + gap
-      const toRightDist = Math.abs(frameLeft - snapToRightOfOther)
-      if (toRightDist < snapThreshold) {
-        xSnaps.push({ value: snapToRightOfOther, distance: toRightDist, guideType: 'left', guidePosition: snapToRightOfOther })
-      }
-      // Snap frame to the LEFT of other (frame.right = other.left - gap, so frame.left = other.left - gap - width)
-      const snapToLeftOfOther = otherLeft - gap
-      const toLeftDist = Math.abs(frameRight - snapToLeftOfOther)
-      if (toLeftDist < snapThreshold) {
-        xSnaps.push({ value: otherLeft - gap - frame.width, distance: toLeftDist, guideType: 'right', guidePosition: snapToLeftOfOther })
-      }
-
-      // === Y-AXIS ALIGNMENT SNAPS ===
-      // Align top edges
-      const topToTopDist = Math.abs(frameTop - otherTop)
-      if (topToTopDist < snapThreshold) {
-        ySnaps.push({ value: otherTop, distance: topToTopDist, guideType: 'top', guidePosition: otherTop })
-      }
-      // Align bottom edges
-      const bottomToBottomDist = Math.abs(frameBottom - otherBottom)
-      if (bottomToBottomDist < snapThreshold) {
-        ySnaps.push({ value: otherBottom - frame.height, distance: bottomToBottomDist, guideType: 'bottom', guidePosition: otherBottom })
-      }
-      // Align centers Y
-      const centerYDist = Math.abs(frameCenterY - otherCenterY)
-      if (centerYDist < snapThreshold) {
-        ySnaps.push({ value: otherCenterY - frame.height / 2, distance: centerYDist, guideType: 'centerY', guidePosition: otherCenterY })
-      }
-      // Align frame top to other center Y
-      const topToCenterYDist = Math.abs(frameTop - otherCenterY)
-      if (topToCenterYDist < snapThreshold) {
-        ySnaps.push({ value: otherCenterY, distance: topToCenterYDist, guideType: 'top', guidePosition: otherCenterY })
-      }
-      // Align frame bottom to other center Y
-      const bottomToCenterYDist = Math.abs(frameBottom - otherCenterY)
-      if (bottomToCenterYDist < snapThreshold) {
-        ySnaps.push({ value: otherCenterY - frame.height, distance: bottomToCenterYDist, guideType: 'bottom', guidePosition: otherCenterY })
-      }
-
-      // === Y-AXIS GAP SNAPS ===
-      // Snap frame BELOW other (frame.top = other.bottom + gap)
-      const snapBelowOther = otherBottom + gap
-      const belowDist = Math.abs(frameTop - snapBelowOther)
-      if (belowDist < snapThreshold) {
-        ySnaps.push({ value: snapBelowOther, distance: belowDist, guideType: 'top', guidePosition: snapBelowOther })
-      }
-      // Snap frame ABOVE other (frame.bottom = other.top - gap, so frame.top = other.top - gap - height)
-      const snapAboveOther = otherTop - gap
-      const aboveDist = Math.abs(frameBottom - snapAboveOther)
-      if (aboveDist < snapThreshold) {
-        ySnaps.push({ value: otherTop - gap - frame.height, distance: aboveDist, guideType: 'bottom', guidePosition: snapAboveOther })
-      }
-    }
-
-    // === APPLY SNAPS ===
-    // Try X snaps from closest to farthest, apply first one that doesn't cause collision
-    if (xSnaps.length > 0) {
-      xSnaps.sort((a, b) => a.distance - b.distance)
-      for (const snap of xSnaps) {
-        const testX = Math.max(0, Math.min(state.wallWidth - frame.width, snap.value))
-        if (!hasCollision(frame, testX, y, gap)) {
-          x = testX
-          break
-        }
-      }
-    }
-
-    // Try Y snaps from closest to farthest, apply first one that doesn't cause collision
-    if (ySnaps.length > 0) {
-      ySnaps.sort((a, b) => a.distance - b.distance)
-      for (const snap of ySnaps) {
-        const testY = Math.max(0, Math.min(state.wallHeight - frame.height, snap.value))
-        if (!hasCollision(frame, x, testY, gap)) {
-          y = testY
-          break
-        }
-      }
-    }
-
-    // If there's still a collision, resolve it
-    if (hasCollision(frame, x, y, gap)) {
-      const resolved = resolveCollision(frame, x, y)
-      x = resolved.x
-      y = resolved.y
-    }
-
-    // Build alignment guides for the final snapped position
-    const finalLeft = x
-    const finalRight = x + frame.width
-    const finalTop = y
-    const finalBottom = y + frame.height
-    const finalCenterX = x + frame.width / 2
-    const finalCenterY = y + frame.height / 2
-
-    // Check what alignments exist at the snapped position
-    for (const other of state.galleryFrames) {
-      if (other.id === frame.id) continue
-
-      const otherLeft = other.x
-      const otherRight = other.x + other.width
-      const otherTop = other.y
-      const otherBottom = other.y + other.height
-      const otherCenterX = other.x + other.width / 2
-      const otherCenterY = other.y + other.height / 2
-
-      const tolerance = 1 // 1 pixel tolerance for alignment detection
-
-      // Horizontal guides (Y alignments)
-      if (Math.abs(finalTop - otherTop) < tolerance) {
-        const minX = Math.min(finalLeft, otherLeft)
-        const maxX = Math.max(finalRight, otherRight)
-        guides.push({ type: 'top', position: otherTop, start: minX, end: maxX })
-      }
-      if (Math.abs(finalBottom - otherBottom) < tolerance) {
-        const minX = Math.min(finalLeft, otherLeft)
-        const maxX = Math.max(finalRight, otherRight)
-        guides.push({ type: 'bottom', position: otherBottom, start: minX, end: maxX })
-      }
-      if (Math.abs(finalCenterY - otherCenterY) < tolerance) {
-        const minX = Math.min(finalLeft, otherLeft)
-        const maxX = Math.max(finalRight, otherRight)
-        guides.push({ type: 'centerY', position: otherCenterY, start: minX, end: maxX })
-      }
-
-      // Vertical guides (X alignments)
-      if (Math.abs(finalLeft - otherLeft) < tolerance) {
-        const minY = Math.min(finalTop, otherTop)
-        const maxY = Math.max(finalBottom, otherBottom)
-        guides.push({ type: 'left', position: otherLeft, start: minY, end: maxY })
-      }
-      if (Math.abs(finalRight - otherRight) < tolerance) {
-        const minY = Math.min(finalTop, otherTop)
-        const maxY = Math.max(finalBottom, otherBottom)
-        guides.push({ type: 'right', position: otherRight, start: minY, end: maxY })
-      }
-      if (Math.abs(finalCenterX - otherCenterX) < tolerance) {
-        const minY = Math.min(finalTop, otherTop)
-        const maxY = Math.max(finalBottom, otherBottom)
-        guides.push({ type: 'centerX', position: otherCenterX, start: minY, end: maxY })
-      }
-
-      // Gap-based adjacency guides
-      if (Math.abs(finalLeft - (otherRight + gap)) < tolerance) {
-        // Frame is snapped to the right of other with gap
-        const minY = Math.min(finalTop, otherTop)
-        const maxY = Math.max(finalBottom, otherBottom)
-        guides.push({ type: 'left', position: finalLeft, start: minY, end: maxY })
-      }
-      if (Math.abs(finalRight + gap - otherLeft) < tolerance) {
-        // Frame is snapped to the left of other with gap
-        const minY = Math.min(finalTop, otherTop)
-        const maxY = Math.max(finalBottom, otherBottom)
-        guides.push({ type: 'right', position: finalRight, start: minY, end: maxY })
-      }
-      if (Math.abs(finalTop - (otherBottom + gap)) < tolerance) {
-        // Frame is snapped below other with gap
-        const minX = Math.min(finalLeft, otherLeft)
-        const maxX = Math.max(finalRight, otherRight)
-        guides.push({ type: 'top', position: finalTop, start: minX, end: maxX })
-      }
-      if (Math.abs(finalBottom + gap - otherTop) < tolerance) {
-        // Frame is snapped above other with gap
-        const minX = Math.min(finalLeft, otherLeft)
-        const maxX = Math.max(finalRight, otherRight)
-        guides.push({ type: 'bottom', position: finalBottom, start: minX, end: maxX })
-      }
-    }
-
-    // Wall edge guides
-    if (Math.abs(finalLeft) < 1) {
-      guides.push({ type: 'left', position: 0, start: finalTop, end: finalBottom })
-    }
-    if (Math.abs(finalRight - state.wallWidth) < 1) {
-      guides.push({ type: 'right', position: state.wallWidth, start: finalTop, end: finalBottom })
-    }
-    if (Math.abs(finalTop) < 1) {
-      guides.push({ type: 'top', position: 0, start: finalLeft, end: finalRight })
-    }
-    if (Math.abs(finalBottom - state.wallHeight) < 1) {
-      guides.push({ type: 'bottom', position: state.wallHeight, start: finalLeft, end: finalRight })
-    }
-    // Wall center guide
-    const wallCenterXFinal = state.wallWidth / 2
-    if (Math.abs(finalCenterX - wallCenterXFinal) < 1) {
-      guides.push({ type: 'centerX', position: wallCenterXFinal, start: 0, end: state.wallHeight })
-    }
-
-    return { x, y, guides }
-  }, [state.galleryFrames, state.gallerySpacing, state.wallWidth, state.wallHeight, hasCollision, resolveCollision])
-
-  // Track drag preview positions for all frames being dragged (for group drag)
-  const [dragPreviews, setDragPreviews] = useState<Map<number, { x: number; y: number }>>(new Map())
-
-  const handleDragMove = (event: DragMoveEvent) => {
-    const { active, delta } = event
-    const frameId = active.id as number
-    const frame = state.galleryFrames.find((f) => f.id === frameId)
-    if (!frame) return
-
-    const desiredX = frame.x + delta.x / scale
-    const desiredY = frame.y + delta.y / scale
-
-    const { x, y, guides } = calculateSnappedPosition(frame, desiredX, desiredY)
-
-    // Calculate the actual delta after snapping
-    const actualDeltaX = x - frame.x
-    const actualDeltaY = y - frame.y
-
-    // Build preview positions for all dragged frames
-    const previews = new Map<number, { x: number; y: number }>()
-    previews.set(frameId, { x, y })
-
-    // If this frame is part of a multi-selection, calculate preview positions for other selected frames
-    if (state.selectedFrames.includes(frameId)) {
-      for (const otherId of state.selectedFrames) {
-        if (otherId === frameId) continue
-        const otherFrame = state.galleryFrames.find(f => f.id === otherId)
-        if (otherFrame) {
-          previews.set(otherId, {
-            x: Math.max(0, Math.min(state.wallWidth - otherFrame.width, otherFrame.x + actualDeltaX)),
-            y: Math.max(0, Math.min(state.wallHeight - otherFrame.height, otherFrame.y + actualDeltaY)),
-          })
-        }
-      }
-    }
-
-    setDragPreviews(previews)
-    setAlignmentGuides(guides)
-  }
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, delta } = event
-    const frameId = active.id as number
-    const frame = state.galleryFrames.find((f) => f.id === frameId)
-    if (!frame) return
-
-    const desiredX = frame.x + delta.x / scale
-    const desiredY = frame.y + delta.y / scale
-
-    const { x, y } = calculateSnappedPosition(frame, desiredX, desiredY)
-
-    // Calculate the actual delta after snapping
-    const actualDeltaX = x - frame.x
-    const actualDeltaY = y - frame.y
-
-    // Check if this frame is part of a multi-selection
-    const otherSelectedFrames = state.selectedFrames.filter(id => id !== frameId)
-
-    if (otherSelectedFrames.length > 0 && state.selectedFrames.includes(frameId)) {
-      // Move the dragged frame first
-      updateGalleryFramePosition(frameId, x, y)
-      // Move other selected frames by the same delta
-      moveGalleryFrames(otherSelectedFrames, actualDeltaX, actualDeltaY)
-    } else {
-      // Single frame drag
-      updateGalleryFramePosition(frameId, x, y)
-    }
-
-    setDragPreviews(new Map())
-    setAlignmentGuides([])
-  }
-
-  // Sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 3,
-      },
-    }),
-    useSensor(KeyboardSensor)
-  )
 
   // Calculate initial pan position - wall near top, centered horizontally
   const getCenteredPan = useCallback(() => {
@@ -1085,43 +289,41 @@ export function Preview({ calculator }: PreviewProps) {
     ctx.fillStyle = '#666'
     ctx.fillText('CEILING', offsetX + (state.wallWidth * scale) / 2, offsetY - 30)
 
-    // Draw anchor reference line (for non-gallery modes)
-    if (state.layoutType !== 'gallery') {
-      ctx.setLineDash([5, 5])
-      ctx.strokeStyle = '#4f46e5'
-      ctx.lineWidth = 1
+    // Draw anchor reference line
+    ctx.setLineDash([5, 5])
+    ctx.strokeStyle = '#4f46e5'
+    ctx.lineWidth = 1
 
-      if (state.anchorType === 'center') {
-        const centerY = offsetY + (state.wallHeight / 2) * scale
-        ctx.beginPath()
-        ctx.moveTo(offsetX, centerY)
-        ctx.lineTo(offsetX + state.wallWidth * scale, centerY)
-        ctx.stroke()
-      } else if (state.anchorType === 'ceiling') {
-        const lineY = offsetY + state.anchorValue * scale
-        ctx.beginPath()
-        ctx.moveTo(offsetX, lineY)
-        ctx.lineTo(offsetX + state.wallWidth * scale, lineY)
-        ctx.stroke()
-      } else if (state.anchorType === 'furniture') {
-        const furnitureTop = state.wallHeight - state.furnitureHeight
-        const lineY = offsetY + (furnitureTop - state.anchorValue) * scale
-        ctx.beginPath()
-        ctx.moveTo(offsetX, lineY)
-        ctx.lineTo(offsetX + state.wallWidth * scale, lineY)
-        ctx.stroke()
-      } else {
-        const lineY = offsetY + (state.wallHeight - state.anchorValue) * scale
-        ctx.beginPath()
-        ctx.moveTo(offsetX, lineY)
-        ctx.lineTo(offsetX + state.wallWidth * scale, lineY)
-        ctx.stroke()
-      }
-      ctx.setLineDash([])
+    if (state.anchorType === 'center') {
+      const centerY = offsetY + (state.wallHeight / 2) * scale
+      ctx.beginPath()
+      ctx.moveTo(offsetX, centerY)
+      ctx.lineTo(offsetX + state.wallWidth * scale, centerY)
+      ctx.stroke()
+    } else if (state.anchorType === 'ceiling') {
+      const lineY = offsetY + state.anchorValue * scale
+      ctx.beginPath()
+      ctx.moveTo(offsetX, lineY)
+      ctx.lineTo(offsetX + state.wallWidth * scale, lineY)
+      ctx.stroke()
+    } else if (state.anchorType === 'furniture') {
+      const furnitureTop = state.wallHeight - state.furnitureHeight
+      const lineY = offsetY + (furnitureTop - state.anchorValue) * scale
+      ctx.beginPath()
+      ctx.moveTo(offsetX, lineY)
+      ctx.lineTo(offsetX + state.wallWidth * scale, lineY)
+      ctx.stroke()
+    } else {
+      const lineY = offsetY + (state.wallHeight - state.anchorValue) * scale
+      ctx.beginPath()
+      ctx.moveTo(offsetX, lineY)
+      ctx.lineTo(offsetX + state.wallWidth * scale, lineY)
+      ctx.stroke()
     }
+    ctx.setLineDash([])
 
     // Draw furniture
-    if (state.anchorType === 'furniture' || state.layoutType === 'gallery') {
+    if (state.anchorType === 'furniture') {
       const furnitureCenterX = state.wallWidth / 2 + state.furnitureX
       const furnitureLeft = furnitureCenterX - state.furnitureWidth / 2
       const furnitureTop = state.wallHeight - state.furnitureHeight
@@ -1146,78 +348,8 @@ export function Preview({ calculator }: PreviewProps) {
       ctx.fillText(fmtShort(state.furnitureWidth), fx + fw / 2, fy - 6)
     }
 
-    // Draw alignment guides (Figma-style)
-    if (state.layoutType === 'gallery' && alignmentGuides.length > 0) {
-      // Magenta color like Figma
-      ctx.strokeStyle = '#ff00ff'
-      ctx.fillStyle = '#ff00ff'
-      ctx.lineWidth = 1
-      ctx.setLineDash([])
-
-      for (const guide of alignmentGuides) {
-        if (['top', 'bottom', 'centerY'].includes(guide.type)) {
-          // Horizontal line
-          const py = offsetY + guide.position * scale
-          const startX = offsetX + guide.start * scale
-          const endX = offsetX + guide.end * scale
-
-          ctx.beginPath()
-          ctx.moveTo(startX, py)
-          ctx.lineTo(endX, py)
-          ctx.stroke()
-
-          // Draw small diamonds at the endpoints
-          const diamondSize = 3
-          ctx.beginPath()
-          ctx.moveTo(startX, py - diamondSize)
-          ctx.lineTo(startX + diamondSize, py)
-          ctx.lineTo(startX, py + diamondSize)
-          ctx.lineTo(startX - diamondSize, py)
-          ctx.closePath()
-          ctx.fill()
-
-          ctx.beginPath()
-          ctx.moveTo(endX, py - diamondSize)
-          ctx.lineTo(endX + diamondSize, py)
-          ctx.lineTo(endX, py + diamondSize)
-          ctx.lineTo(endX - diamondSize, py)
-          ctx.closePath()
-          ctx.fill()
-        } else {
-          // Vertical line
-          const px = offsetX + guide.position * scale
-          const startY = offsetY + guide.start * scale
-          const endY = offsetY + guide.end * scale
-
-          ctx.beginPath()
-          ctx.moveTo(px, startY)
-          ctx.lineTo(px, endY)
-          ctx.stroke()
-
-          // Draw small diamonds at the endpoints
-          const diamondSize = 3
-          ctx.beginPath()
-          ctx.moveTo(px - diamondSize, startY)
-          ctx.lineTo(px, startY - diamondSize)
-          ctx.lineTo(px + diamondSize, startY)
-          ctx.lineTo(px, startY + diamondSize)
-          ctx.closePath()
-          ctx.fill()
-
-          ctx.beginPath()
-          ctx.moveTo(px - diamondSize, endY)
-          ctx.lineTo(px, endY - diamondSize)
-          ctx.lineTo(px + diamondSize, endY)
-          ctx.lineTo(px, endY + diamondSize)
-          ctx.closePath()
-          ctx.fill()
-        }
-      }
-    }
-
-    // Draw frames on canvas for NON-gallery modes only
-    if (state.layoutType !== 'gallery') {
-      layoutPositions.forEach((frame) => {
+    // Draw frames on canvas
+    layoutPositions.forEach((frame) => {
         const fx = offsetX + frame.x * scale
         const fy = offsetY + frame.y * scale
         const fw = frame.width * scale
@@ -1478,7 +610,6 @@ export function Preview({ calculator }: PreviewProps) {
           }
         }
       }
-    }
 
   }, [
     layoutPositions,
@@ -1488,7 +619,6 @@ export function Preview({ calculator }: PreviewProps) {
     canvasHeight,
     fmtShort,
     fmt,
-    alignmentGuides,
     referenceHook,
     compareHook,
     pan,
@@ -1515,67 +645,41 @@ export function Preview({ calculator }: PreviewProps) {
           style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
           onClick={handleCanvasClick}
         />
-
-        {/* Gallery mode: render frames as DOM elements with dnd-kit */}
-        {state.layoutType === 'gallery' && (
-          <DndContext
-            sensors={sensors}
-            onDragMove={handleDragMove}
-            onDragEnd={handleDragEnd}
-          >
-            {state.galleryFrames.map((frame) => (
-              <DraggableFrame
-                key={frame.id}
-                frame={frame}
-                scale={scale}
-                padding={padding}
-                pan={pan}
-                isSelected={state.selectedFrames.includes(frame.id)}
-                isPrimary={state.selectedFrame === frame.id}
-                onSelect={toggleFrameSelection}
-                fmtShort={fmtShort}
-                previewPosition={dragPreviews.get(frame.id) || null}
-              />
-            ))}
-          </DndContext>
-        )}
       </div>
 
-      {/* Help button - top right (only for non-gallery modes) */}
-      {state.layoutType !== 'gallery' && (
-        <div className="absolute top-4 right-4">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white/90 hover:bg-white dark:bg-slate-900/90 dark:hover:bg-slate-800 backdrop-blur-xl shadow-2xl border border-gray-200 dark:border-white/10"
-              >
-                <HelpCircle className="size-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-64">
-              <div className="flex flex-col gap-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
-                  <span className="text-xs text-gray-600 dark:text-white/70">Hook position</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-0.5 bg-green-500 shrink-0" />
-                  <span className="text-xs text-gray-600 dark:text-white/70">Distance from wall/floor</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-0.5 bg-cyan-500 shrink-0" />
-                  <span className="text-xs text-gray-600 dark:text-white/70">Hook comparison</span>
-                </div>
-                <div className="border-t border-gray-200 dark:border-white/10 pt-2 mt-1">
-                  <p className="text-xs text-gray-500 dark:text-white/50">
-                    Click a hook to see measurements.<br />
-                    Shift+click another to compare.
-                  </p>
-                </div>
+      {/* Help button - top right */}
+      <div className="absolute top-4 right-4">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl bg-white/90 hover:bg-white dark:bg-slate-900/90 dark:hover:bg-slate-800 backdrop-blur-xl shadow-2xl border border-gray-200 dark:border-white/10"
+            >
+              <HelpCircle className="size-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-64">
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
+                <span className="text-xs text-gray-600 dark:text-white/70">Hook position</span>
               </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-      )}
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-0.5 bg-green-500 shrink-0" />
+                <span className="text-xs text-gray-600 dark:text-white/70">Distance from wall/floor</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-0.5 bg-cyan-500 shrink-0" />
+                <span className="text-xs text-gray-600 dark:text-white/70">Hook comparison</span>
+              </div>
+              <div className="border-t border-gray-200 dark:border-white/10 pt-2 mt-1">
+                <p className="text-xs text-gray-500 dark:text-white/50">
+                  Click a hook to see measurements.<br />
+                  Shift+click another to compare.
+                </p>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
 
       {/* Zoom controls - bottom right */}
       <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl px-2 py-1.5 shadow-lg border border-gray-200/50 dark:border-white/10">

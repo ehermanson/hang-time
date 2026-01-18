@@ -4,7 +4,6 @@ import { useSavedLayouts } from '@/hooks/useSavedLayouts'
 import { WallDimensions } from './WallDimensions'
 import { LayoutTypeSelector } from './LayoutTypeSelector'
 import { FrameSize } from './FrameSize'
-import { GalleryFramesList } from './GalleryFramesList'
 import { VerticalPosition } from './VerticalPosition'
 import { HorizontalPosition } from './HorizontalPosition'
 import { SaveLayoutDialog } from '@/components/SaveLayoutDialog'
@@ -299,20 +298,9 @@ export function Sidebar({ calculator }: SidebarProps) {
               <WallDimensions calculator={calculator} />
               <LayoutTypeSelector calculator={calculator} />
 
-              {state.layoutType !== 'gallery' && (
-                <FrameSize calculator={calculator} />
-              )}
-
-              {state.layoutType === 'gallery' && (
-                <GalleryFramesList calculator={calculator} />
-              )}
-
-              {state.layoutType !== 'gallery' && (
-                <>
-                  <VerticalPosition calculator={calculator} />
-                  <HorizontalPosition calculator={calculator} />
-                </>
-              )}
+              <FrameSize calculator={calculator} />
+              <VerticalPosition calculator={calculator} />
+              <HorizontalPosition calculator={calculator} />
             </div>
           )}
 

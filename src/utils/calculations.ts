@@ -1,4 +1,4 @@
-import type { CalculatorState, FramePosition, GalleryFrame } from '@/types'
+import type { CalculatorState, FramePosition } from '@/types'
 
 export const INCH_TO_CM = 2.54
 
@@ -49,34 +49,10 @@ export function calculateLayoutPositions(state: CalculatorState): FramePosition[
     hAnchorValue,
     wallWidth,
     wallHeight,
-    galleryFrames,
     furnitureHeight,
     furnitureX,
     furnitureCentered,
   } = state
-
-  if (layoutType === 'gallery') {
-    return galleryFrames.map((f: GalleryFrame) => {
-      const hookX = f.x + f.width / 2
-      const hookY = f.y + f.hangingOffset
-      return {
-        id: f.id,
-        name: f.name,
-        x: f.x,
-        y: f.y,
-        width: f.width,
-        height: f.height,
-        hangingOffset: f.hangingOffset,
-        hookX,
-        hookY,
-        fromLeft: hookX,
-        fromTop: hookY,
-        fromFloor: wallHeight - hookY,
-        fromRight: wallWidth - hookX,
-        fromCeiling: hookY,
-      }
-    })
-  }
 
   const rows = layoutType === 'row' ? 1 : gridRows
   const cols = gridCols

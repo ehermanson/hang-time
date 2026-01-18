@@ -84,8 +84,8 @@ const FRAME_TEMPLATES = [
   { value: '16x20', label: '16×20"', width: 16, height: 20 },
   { value: '18x24', label: '18×24"', width: 18, height: 24 },
   { value: '24x36', label: '24×36"', width: 24, height: 36 },
-  { value: '8x8', label: '8×8" (Square)', width: 8, height: 8 },
-  { value: '12x12', label: '12×12" (Square)', width: 12, height: 12 },
+  { value: '8x8', label: '8×8"', width: 8, height: 8 },
+  { value: '12x12', label: '12×12"', width: 12, height: 12 },
 ]
 
 interface Props {
