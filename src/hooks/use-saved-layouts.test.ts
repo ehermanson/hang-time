@@ -45,7 +45,9 @@ describe('useSavedLayouts', () => {
     });
 
     // Mock crypto.randomUUID
-    vi.spyOn(crypto, 'randomUUID').mockReturnValue('test-uuid-1234');
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+      '12345678-1234-1234-1234-123456789012',
+    );
 
     // Mock Date.now
     vi.spyOn(Date, 'now').mockReturnValue(1000000);
@@ -118,7 +120,7 @@ describe('useSavedLayouts', () => {
       expect(saveResult!.success).toBe(true);
       expect(result.current.layouts).toHaveLength(1);
       expect(result.current.layouts[0]).toMatchObject({
-        id: 'test-uuid-1234',
+        id: '12345678-1234-1234-1234-123456789012',
         title: 'My Layout',
         url: '?test=1',
         createdAt: 1000000,
@@ -201,8 +203,8 @@ describe('useSavedLayouts', () => {
         result.current.save('My Layout');
       });
 
-      expect(result.current.loadedLayout?.id).toBe('test-uuid-1234');
-      expect(mockSessionStorage[LOADED_LAYOUT_KEY]).toBe('test-uuid-1234');
+      expect(result.current.loadedLayout?.id).toBe('12345678-1234-1234-1234-123456789012');
+      expect(mockSessionStorage[LOADED_LAYOUT_KEY]).toBe('12345678-1234-1234-1234-123456789012');
     });
 
     it('persists to localStorage', () => {
