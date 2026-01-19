@@ -545,6 +545,34 @@ export function Preview({ calculator }: PreviewProps) {
       ctx.fillStyle = '#22c55e';
       ctx.fillText(fromFloorText, 0, 0);
       ctx.restore();
+
+      // When "from ceiling" mode: also draw line and label from ceiling to hook
+      if (state.anchorType === 'ceiling') {
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+
+        // Vertical line from ceiling to hook
+        ctx.beginPath();
+        ctx.moveTo(hookX, offsetY);
+        ctx.lineTo(hookX, hookY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // "From ceiling" label (rotated, on left side of line)
+        ctx.save();
+        ctx.font = 'bold 10px -apple-system, sans-serif';
+        const fromCeilingText = fmt(f.fromCeiling);
+        const fromCeilingY = offsetY + (f.fromCeiling * scale) / 2;
+        ctx.translate(hookX - 10, fromCeilingY);
+        ctx.rotate(-Math.PI / 2);
+        const ceilingTextWidth = ctx.measureText(fromCeilingText).width;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(-ceilingTextWidth / 2 - 2, -9, ceilingTextWidth + 4, 12);
+        ctx.fillStyle = '#22c55e';
+        ctx.fillText(fromCeilingText, 0, 0);
+        ctx.restore();
+      }
     };
 
     // Always show hook gap for dual hooks (for all frames)
