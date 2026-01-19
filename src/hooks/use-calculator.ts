@@ -239,7 +239,6 @@ export function useCalculator() {
   );
 
   const addGalleryFrame = useCallback(() => {
-    if (galleryFrames.length >= 8) return;
     const newFrame: GalleryFrame = {
       id: generateId(),
       width: 12,

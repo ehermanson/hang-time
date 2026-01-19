@@ -240,8 +240,6 @@ export function GalleryFrames({ calculator }: Props) {
     }
   };
 
-  const canAddMore = state.galleryFrames.length < 8;
-
   return (
     <Collapsible
       defaultOpen
@@ -254,7 +252,7 @@ export function GalleryFrames({ calculator }: Props) {
           </span>
           Gallery Frames
           <span className="ml-1 text-xs font-normal text-gray-400 dark:text-white/40">
-            ({state.galleryFrames.length}/8)
+            ({state.galleryFrames.length})
           </span>
           <ChevronDown className="h-4 w-4 ml-auto text-gray-400 transition-transform group-data-[state=closed]:-rotate-90" />
         </h3>
@@ -290,7 +288,6 @@ export function GalleryFrames({ calculator }: Props) {
             variant="outline"
             size="sm"
             onClick={addGalleryFrame}
-            disabled={!canAddMore}
             className="w-full mt-2"
           >
             <Plus className="h-4 w-4 mr-1" />
