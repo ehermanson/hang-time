@@ -5,6 +5,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
 import { cn } from '@/lib/utils';
@@ -143,18 +144,22 @@ export function LayoutTypeSelector({ calculator }: Props) {
       <CollapsibleContent>
         <div className="space-y-4 pt-3">
           {/* Frame Count - Primary Input */}
-          <Input
-            type="number"
-            min="1"
-            max="20"
-            value={state.frameCount}
-            onChange={(e) =>
-              setFrameCount(
-                Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)),
-              )
-            }
-            className="text-lg font-medium text-center bg-gray-50 border-gray-200 text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
-          />
+          <Field>
+            <FieldLabel htmlFor="frameCount">Number of Frames</FieldLabel>
+            <Input
+              id="frameCount"
+              type="number"
+              min="1"
+              max="20"
+              value={state.frameCount}
+              onChange={(e) =>
+                setFrameCount(
+                  Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)),
+                )
+              }
+              className="text-lg font-medium text-center bg-gray-50 border-gray-200 text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
+            />
+          </Field>
 
           {/* Layout Options */}
           <div className="grid grid-cols-3 gap-2">

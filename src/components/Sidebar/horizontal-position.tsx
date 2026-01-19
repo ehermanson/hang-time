@@ -4,8 +4,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
 import { cn } from '@/lib/utils';
 import type { Distribution, HorizontalAnchorType } from '@/types';
@@ -147,8 +147,8 @@ export function HorizontalPosition({ calculator }: Props) {
       <CollapsibleContent>
         <div className="space-y-3 pt-3">
           {/* Distribution Mode */}
-          <div className="space-y-1.5">
-            <Label>Distribution</Label>
+          <Field>
+            <FieldLabel>Distribution</FieldLabel>
             <div className="grid grid-cols-4 gap-1.5">
               {DISTRIBUTION_OPTIONS.map((option) => (
                 <button
@@ -178,7 +178,7 @@ export function HorizontalPosition({ calculator }: Props) {
                 </button>
               ))}
             </div>
-          </div>
+          </Field>
 
           {/* Anchor options - only show for fixed distribution */}
           {state.hDistribution === 'fixed' && (
@@ -218,11 +218,12 @@ export function HorizontalPosition({ calculator }: Props) {
               </div>
 
               {state.hAnchorType !== 'center' && (
-                <div className="space-y-1.5 mt-3">
-                  <Label>
+                <Field className="mt-3">
+                  <FieldLabel htmlFor="hAnchorValue">
                     Distance from {state.hAnchorType} edge ({state.unit})
-                  </Label>
+                  </FieldLabel>
                   <Input
+                    id="hAnchorValue"
                     type="number"
                     step="0.125"
                     value={parseFloat(u(state.hAnchorValue).toFixed(3))}
@@ -230,12 +231,13 @@ export function HorizontalPosition({ calculator }: Props) {
                       setHAnchorValue(fromU(parseFloat(e.target.value) || 0))
                     }
                   />
-                </div>
+                </Field>
               )}
 
-              <div className="space-y-1.5 mt-3">
-                <Label>Gap between frames ({state.unit})</Label>
+              <Field className="mt-3">
+                <FieldLabel htmlFor="hSpacing">Gap between frames ({state.unit})</FieldLabel>
                 <Input
+                  id="hSpacing"
                   type="number"
                   step="0.125"
                   min={0}
@@ -244,7 +246,7 @@ export function HorizontalPosition({ calculator }: Props) {
                     setHSpacing(fromU(parseFloat(e.target.value) || 0))
                   }
                 />
-              </div>
+              </Field>
             </>
           )}
         </div>

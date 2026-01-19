@@ -4,8 +4,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
 
 interface Props {
@@ -31,9 +31,10 @@ export function WallDimensions({ calculator }: Props) {
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="grid grid-cols-2 gap-3 pt-3">
-          <div className="space-y-1.5">
-            <Label>Width ({state.unit})</Label>
+          <Field>
+            <FieldLabel htmlFor="wallWidth">Width ({state.unit})</FieldLabel>
             <Input
+              id="wallWidth"
               type="number"
               step="0.125"
               value={parseFloat(u(state.wallWidth).toFixed(3))}
@@ -41,10 +42,11 @@ export function WallDimensions({ calculator }: Props) {
                 setWallWidth(fromU(parseFloat(e.target.value) || 0))
               }
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Height ({state.unit})</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="wallHeight">Height ({state.unit})</FieldLabel>
             <Input
+              id="wallHeight"
               type="number"
               step="0.125"
               value={parseFloat(u(state.wallHeight).toFixed(3))}
@@ -52,7 +54,7 @@ export function WallDimensions({ calculator }: Props) {
                 setWallHeight(fromU(parseFloat(e.target.value) || 0))
               }
             />
-          </div>
+          </Field>
         </div>
       </CollapsibleContent>
     </Collapsible>

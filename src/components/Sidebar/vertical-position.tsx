@@ -5,6 +5,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
@@ -103,31 +104,31 @@ const options: {
   desc: string;
   defaultValue: number;
 }[] = [
-  {
-    value: 'floor',
-    label: 'From Floor',
-    desc: 'Eye-level standard: 57"',
-    defaultValue: 57,
-  },
-  {
-    value: 'ceiling',
-    label: 'From Ceiling',
-    desc: 'Gap from ceiling (e.g., 6")',
-    defaultValue: 6,
-  },
-  {
-    value: 'center',
-    label: 'Center on Wall',
-    desc: 'Vertically centered',
-    defaultValue: 0,
-  },
-  {
-    value: 'furniture',
-    label: 'Above Furniture',
-    desc: 'Position above a piece of furniture',
-    defaultValue: 8,
-  },
-];
+    {
+      value: 'floor',
+      label: 'From Floor',
+      desc: 'Eye-level standard: 57"',
+      defaultValue: 57,
+    },
+    {
+      value: 'ceiling',
+      label: 'From Ceiling',
+      desc: 'Gap from ceiling (e.g., 6")',
+      defaultValue: 6,
+    },
+    {
+      value: 'center',
+      label: 'Center on Wall',
+      desc: 'Vertically centered',
+      defaultValue: 0,
+    },
+    {
+      value: 'furniture',
+      label: 'Above Furniture',
+      desc: 'Position above a piece of furniture',
+      defaultValue: 8,
+    },
+  ];
 
 export function VerticalPosition({ calculator }: Props) {
   const {
@@ -164,8 +165,8 @@ export function VerticalPosition({ calculator }: Props) {
         <div className="space-y-3 pt-3">
           {/* Distribution Mode - only for multi-row layouts */}
           {showDistribution && (
-            <div className="space-y-1.5">
-              <Label>Distribution</Label>
+            <Field>
+              <FieldLabel>Distribution</FieldLabel>
               <div className="grid grid-cols-4 gap-1.5">
                 {DISTRIBUTION_OPTIONS.map((option) => (
                   <button
@@ -195,7 +196,7 @@ export function VerticalPosition({ calculator }: Props) {
                   </button>
                 ))}
               </div>
-            </div>
+            </Field>
           )}
 
           {/* Anchor options - only show for fixed distribution (or row layout) */}
@@ -220,7 +221,7 @@ export function VerticalPosition({ calculator }: Props) {
                     <input
                       type="radio"
                       checked={state.anchorType === opt.value}
-                      onChange={() => {}}
+                      onChange={() => { }}
                       className="mt-1 accent-emerald-600 dark:accent-emerald-500"
                     />
                     <div>
@@ -237,13 +238,13 @@ export function VerticalPosition({ calculator }: Props) {
 
               {state.anchorType !== 'center' &&
                 state.anchorType !== 'furniture' && (
-                  <div className="space-y-1.5 mt-3">
-                    <Label htmlFor="anchorValue">
+                  <Field className="mt-3">
+                    <FieldLabel htmlFor="anchorValue">
                       {state.anchorType === 'floor'
                         ? 'Distance from floor'
                         : 'Distance from ceiling'}{' '}
                       ({state.unit})
-                    </Label>
+                    </FieldLabel>
                     <Input
                       id="anchorValue"
                       type="number"
@@ -253,71 +254,67 @@ export function VerticalPosition({ calculator }: Props) {
                         setAnchorValue(fromU(parseFloat(e.target.value) || 0))
                       }
                     />
-                  </div>
+                  </Field>
                 )}
 
               {state.anchorType === 'furniture' && (
                 <div className="mt-3 space-y-3">
-                  <div className="bg-gray-100 dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 p-3 space-y-3">
-                    <div className="text-xs font-medium text-gray-600 dark:text-white/60 uppercase tracking-wide">
+                  <FieldSet>
+                    <FieldLegend variant="label">
                       Furniture Dimensions
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="furnitureWidth">
-                          Width ({state.unit})
-                        </Label>
+                    </FieldLegend>
+                    <FieldGroup>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field>
+                          <FieldLabel htmlFor="furnitureWidth">Width ({state.unit})</FieldLabel>
+                          <Input
+                            id="furnitureWidth"
+                            type="number"
+                            step="0.125"
+                            value={parseFloat(u(state.furnitureWidth).toFixed(3))}
+                            onChange={(e) =>
+                              setFurnitureWidth(
+                                fromU(parseFloat(e.target.value) || 0),
+                              )
+                            }
+                          />
+                        </Field>
+                        <Field>
+                          <FieldLabel htmlFor="furnitureHeight">Height ({state.unit})</FieldLabel>
+                          <Input
+                            id="furnitureHeight"
+                            type="number"
+                            step="0.125"
+                            value={parseFloat(
+                              u(state.furnitureHeight).toFixed(3),
+                            )}
+                            onChange={(e) =>
+                              setFurnitureHeight(
+                                fromU(parseFloat(e.target.value) || 0),
+                              )
+                            }
+                          />
+                        </Field>
+                      </div>
+                      <Field>
+                        <FieldLabel htmlFor="furnitureX">Offset from center ({state.unit})</FieldLabel>
                         <Input
-                          id="furnitureWidth"
+                          id="furnitureX"
                           type="number"
                           step="0.125"
-                          value={parseFloat(u(state.furnitureWidth).toFixed(3))}
+                          value={parseFloat(u(state.furnitureX).toFixed(3))}
                           onChange={(e) =>
-                            setFurnitureWidth(
-                              fromU(parseFloat(e.target.value) || 0),
-                            )
+                            setFurnitureX(fromU(parseFloat(e.target.value) || 0))
                           }
                         />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="furnitureHeight">
-                          Height ({state.unit})
-                        </Label>
-                        <Input
-                          id="furnitureHeight"
-                          type="number"
-                          step="0.125"
-                          value={parseFloat(
-                            u(state.furnitureHeight).toFixed(3),
-                          )}
-                          onChange={(e) =>
-                            setFurnitureHeight(
-                              fromU(parseFloat(e.target.value) || 0),
-                            )
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="furnitureX">
-                        Offset from center ({state.unit})
-                      </Label>
-                      <Input
-                        id="furnitureX"
-                        type="number"
-                        step="0.125"
-                        value={parseFloat(u(state.furnitureX).toFixed(3))}
-                        onChange={(e) =>
-                          setFurnitureX(fromU(parseFloat(e.target.value) || 0))
-                        }
-                      />
-                      <p className="text-xs text-gray-500 dark:text-white/50">
-                        0 = centered, negative = left, positive = right
-                      </p>
-                    </div>
-                  </div>
+                        <FieldDescription>
+                          0 = centered, negative = left, positive = right
+                        </FieldDescription>
+                      </Field>
+                    </FieldGroup>
+                  </FieldSet>
 
-                  <div className="flex items-center gap-2">
+                  <Field orientation="horizontal">
                     <Checkbox
                       checked={state.furnitureCentered}
                       id="furnitureCentered"
@@ -329,12 +326,10 @@ export function VerticalPosition({ calculator }: Props) {
                     >
                       Center frames above furniture
                     </Label>
-                  </div>
+                  </Field>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="furnitureGap">
-                      Gap above furniture ({state.unit})
-                    </Label>
+                  <Field>
+                    <FieldLabel htmlFor="furnitureGap">Gap above furniture ({state.unit})</FieldLabel>
                     <Input
                       id="furnitureGap"
                       type="number"
@@ -344,15 +339,16 @@ export function VerticalPosition({ calculator }: Props) {
                         setAnchorValue(fromU(parseFloat(e.target.value) || 0))
                       }
                     />
-                  </div>
+                  </Field>
                 </div>
               )}
 
               {/* Gap input for fixed distribution in multi-row layouts */}
               {showDistribution && (
-                <div className="space-y-1.5 mt-3">
-                  <Label>Gap between rows ({state.unit})</Label>
+                <Field className="mt-3">
+                  <FieldLabel htmlFor="vSpacing">Gap between rows ({state.unit})</FieldLabel>
                   <Input
+                    id="vSpacing"
                     type="number"
                     step="0.125"
                     min={0}
@@ -361,7 +357,7 @@ export function VerticalPosition({ calculator }: Props) {
                       setVSpacing(fromU(parseFloat(e.target.value) || 0))
                     }
                   />
-                </div>
+                </Field>
               )}
             </>
           )}

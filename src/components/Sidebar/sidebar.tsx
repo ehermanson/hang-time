@@ -335,7 +335,7 @@ export function Sidebar({ calculator }: SidebarProps) {
           </TooltipProvider>
         </div>
 
-        <Tabs defaultValue="config" >
+        <Tabs defaultValue="config" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="w-full h-auto p-0 bg-transparent rounded-none border-b border-gray-200 dark:border-white/10">
             <TabsTrigger
               value="config"

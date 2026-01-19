@@ -4,8 +4,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -179,13 +179,13 @@ export function FrameSize({ calculator }: Props) {
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-3 pt-3">
-          <div className="space-y-1.5">
-            <Label>Size</Label>
+          <Field>
+            <FieldLabel htmlFor="frameSize">Size</FieldLabel>
             <Select
               value={currentTemplate || 'custom'}
               onValueChange={handleTemplateChange}
             >
-              <SelectTrigger>
+              <SelectTrigger id="frameSize">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -197,13 +197,14 @@ export function FrameSize({ calculator }: Props) {
                 <SelectItem value="custom">Custom</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </Field>
 
           {isCustom && (
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <Label>Width ({state.unit})</Label>
+              <Field>
+                <FieldLabel htmlFor="frameWidth">Width ({state.unit})</FieldLabel>
                 <Input
+                  id="frameWidth"
                   type="number"
                   step="0.125"
                   min={0.125}
@@ -212,10 +213,11 @@ export function FrameSize({ calculator }: Props) {
                     setFrameWidth(fromU(parseFloat(e.target.value) || 0))
                   }
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Height ({state.unit})</Label>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="frameHeight">Height ({state.unit})</FieldLabel>
                 <Input
+                  id="frameHeight"
                   type="number"
                   step="0.125"
                   min={0.125}
@@ -224,16 +226,17 @@ export function FrameSize({ calculator }: Props) {
                     setFrameHeight(fromU(parseFloat(e.target.value) || 0))
                   }
                 />
-              </div>
+              </Field>
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <Label>Hook Offset ({state.unit}) </Label>
-            <span className="text-xs text-gray-500 dark:text-white/50 block">
+          <Field>
+            <FieldLabel htmlFor="hookOffset">Hook Offset ({state.unit})</FieldLabel>
+            <FieldDescription>
               Distance from top edge of frame to hanging point
-            </span>
+            </FieldDescription>
             <Input
+              id="hookOffset"
               type="number"
               step="0.125"
               max={parseFloat(u(state.frameHeight).toFixed(3))}
@@ -242,10 +245,10 @@ export function FrameSize({ calculator }: Props) {
                 setHangingOffset(fromU(parseFloat(e.target.value) || 0))
               }
             />
-          </div>
+          </Field>
 
-          <div className="mt-3 space-y-1.5">
-            <Label>Hanging Type</Label>
+          <Field className="mt-3">
+            <FieldLabel>Hanging Type</FieldLabel>
             <div className="grid grid-cols-2 gap-2">
               {HANGING_OPTIONS.map((option) => (
                 <button
@@ -276,12 +279,13 @@ export function FrameSize({ calculator }: Props) {
               ))}
             </div>
             {state.hangingType === 'dual' && (
-              <div className="pt-2">
-                <Label>Hook Inset ({state.unit})</Label>
-                <span className="text-xs text-gray-500 dark:text-white/50 block">
+              <Field className="pt-2">
+                <FieldLabel htmlFor="hookInset">Hook Inset ({state.unit})</FieldLabel>
+                <FieldDescription>
                   Distance from edge of frame to hanging point
-                </span>
+                </FieldDescription>
                 <Input
+                  id="hookInset"
                   type="number"
                   step="0.125"
                   min={0}
@@ -290,11 +294,10 @@ export function FrameSize({ calculator }: Props) {
                   onChange={(e) =>
                     setHookInset(fromU(parseFloat(e.target.value) || 0))
                   }
-                  className="mt-1.5"
                 />
-              </div>
+              </Field>
             )}
-          </div>
+          </Field>
         </div>
       </CollapsibleContent>
     </Collapsible>
