@@ -60,7 +60,7 @@ const DISTRIBUTION_OPTIONS: { value: Distribution; label: string; icon: typeof A
   { value: 'space-around', label: 'Around', icon: AlignHorizontalSpaceAround },
 ];
 
-const FRAME_TEMPLATES = [
+const FRAME_PRESETS = [
   { label: '4×6"', width: 4, height: 6 },
   { label: '5×7"', width: 5, height: 7 },
   { label: '8×10"', width: 8, height: 10 },
@@ -69,6 +69,10 @@ const FRAME_TEMPLATES = [
   { label: '8×8"', width: 8, height: 8 },
   { label: '12×12"', width: 12, height: 12 },
 ];
+
+// Check if dimensions match a preset
+const isPresetSize = (width: number, height: number) =>
+  FRAME_PRESETS.some((p) => p.width === width && p.height === height);
 
 // Draggable frame card with full editing capabilities
 interface DraggableFrameCardProps {
@@ -155,55 +159,73 @@ function DraggableFrameCard({
         ) : (
           <>
             <div className="flex flex-wrap gap-1">
-              {FRAME_TEMPLATES.map((t) => (
+              {FRAME_PRESETS.map((p) => (
                 <button
-                  key={t.label}
-                  onClick={() => onUpdate(frame.id, { width: t.width, height: t.height })}
+                  key={p.label}
+                  onClick={() => onUpdate(frame.id, { width: p.width, height: p.height })}
                   className={cn(
                     'px-1.5 py-0.5 text-[10px] rounded border transition-colors',
-                    t.width === frame.width && t.height === frame.height
+                    p.width === frame.width && p.height === frame.height
                       ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-500/20 dark:text-pink-300'
                       : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300 dark:border-white/10 dark:bg-white/5 dark:text-white/50',
                   )}
                 >
-                  {t.label}
+                  {p.label}
                 </button>
               ))}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Field>
-                <FieldLabel htmlFor={`width-${frame.id}`} className="text-[10px]">
-                  W ({unit})
-                </FieldLabel>
-                <Input
-                  id={`width-${frame.id}`}
-                  type="number"
-                  step="0.125"
-                  min={0.125}
-                  value={parseFloat(u(frame.width).toFixed(3))}
-                  onChange={(e) =>
-                    onUpdate(frame.id, { width: fromU(parseFloat(e.target.value) || 1) })
+              <button
+                onClick={() => {
+                  // Set to a non-preset size to reveal custom inputs
+                  if (isPresetSize(frame.width, frame.height)) {
+                    onUpdate(frame.id, { width: frame.width + 0.1, height: frame.height + 0.1 });
                   }
-                  className="h-7 text-xs"
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor={`height-${frame.id}`} className="text-[10px]">
-                  H ({unit})
-                </FieldLabel>
-                <Input
-                  id={`height-${frame.id}`}
-                  type="number"
-                  step="0.125"
-                  min={0.125}
-                  value={parseFloat(u(frame.height).toFixed(3))}
-                  onChange={(e) =>
-                    onUpdate(frame.id, { height: fromU(parseFloat(e.target.value) || 1) })
-                  }
-                  className="h-7 text-xs"
-                />
-              </Field>
+                }}
+                className={cn(
+                  'px-1.5 py-0.5 text-[10px] rounded border transition-colors',
+                  !isPresetSize(frame.width, frame.height)
+                    ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-500/20 dark:text-pink-300'
+                    : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300 dark:border-white/10 dark:bg-white/5 dark:text-white/50',
+                )}
+              >
+                Custom
+              </button>
             </div>
+            {!isPresetSize(frame.width, frame.height) && (
+              <div className="grid grid-cols-2 gap-2">
+                <Field>
+                  <FieldLabel htmlFor={`width-${frame.id}`} className="text-[10px]">
+                    W ({unit})
+                  </FieldLabel>
+                  <Input
+                    id={`width-${frame.id}`}
+                    type="number"
+                    step="0.125"
+                    min={0.125}
+                    value={parseFloat(u(frame.width).toFixed(3))}
+                    onChange={(e) =>
+                      onUpdate(frame.id, { width: fromU(parseFloat(e.target.value) || 1) })
+                    }
+                    className="h-7 text-xs"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor={`height-${frame.id}`} className="text-[10px]">
+                    H ({unit})
+                  </FieldLabel>
+                  <Input
+                    id={`height-${frame.id}`}
+                    type="number"
+                    step="0.125"
+                    min={0.125}
+                    value={parseFloat(u(frame.height).toFixed(3))}
+                    onChange={(e) =>
+                      onUpdate(frame.id, { height: fromU(parseFloat(e.target.value) || 1) })
+                    }
+                    className="h-7 text-xs"
+                  />
+                </Field>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -539,54 +561,73 @@ export function GalleryFrames({ calculator }: Props) {
           {state.uniformSize && (
             <div className="space-y-2">
               <div className="flex flex-wrap gap-1">
-                {FRAME_TEMPLATES.map((t) => (
+                {FRAME_PRESETS.map((p) => (
                   <button
-                    key={t.label}
+                    key={p.label}
                     onClick={() => {
-                      setFrameWidth(t.width);
-                      setFrameHeight(t.height);
+                      setFrameWidth(p.width);
+                      setFrameHeight(p.height);
                     }}
                     className={cn(
                       'px-2 py-0.5 text-xs rounded border transition-colors',
-                      t.width === state.frameWidth && t.height === state.frameHeight
+                      p.width === state.frameWidth && p.height === state.frameHeight
                         ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-500/20 dark:text-pink-300'
                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:border-white/20',
                     )}
                   >
-                    {t.label}
+                    {p.label}
                   </button>
                 ))}
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Field>
-                  <FieldLabel htmlFor="uniform-width">W ({state.unit})</FieldLabel>
-                  <Input
-                    id="uniform-width"
-                    type="number"
-                    step="0.125"
-                    min={0.125}
-                    value={parseFloat(u(state.frameWidth).toFixed(3))}
-                    onChange={(e) =>
-                      setFrameWidth(fromU(parseFloat(e.target.value) || 1))
+                <button
+                  onClick={() => {
+                    // Set to a non-preset size to reveal custom inputs
+                    if (isPresetSize(state.frameWidth, state.frameHeight)) {
+                      setFrameWidth(state.frameWidth + 0.1);
+                      setFrameHeight(state.frameHeight + 0.1);
                     }
-                    className="h-8 text-sm"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="uniform-height">H ({state.unit})</FieldLabel>
-                  <Input
-                    id="uniform-height"
-                    type="number"
-                    step="0.125"
-                    min={0.125}
-                    value={parseFloat(u(state.frameHeight).toFixed(3))}
-                    onChange={(e) =>
-                      setFrameHeight(fromU(parseFloat(e.target.value) || 1))
-                    }
-                    className="h-8 text-sm"
-                  />
-                </Field>
+                  }}
+                  className={cn(
+                    'px-2 py-0.5 text-xs rounded border transition-colors',
+                    !isPresetSize(state.frameWidth, state.frameHeight)
+                      ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-500/20 dark:text-pink-300'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:border-white/20',
+                  )}
+                >
+                  Custom
+                </button>
               </div>
+              {!isPresetSize(state.frameWidth, state.frameHeight) && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Field>
+                    <FieldLabel htmlFor="uniform-width">W ({state.unit})</FieldLabel>
+                    <Input
+                      id="uniform-width"
+                      type="number"
+                      step="0.125"
+                      min={0.125}
+                      value={parseFloat(u(state.frameWidth).toFixed(3))}
+                      onChange={(e) =>
+                        setFrameWidth(fromU(parseFloat(e.target.value) || 1))
+                      }
+                      className="h-8 text-sm"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="uniform-height">H ({state.unit})</FieldLabel>
+                    <Input
+                      id="uniform-height"
+                      type="number"
+                      step="0.125"
+                      min={0.125}
+                      value={parseFloat(u(state.frameHeight).toFixed(3))}
+                      onChange={(e) =>
+                        setFrameHeight(fromU(parseFloat(e.target.value) || 1))
+                      }
+                      className="h-8 text-sm"
+                    />
+                  </Field>
+                </div>
+              )}
             </div>
           )}
 
