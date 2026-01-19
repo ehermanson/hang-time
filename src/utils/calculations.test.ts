@@ -446,6 +446,69 @@ describe('calculateLayoutPositions', () => {
     });
   });
 
+  describe('Vertical Alignment within Rows', () => {
+    it('vAlign top: aligns frames to top of row', () => {
+      const frames = [
+        createFrame(16, 10, 0), // short frame
+        createFrame(16, 20, 0), // tall frame
+      ];
+      const state = createDefaultState({
+        frames,
+        uniformSize: false,
+        rowMode: 'manual',
+        vAlign: 'top',
+        anchorType: 'ceiling',
+        anchorValue: 0,
+      });
+      const positions = calculateLayoutPositions(state);
+      // Both frames should start at y=0 (top aligned)
+      expect(positions[0].y).toBe(0);
+      expect(positions[1].y).toBe(0);
+    });
+
+    it('vAlign bottom: aligns frames to bottom of row', () => {
+      const frames = [
+        createFrame(16, 10, 0), // short frame
+        createFrame(16, 20, 0), // tall frame
+      ];
+      const state = createDefaultState({
+        frames,
+        uniformSize: false,
+        rowMode: 'manual',
+        vAlign: 'bottom',
+        anchorType: 'ceiling',
+        anchorValue: 0,
+      });
+      const positions = calculateLayoutPositions(state);
+      // Row height is 20 (max of frames)
+      // Short frame should be at y = 0 + (20 - 10) = 10
+      // Tall frame should be at y = 0
+      expect(positions[0].y).toBe(10); // short frame pushed down
+      expect(positions[1].y).toBe(0);  // tall frame at top
+    });
+
+    it('vAlign center: centers frames within row', () => {
+      const frames = [
+        createFrame(16, 10, 0), // short frame
+        createFrame(16, 20, 0), // tall frame
+      ];
+      const state = createDefaultState({
+        frames,
+        uniformSize: false,
+        rowMode: 'manual',
+        vAlign: 'center',
+        anchorType: 'ceiling',
+        anchorValue: 0,
+      });
+      const positions = calculateLayoutPositions(state);
+      // Row height is 20 (max of frames)
+      // Short frame should be at y = 0 + (20 - 10) / 2 = 5
+      // Tall frame should be at y = 0
+      expect(positions[0].y).toBe(5);  // short frame centered
+      expect(positions[1].y).toBe(0);  // tall frame at top (fills row)
+    });
+  });
+
   describe('Distance Calculations', () => {
     it('calculates fromLeft as distance to hook', () => {
       const state = createDefaultState({

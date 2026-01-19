@@ -92,7 +92,7 @@ const furnitureParsers = {
 
 const layoutParsers = {
   va: parseAsStringLiteral(['center', 'top', 'bottom'] as const).withDefault('center'),
-  rm: parseAsStringLiteral(['auto', 'manual'] as const).withDefault('auto'),
+  rm: parseAsStringLiteral(['auto', 'manual'] as const).withDefault('manual'),
   mw: parseAsFloat.withDefault(-1), // -1 = use wallWidth, positive = custom
   rs: parseAsFloat.withDefault(3), // row spacing (vertical between rows)
   rc: parseAsString.withDefault(''), // JSON-encoded GalleryRowConfig[]

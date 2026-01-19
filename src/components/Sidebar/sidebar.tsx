@@ -32,7 +32,6 @@ import { useSavedLayouts } from '@/hooks/use-saved-layouts';
 import { cn } from '@/lib/utils';
 import { Furniture } from './furniture';
 import { GalleryFrames } from './gallery-frames';
-import { GalleryRowSettings } from './gallery-row-settings';
 import { GalleryTemplatePicker } from './gallery-template-picker';
 import { HorizontalPosition } from './horizontal-position';
 import { VerticalPosition } from './vertical-position';
@@ -389,12 +388,6 @@ export function Sidebar({ calculator }: SidebarProps) {
                 <WallDimensions calculator={calculator} />
                 <GalleryFrames calculator={calculator} />
                 <GalleryTemplatePicker calculator={calculator} />
-                {state.layoutMode === 'freeform' && (
-                  <GalleryRowSettings
-                    calculator={calculator}
-                    layoutPositions={calculator.layoutPositions}
-                  />
-                )}
                 <VerticalPosition calculator={calculator} />
                 {state.anchorType === 'furniture' && (
                   <Furniture calculator={calculator} />
