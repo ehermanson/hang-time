@@ -2,7 +2,7 @@ export type Unit = 'in' | 'cm';
 
 export type Theme = 'light' | 'dark';
 
-export type LayoutType = 'grid' | 'row';
+export type LayoutType = 'grid' | 'row' | 'gallery';
 
 export type AnchorType = 'floor' | 'ceiling' | 'center' | 'furniture';
 
@@ -21,6 +21,14 @@ export type FurnitureAnchor = 'left' | 'center' | 'right';
 export type FrameFurnitureAlignment = 'left' | 'center' | 'right' | 'span';
 
 export type FurnitureVerticalAnchor = 'center' | 'ceiling' | 'above-furniture';
+
+export type GalleryVAlign = 'center' | 'top' | 'bottom';
+
+export interface GalleryFrame {
+  id: string;
+  width: number;
+  height: number;
+}
 
 export interface FramePosition {
   id: number;
@@ -84,6 +92,10 @@ export interface CalculatorState {
   furnitureOffset: number; // Distance from anchor edge (always positive)
   frameFurnitureAlign: FrameFurnitureAlignment; // How frames align to furniture
   furnitureVAnchor: FurnitureVerticalAnchor; // Vertical anchor for frames above furniture
+
+  // Gallery mode (variable-sized frames)
+  galleryFrames: GalleryFrame[];
+  galleryVAlign: GalleryVAlign;
 }
 
 export interface SavedLayout {

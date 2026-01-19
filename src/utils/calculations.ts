@@ -32,9 +32,126 @@ export const formatShort = (value: number, unit: 'in' | 'cm'): string => {
     : `${formatNumber(value, decimals)}cm`;
 };
 
+function calculateGalleryPositions(state: CalculatorState): FramePosition[] {
+  const {
+    galleryFrames,
+    galleryVAlign,
+    hSpacing,
+    hangingOffset,
+    hangingType,
+    hookInset,
+    anchorType,
+    anchorValue,
+    hAnchorType,
+    hAnchorValue,
+    wallWidth,
+    wallHeight,
+  } = state;
+
+  if (galleryFrames.length === 0) return [];
+
+  // Calculate total width of gallery (sum of frames + gaps)
+  const totalWidth =
+    galleryFrames.reduce((sum, f) => sum + f.width, 0) +
+    (galleryFrames.length - 1) * hSpacing;
+
+  // Calculate max height of all frames
+  const maxHeight = Math.max(...galleryFrames.map((f) => f.height));
+
+  // Calculate horizontal start position (bounding box left edge)
+  let startX: number;
+  if (hAnchorType === 'center') {
+    startX = (wallWidth - totalWidth) / 2;
+  } else if (hAnchorType === 'left') {
+    startX = hAnchorValue;
+  } else {
+    startX = wallWidth - totalWidth - hAnchorValue;
+  }
+
+  // Calculate vertical position of the bounding box top
+  let boundingBoxY: number;
+  if (anchorType === 'center') {
+    boundingBoxY = (wallHeight - maxHeight) / 2;
+  } else if (anchorType === 'ceiling') {
+    boundingBoxY = anchorValue;
+  } else if (anchorType === 'floor') {
+    // anchorValue is distance from floor to bottom of bounding box
+    boundingBoxY = wallHeight - anchorValue - maxHeight;
+  } else {
+    // furniture mode - treat same as floor for now
+    boundingBoxY = wallHeight - anchorValue - maxHeight;
+  }
+
+  const positions: FramePosition[] = [];
+  let currentX = startX;
+
+  galleryFrames.forEach((frame, index) => {
+    // Position frame vertically within bounding box based on alignment
+    let y: number;
+    if (galleryVAlign === 'top') {
+      y = boundingBoxY;
+    } else if (galleryVAlign === 'bottom') {
+      y = boundingBoxY + maxHeight - frame.height;
+    } else {
+      // center (default)
+      y = boundingBoxY + (maxHeight - frame.height) / 2;
+    }
+    const hookY = y + hangingOffset;
+
+    // Calculate hook positions based on hanging type
+    let hookX: number;
+    let hookX2: number | undefined;
+    let hookGap: number | undefined;
+
+    if (hangingType === 'dual') {
+      hookX = currentX + hookInset;
+      hookX2 = currentX + frame.width - hookInset;
+      hookGap = frame.width - 2 * hookInset;
+    } else {
+      hookX = currentX + frame.width / 2;
+    }
+
+    // Check if frame extends beyond wall boundaries
+    const isOutOfBounds =
+      currentX < 0 ||
+      y < 0 ||
+      currentX + frame.width > wallWidth ||
+      y + frame.height > wallHeight;
+
+    positions.push({
+      id: index + 1,
+      name: `Frame ${index + 1}`,
+      x: currentX,
+      y,
+      width: frame.width,
+      height: frame.height,
+      hangingOffset,
+      hookX,
+      hookX2,
+      hookY,
+      hookGap,
+      fromLeft: hookX,
+      fromTop: hookY,
+      fromFloor: wallHeight - hookY,
+      fromRight: wallWidth - (hookX2 ?? hookX),
+      fromCeiling: hookY,
+      isOutOfBounds,
+    });
+
+    currentX += frame.width + hSpacing;
+  });
+
+  return positions;
+}
+
 export function calculateLayoutPositions(
   state: CalculatorState,
 ): FramePosition[] {
+  // Gallery mode has separate calculation
+  if (state.layoutType === 'gallery') {
+    return calculateGalleryPositions(state);
+  }
+
   const {
     layoutType,
     frameCount,

@@ -1,6 +1,7 @@
 import {
   parseAsFloat,
   parseAsInteger,
+  parseAsString,
   parseAsStringLiteral,
   useQueryStates,
 } from 'nuqs';
@@ -13,6 +14,8 @@ import type {
   FramePosition,
   FurnitureAnchor,
   FurnitureVerticalAnchor,
+  GalleryFrame,
+  GalleryVAlign,
   HangingType,
   HorizontalAnchorType,
   LayoutType,
@@ -41,10 +44,15 @@ const wallParsers = {
 };
 
 const layoutParsers = {
-  lt: parseAsStringLiteral(['grid', 'row'] as const).withDefault('row'),
+  lt: parseAsStringLiteral(['grid', 'row', 'gallery'] as const).withDefault('row'),
   fc: parseAsInteger.withDefault(3), // frame count - primary input
   gr: parseAsInteger.withDefault(1),
   gc: parseAsInteger.withDefault(3),
+};
+
+const galleryParsers = {
+  gf: parseAsString.withDefault(''), // JSON-encoded GalleryFrame[]
+  gva: parseAsStringLiteral(['center', 'top', 'bottom'] as const).withDefault('center'),
 };
 
 const frameParsers = {
@@ -92,6 +100,30 @@ const furnitureParsers = {
   fva: parseAsStringLiteral(['center', 'ceiling', 'above-furniture'] as const).withDefault('above-furniture'),
 };
 
+// Helper to generate unique IDs
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 9);
+}
+
+// Parse gallery frames from JSON string
+function parseGalleryFrames(json: string): GalleryFrame[] {
+  if (!json) return [];
+  try {
+    const parsed = JSON.parse(json);
+    if (Array.isArray(parsed)) {
+      return parsed.filter(
+        (f): f is GalleryFrame =>
+          typeof f.id === 'string' &&
+          typeof f.width === 'number' &&
+          typeof f.height === 'number'
+      );
+    }
+  } catch {
+    // Invalid JSON
+  }
+  return [];
+}
+
 export function useCalculator() {
   // URL-synced state grouped by concern
   const [wall, setWall] = useQueryStates(wallParsers);
@@ -99,6 +131,13 @@ export function useCalculator() {
   const [frame, setFrame] = useQueryStates(frameParsers);
   const [position, setPosition] = useQueryStates(positionParsers);
   const [furniture, setFurniture] = useQueryStates(furnitureParsers);
+  const [gallery, setGallery] = useQueryStates(galleryParsers);
+
+  // Parse gallery frames from URL state
+  const galleryFrames = useMemo(
+    () => parseGalleryFrames(gallery.gf),
+    [gallery.gf]
+  );
 
   // Construct state object for calculations
   const state: CalculatorState = useMemo(
@@ -129,8 +168,10 @@ export function useCalculator() {
       furnitureOffset: furniture.fuo,
       frameFurnitureAlign: furniture.ffa as FrameFurnitureAlignment,
       furnitureVAnchor: furniture.fva as FurnitureVerticalAnchor,
+      galleryFrames,
+      galleryVAlign: gallery.gva as GalleryVAlign,
     }),
-    [wall, layout, frame, position, furniture],
+    [wall, layout, frame, position, furniture, galleryFrames, gallery.gva],
   );
 
   // Unit conversion helpers
@@ -189,6 +230,56 @@ export function useCalculator() {
   const setFrameFurnitureAlign = (value: FrameFurnitureAlignment) => setFurniture({ ffa: value });
   const setFurnitureVAnchor = (value: FurnitureVerticalAnchor) => setFurniture({ fva: value });
 
+  // Gallery frame setters
+  const setGalleryFrames = useCallback(
+    (frames: GalleryFrame[]) => {
+      setGallery({ gf: frames.length > 0 ? JSON.stringify(frames) : '' });
+    },
+    [setGallery]
+  );
+
+  const addGalleryFrame = useCallback(() => {
+    if (galleryFrames.length >= 8) return;
+    const newFrame: GalleryFrame = {
+      id: generateId(),
+      width: 12,
+      height: 12,
+    };
+    setGalleryFrames([...galleryFrames, newFrame]);
+  }, [galleryFrames, setGalleryFrames]);
+
+  const removeGalleryFrame = useCallback(
+    (id: string) => {
+      setGalleryFrames(galleryFrames.filter((f) => f.id !== id));
+    },
+    [galleryFrames, setGalleryFrames]
+  );
+
+  const updateGalleryFrame = useCallback(
+    (id: string, updates: Partial<GalleryFrame>) => {
+      setGalleryFrames(
+        galleryFrames.map((f) => (f.id === id ? { ...f, ...updates } : f))
+      );
+    },
+    [galleryFrames, setGalleryFrames]
+  );
+
+  const reorderGalleryFrames = useCallback(
+    (activeId: string, overId: string) => {
+      const oldIndex = galleryFrames.findIndex((f) => f.id === activeId);
+      const newIndex = galleryFrames.findIndex((f) => f.id === overId);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const newFrames = [...galleryFrames];
+      const [removed] = newFrames.splice(oldIndex, 1);
+      newFrames.splice(newIndex, 0, removed);
+      setGalleryFrames(newFrames);
+    },
+    [galleryFrames, setGalleryFrames]
+  );
+
+  const setGalleryVAlign = (value: GalleryVAlign) => setGallery({ gva: value });
+
   return {
     state,
     layoutPositions,
@@ -222,6 +313,12 @@ export function useCalculator() {
     setFurnitureOffset,
     setFrameFurnitureAlign,
     setFurnitureVAnchor,
+    setGalleryFrames,
+    addGalleryFrame,
+    removeGalleryFrame,
+    updateGalleryFrame,
+    reorderGalleryFrames,
+    setGalleryVAlign,
   };
 }
 

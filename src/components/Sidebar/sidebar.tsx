@@ -30,6 +30,7 @@ import { useSavedLayouts } from '@/hooks/use-saved-layouts';
 import { cn } from '@/lib/utils';
 import { FrameSize } from './frame-size';
 import { Furniture } from './furniture';
+import { GalleryFrames } from './gallery-frames';
 import { HorizontalPosition } from './horizontal-position';
 import { LayoutTypeSelector } from './layout-type-selector';
 import { VerticalPosition } from './vertical-position';
@@ -365,7 +366,11 @@ export function Sidebar({ calculator }: SidebarProps) {
             <div className="p-4 space-y-4">
               <WallDimensions calculator={calculator} />
               <LayoutTypeSelector calculator={calculator} />
-              <FrameSize calculator={calculator} />
+              {state.layoutType === 'gallery' ? (
+                <GalleryFrames calculator={calculator} />
+              ) : (
+                <FrameSize calculator={calculator} />
+              )}
               <VerticalPosition calculator={calculator} />
               {state.anchorType === 'furniture' ? (
                 <Furniture calculator={calculator} />

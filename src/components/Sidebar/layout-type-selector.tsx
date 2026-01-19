@@ -1,4 +1,4 @@
-import { ChevronDown, LayoutGrid } from 'lucide-react';
+import { ChevronDown, Images, LayoutGrid } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   Collapsible,
@@ -113,7 +113,9 @@ function LayoutPreview({
 }
 
 export function LayoutTypeSelector({ calculator }: Props) {
-  const { state, setFrameCount, applyLayout } = calculator;
+  const { state, setFrameCount, applyLayout, setLayoutType, addGalleryFrame } = calculator;
+
+  const isGalleryMode = state.layoutType === 'gallery';
 
   const layoutOptions = useMemo(
     () => getLayoutOptions(state.frameCount),
@@ -127,6 +129,19 @@ export function LayoutTypeSelector({ calculator }: Props) {
     applyLayout(option.type, option.rows, option.cols);
   };
 
+  const handleSelectGallery = () => {
+    setLayoutType('gallery');
+    // Initialize with one frame if empty
+    if (state.galleryFrames.length === 0) {
+      addGalleryFrame();
+    }
+  };
+
+  const handleSelectUniform = () => {
+    // Switch back to row mode
+    applyLayout('row', 1, state.frameCount);
+  };
+
   return (
     <Collapsible
       defaultOpen
@@ -135,7 +150,11 @@ export function LayoutTypeSelector({ calculator }: Props) {
       <CollapsibleTrigger className="w-full group">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-white/90 flex items-center gap-2">
           <span className="w-6 h-6 rounded-lg flex items-center justify-center bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
-            <LayoutGrid className="h-3.5 w-3.5" />
+            {isGalleryMode ? (
+              <Images className="h-3.5 w-3.5" />
+            ) : (
+              <LayoutGrid className="h-3.5 w-3.5" />
+            )}
           </span>
           Frame Arrangement
           <ChevronDown className="h-4 w-4 ml-auto text-gray-400 transition-transform group-data-[state=closed]:-rotate-90" />
@@ -143,61 +162,126 @@ export function LayoutTypeSelector({ calculator }: Props) {
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-4 pt-3">
-          {/* Frame Count - Primary Input */}
-          <Field>
-            <FieldLabel htmlFor="frameCount">Number of Frames</FieldLabel>
-            <Input
-              id="frameCount"
-              type="number"
-              min="1"
-              max="20"
-              value={state.frameCount}
-              onChange={(e) =>
-                setFrameCount(
-                  Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)),
-                )
-              }
-              className="text-lg font-medium text-center bg-gray-50 border-gray-200 text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
-            />
-          </Field>
-
-          {/* Layout Options */}
-          <div className="grid grid-cols-3 gap-2">
-            {layoutOptions.map((option) => {
-              const optionKey = `${option.type}-${option.rows}-${option.cols}`;
-              const isSelected = currentLayoutKey === optionKey;
-
-              return (
-                <button
-                  key={optionKey}
-                  onClick={() => handleSelectLayout(option)}
-                  className={cn(
-                    'flex flex-col items-center justify-end p-2 rounded-lg border transition-all',
-                    isSelected
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/20'
-                      : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10',
-                  )}
-                >
-                  <LayoutPreview
-                    rows={option.rows}
-                    cols={option.cols}
-                    frameCount={state.frameCount}
-                    isSelected={isSelected}
-                  />
-                  <span
-                    className={cn(
-                      'text-xs font-medium mt-2',
-                      isSelected
-                        ? 'text-indigo-600 dark:text-indigo-300'
-                        : 'text-gray-600 dark:text-white/60',
-                    )}
-                  >
-                    {option.label}
-                  </span>
-                </button>
-              );
-            })}
+          {/* Mode Toggle: Uniform vs Gallery */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={handleSelectUniform}
+              className={cn(
+                'flex flex-col items-center p-2 rounded-lg border transition-all',
+                !isGalleryMode
+                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/20'
+                  : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10',
+              )}
+            >
+              <LayoutGrid
+                className={cn(
+                  'h-5 w-5',
+                  !isGalleryMode
+                    ? 'text-indigo-500 dark:text-indigo-400'
+                    : 'text-gray-400 dark:text-white/40',
+                )}
+              />
+              <span
+                className={cn(
+                  'text-xs font-medium mt-1',
+                  !isGalleryMode
+                    ? 'text-indigo-600 dark:text-indigo-300'
+                    : 'text-gray-600 dark:text-white/60',
+                )}
+              >
+                Uniform
+              </span>
+            </button>
+            <button
+              onClick={handleSelectGallery}
+              className={cn(
+                'flex flex-col items-center p-2 rounded-lg border transition-all',
+                isGalleryMode
+                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/20'
+                  : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10',
+              )}
+            >
+              <Images
+                className={cn(
+                  'h-5 w-5',
+                  isGalleryMode
+                    ? 'text-indigo-500 dark:text-indigo-400'
+                    : 'text-gray-400 dark:text-white/40',
+                )}
+              />
+              <span
+                className={cn(
+                  'text-xs font-medium mt-1',
+                  isGalleryMode
+                    ? 'text-indigo-600 dark:text-indigo-300'
+                    : 'text-gray-600 dark:text-white/60',
+                )}
+              >
+                Gallery
+              </span>
+            </button>
           </div>
+
+          {/* Uniform mode options */}
+          {!isGalleryMode && (
+            <>
+              {/* Frame Count - Primary Input */}
+              <Field>
+                <FieldLabel htmlFor="frameCount">Number of Frames</FieldLabel>
+                <Input
+                  id="frameCount"
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={state.frameCount}
+                  onChange={(e) =>
+                    setFrameCount(
+                      Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)),
+                    )
+                  }
+                  className="text-lg font-medium text-center bg-gray-50 border-gray-200 text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
+                />
+              </Field>
+
+              {/* Layout Options */}
+              <div className="grid grid-cols-3 gap-2">
+                {layoutOptions.map((option) => {
+                  const optionKey = `${option.type}-${option.rows}-${option.cols}`;
+                  const isSelected = currentLayoutKey === optionKey;
+
+                  return (
+                    <button
+                      key={optionKey}
+                      onClick={() => handleSelectLayout(option)}
+                      className={cn(
+                        'flex flex-col items-center justify-end p-2 rounded-lg border transition-all',
+                        isSelected
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/20'
+                          : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10',
+                      )}
+                    >
+                      <LayoutPreview
+                        rows={option.rows}
+                        cols={option.cols}
+                        frameCount={state.frameCount}
+                        isSelected={isSelected}
+                      />
+                      <span
+                        className={cn(
+                          'text-xs font-medium mt-2',
+                          isSelected
+                            ? 'text-indigo-600 dark:text-indigo-300'
+                            : 'text-gray-600 dark:text-white/60',
+                        )}
+                      >
+                        {option.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       </CollapsibleContent>
     </Collapsible>

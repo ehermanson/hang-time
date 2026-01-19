@@ -39,6 +39,8 @@ const createDefaultState = (
   furnitureOffset: 0,
   frameFurnitureAlign: 'center',
   furnitureVAnchor: 'above-furniture',
+  galleryFrames: [],
+  galleryVAlign: 'center',
   ...overrides,
 });
 
