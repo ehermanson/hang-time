@@ -63,13 +63,18 @@ export function calculateLayoutPositions(
   const rows = layoutType === 'row' ? 1 : gridRows;
   const cols = gridCols;
 
+  // Calculate actual number of frames that will be displayed
+  const maxFrames = Math.min(frameCount, rows * cols);
+  const actualCols = layoutType === 'row' ? maxFrames : cols;
+  const actualRows = layoutType === 'row' ? 1 : Math.ceil(maxFrames / cols);
+
   // Calculate effective spacing based on distribution mode
   let effectiveHSpacing = hSpacing;
   let effectiveVSpacing = vSpacing;
 
-  // Calculate total frame dimensions (without gaps)
-  const totalFrameWidth = cols * frameWidth;
-  const totalFrameHeight = rows * frameHeight;
+  // Calculate total frame dimensions (without gaps) - use actual frame count
+  const totalFrameWidth = actualCols * frameWidth;
+  const totalFrameHeight = actualRows * frameHeight;
 
   // Calculate horizontal spacing and start position based on distribution
   let startX: number;
@@ -79,23 +84,23 @@ export function calculateLayoutPositions(
     switch (hDistribution) {
       case 'space-between':
         // First/last frames at edges, equal gaps between
-        effectiveHSpacing = cols > 1 ? availableHSpace / (cols - 1) : 0;
+        effectiveHSpacing = actualCols > 1 ? availableHSpace / (actualCols - 1) : 0;
         startX = 0;
         break;
       case 'space-evenly':
         // Equal space at edges and between all frames
-        effectiveHSpacing = availableHSpace / (cols + 1);
+        effectiveHSpacing = availableHSpace / (actualCols + 1);
         startX = effectiveHSpacing;
         break;
       case 'space-around':
         // Half-size space at edges, full space between
-        effectiveHSpacing = availableHSpace / cols;
+        effectiveHSpacing = availableHSpace / actualCols;
         startX = effectiveHSpacing / 2;
         break;
     }
   } else {
     // Fixed mode: use original anchor-based positioning
-    const totalWidth = cols * frameWidth + (cols - 1) * hSpacing;
+    const totalWidth = actualCols * frameWidth + (actualCols - 1) * hSpacing;
     if (hAnchorType === 'center') {
       startX = (wallWidth - totalWidth) / 2;
     } else if (hAnchorType === 'left') {
@@ -113,23 +118,23 @@ export function calculateLayoutPositions(
     switch (vDistribution) {
       case 'space-between':
         // First/last frames at edges, equal gaps between
-        effectiveVSpacing = rows > 1 ? availableVSpace / (rows - 1) : 0;
+        effectiveVSpacing = actualRows > 1 ? availableVSpace / (actualRows - 1) : 0;
         startY = 0;
         break;
       case 'space-evenly':
         // Equal space at edges and between all frames
-        effectiveVSpacing = availableVSpace / (rows + 1);
+        effectiveVSpacing = availableVSpace / (actualRows + 1);
         startY = effectiveVSpacing;
         break;
       case 'space-around':
         // Half-size space at edges, full space between
-        effectiveVSpacing = availableVSpace / rows;
+        effectiveVSpacing = availableVSpace / actualRows;
         startY = effectiveVSpacing / 2;
         break;
     }
   } else {
     // Fixed mode: use original anchor-based positioning
-    const totalHeight = rows * frameHeight + (rows - 1) * vSpacing;
+    const totalHeight = actualRows * frameHeight + (actualRows - 1) * vSpacing;
     if (anchorType === 'center') {
       startY = (wallHeight - totalHeight) / 2;
     } else if (anchorType === 'ceiling') {
@@ -142,7 +147,7 @@ export function calculateLayoutPositions(
       // If furniture centering is enabled, override horizontal positioning
       // (only if horizontal distribution is also fixed)
       if (furnitureCentered && hDistribution === 'fixed') {
-        const totalWidth = cols * frameWidth + (cols - 1) * hSpacing;
+        const totalWidth = actualCols * frameWidth + (actualCols - 1) * hSpacing;
         const furnitureCenterX = wallWidth / 2 + furnitureX;
         startX = furnitureCenterX - totalWidth / 2;
       }
@@ -153,7 +158,6 @@ export function calculateLayoutPositions(
   }
 
   const positions: FramePosition[] = [];
-  const maxFrames = Math.min(frameCount, rows * cols);
   let frameNum = 0;
 
   for (let row = 0; row < rows && frameNum < maxFrames; row++) {
@@ -177,6 +181,13 @@ export function calculateLayoutPositions(
         hookX = x + frameWidth / 2;
       }
 
+      // Check if frame extends beyond wall boundaries
+      const isOutOfBounds =
+        x < 0 ||
+        y < 0 ||
+        x + frameWidth > wallWidth ||
+        y + frameHeight > wallHeight;
+
       frameNum++;
       positions.push({
         id: frameNum,
@@ -197,6 +208,7 @@ export function calculateLayoutPositions(
         fromFloor: wallHeight - hookY,
         fromRight: wallWidth - (hookX2 ?? hookX), // Distance from right hook (or center)
         fromCeiling: hookY,
+        isOutOfBounds,
       });
     }
   }

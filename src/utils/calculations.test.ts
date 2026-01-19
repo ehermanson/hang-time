@@ -564,4 +564,124 @@ describe('calculateLayoutPositions', () => {
       expect(positions[0].hangingOffset).toBe(5);
     });
   });
+
+  describe('Out of Bounds Detection', () => {
+    it('marks frame as in bounds when fully within wall', () => {
+      const state = createDefaultState({
+        frameCount: 1,
+        frameWidth: 20,
+        frameHeight: 20,
+        wallWidth: 100,
+        wallHeight: 100,
+        hAnchorType: 'center',
+        anchorType: 'center',
+      });
+      const positions = calculateLayoutPositions(state);
+      expect(positions[0].isOutOfBounds).toBe(false);
+    });
+
+    it('marks frame as out of bounds when extending past left edge', () => {
+      const state = createDefaultState({
+        frameCount: 1,
+        frameWidth: 20,
+        wallWidth: 100,
+        hDistribution: 'fixed',
+        hAnchorType: 'left',
+        hAnchorValue: -5, // Starts 5 units off the left edge
+      });
+      const positions = calculateLayoutPositions(state);
+      expect(positions[0].isOutOfBounds).toBe(true);
+    });
+
+    it('marks frame as out of bounds when extending past right edge', () => {
+      const state = createDefaultState({
+        frameCount: 1,
+        frameWidth: 20,
+        wallWidth: 100,
+        hDistribution: 'fixed',
+        hAnchorType: 'left',
+        hAnchorValue: 90, // Starts at 90, ends at 110
+      });
+      const positions = calculateLayoutPositions(state);
+      expect(positions[0].isOutOfBounds).toBe(true);
+    });
+
+    it('marks frame as out of bounds when extending past top edge', () => {
+      const state = createDefaultState({
+        frameCount: 1,
+        frameHeight: 20,
+        wallHeight: 100,
+        vDistribution: 'fixed',
+        anchorType: 'ceiling',
+        anchorValue: -5, // Starts 5 units above ceiling
+      });
+      const positions = calculateLayoutPositions(state);
+      expect(positions[0].isOutOfBounds).toBe(true);
+    });
+
+    it('marks frame as out of bounds when extending past bottom edge', () => {
+      const state = createDefaultState({
+        frameCount: 1,
+        frameHeight: 20,
+        wallHeight: 100,
+        vDistribution: 'fixed',
+        anchorType: 'floor',
+        anchorValue: -5, // Extends 5 units below floor
+      });
+      const positions = calculateLayoutPositions(state);
+      expect(positions[0].isOutOfBounds).toBe(true);
+    });
+
+    it('marks multiple frames correctly when some are out of bounds', () => {
+      const state = createDefaultState({
+        layoutType: 'row',
+        frameCount: 5,
+        gridCols: 5,
+        frameWidth: 30,
+        wallWidth: 100,
+        hDistribution: 'fixed',
+        hAnchorType: 'center',
+        hSpacing: 5,
+      });
+      const positions = calculateLayoutPositions(state);
+      // Total width = 5*30 + 4*5 = 170, wall = 100
+      // startX = (100 - 170) / 2 = -35
+      // Some frames will be off left edge, some off right edge
+      const outOfBoundsCount = positions.filter((p) => p.isOutOfBounds).length;
+      expect(outOfBoundsCount).toBeGreaterThan(0);
+    });
+
+    it('detects out of bounds with too many frames in row layout', () => {
+      const state = createDefaultState({
+        layoutType: 'row',
+        frameCount: 9,
+        gridCols: 9,
+        frameWidth: 24,
+        wallWidth: 120,
+        hDistribution: 'fixed',
+        hAnchorType: 'center',
+        hSpacing: 6,
+      });
+      const positions = calculateLayoutPositions(state);
+      // Total width = 9*24 + 8*6 = 264, wall = 120
+      // Frames definitely extend beyond wall
+      expect(positions.some((p) => p.isOutOfBounds)).toBe(true);
+    });
+
+    it('frame exactly fitting wall is not out of bounds', () => {
+      const state = createDefaultState({
+        frameCount: 1,
+        frameWidth: 100,
+        frameHeight: 100,
+        wallWidth: 100,
+        wallHeight: 100,
+        hDistribution: 'fixed',
+        vDistribution: 'fixed',
+        hAnchorType: 'center',
+        anchorType: 'center',
+      });
+      const positions = calculateLayoutPositions(state);
+      expect(positions[0].isOutOfBounds).toBe(false);
+    });
+  });
 });

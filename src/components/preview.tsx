@@ -423,10 +423,10 @@ export function Preview({ calculator }: PreviewProps) {
 
       ctx.fillStyle = 'rgba(0,0,0,0.1)';
       ctx.fillRect(fx + 3, fy + 3, fw, fh);
-      ctx.fillStyle = '#f8f8f8';
+      ctx.fillStyle = frame.isOutOfBounds ? '#fef2f2' : '#f8f8f8';
       ctx.fillRect(fx, fy, fw, fh);
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = frame.isOutOfBounds ? '#ef4444' : '#333';
+      ctx.lineWidth = frame.isOutOfBounds ? 3 : 2;
       ctx.strokeRect(fx, fy, fw, fh);
 
       const matInset = Math.min(fw, fh) * 0.1;
@@ -768,9 +768,15 @@ export function Preview({ calculator }: PreviewProps) {
             <Button
               variant="outline"
               size="icon"
-              className="h-12 w-12 rounded-2xl bg-white/90 hover:bg-white dark:bg-slate-900/90 dark:hover:bg-slate-800 backdrop-blur-xl shadow-2xl border border-gray-200 dark:border-white/10"
+              className="h-12 w-12 rounded-2xl bg-white/90 hover:bg-white dark:bg-slate-900/90 dark:hover:bg-slate-800 backdrop-blur-xl shadow-2xl border border-gray-200 dark:border-white/10 relative"
             >
               <HelpCircle className="size-4" />
+              {layoutPositions.some((f) => f.isOutOfBounds) && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                </span>
+              )}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-64">
@@ -791,6 +797,12 @@ export function Preview({ calculator }: PreviewProps) {
                 <div className="w-5 h-0.5 bg-cyan-500 shrink-0" />
                 <span className="text-xs text-gray-600 dark:text-white/70">
                   Hook comparison
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-3 border-2 border-red-500 rounded-sm shrink-0" />
+                <span className="text-xs text-gray-600 dark:text-white/70">
+                  Frame exceeds wall
                 </span>
               </div>
               <div className="border-t border-gray-200 dark:border-white/10 pt-2 mt-1">

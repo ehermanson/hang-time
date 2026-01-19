@@ -37,6 +37,7 @@ export interface FramePosition {
   fromFloor: number;
   fromRight: number;
   fromCeiling: number;
+  isOutOfBounds: boolean; // True if frame extends beyond wall boundaries
 }
 
 export interface CalculatorState {
