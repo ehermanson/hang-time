@@ -230,6 +230,8 @@ interface RowContainerProps {
   u: (val: number) => number;
   fromU: (val: number) => number;
   uniformSize: boolean;
+  vAlign: GalleryVAlign;
+  onVAlignChange: (value: GalleryVAlign) => void;
   onAddFrame: (rowIndex: number) => void;
   onUpdateFrame: (id: string, updates: Partial<GalleryFrame>) => void;
   onRemoveFrame: (id: string) => void;
@@ -245,6 +247,8 @@ function RowContainer({
   u,
   fromU,
   uniformSize,
+  vAlign,
+  onVAlignChange,
   onAddFrame,
   onUpdateFrame,
   onRemoveFrame,
@@ -272,10 +276,32 @@ function RowContainer({
         <span className="text-[10px] text-gray-400 dark:text-white/30">
           ({frames.length} {frames.length === 1 ? 'frame' : 'frames'})
         </span>
+        {/* Per-row vertical alignment */}
+        <div className="ml-auto flex items-center gap-0.5">
+          {VALIGN_OPTIONS.map((option) => {
+            const Icon = option.icon;
+            const isSelected = vAlign === option.value;
+            return (
+              <button
+                key={option.value}
+                onClick={() => onVAlignChange(option.value)}
+                className={cn(
+                  'p-1 rounded transition-colors',
+                  isSelected
+                    ? 'bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400'
+                    : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100 dark:text-white/30 dark:hover:text-white/50 dark:hover:bg-white/10',
+                )}
+                title={`Align ${option.label}`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </button>
+            );
+          })}
+        </div>
         {canRemoveRow && frames.length === 0 && (
           <button
             onClick={onRemoveRow}
-            className="ml-auto p-1 text-gray-300 hover:text-red-500 dark:text-white/30 dark:hover:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-500/10"
+            className="p-1 text-gray-300 hover:text-red-500 dark:text-white/30 dark:hover:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-500/10"
             title="Remove empty row"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -334,10 +360,10 @@ export function GalleryFrames({ calculator }: Props) {
     removeFrame,
     updateFrame,
     setFrames,
-    setVAlign,
     setHDistribution,
     setHSpacing,
     setRowSpacing,
+    updateRowConfig,
   } = calculator;
 
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -573,23 +599,30 @@ export function GalleryFrames({ calculator }: Props) {
             onDragEnd={handleDragEnd}
           >
             <div className="space-y-3">
-              {rowIndices.map((rowIndex) => (
-                <RowContainer
-                  key={rowIndex}
-                  rowIndex={rowIndex}
-                  frames={framesByRow.get(rowIndex) || []}
-                  allFrames={state.frames}
-                  unit={state.unit}
-                  u={u}
-                  fromU={fromU}
-                  uniformSize={state.uniformSize}
-                  onAddFrame={addFrameToRow}
-                  onUpdateFrame={updateFrame}
-                  onRemoveFrame={removeFrame}
-                  onRemoveRow={() => removeRow(rowIndex)}
-                  canRemoveRow={rowIndices.length > 1}
-                />
-              ))}
+              {rowIndices.map((rowIndex) => {
+                const rowId = `row-${rowIndex}`;
+                const rowConfig = state.rowConfigs.find((c) => c.id === rowId);
+                const rowVAlign = rowConfig?.vAlign ?? state.vAlign;
+                return (
+                  <RowContainer
+                    key={rowIndex}
+                    rowIndex={rowIndex}
+                    frames={framesByRow.get(rowIndex) || []}
+                    allFrames={state.frames}
+                    unit={state.unit}
+                    u={u}
+                    fromU={fromU}
+                    uniformSize={state.uniformSize}
+                    vAlign={rowVAlign}
+                    onVAlignChange={(value) => updateRowConfig(rowId, { vAlign: value })}
+                    onAddFrame={addFrameToRow}
+                    onUpdateFrame={updateFrame}
+                    onRemoveFrame={removeFrame}
+                    onRemoveRow={() => removeRow(rowIndex)}
+                    canRemoveRow={rowIndices.length > 1}
+                  />
+                );
+              })}
             </div>
 
             <DragOverlay>
@@ -680,48 +713,6 @@ export function GalleryFrames({ calculator }: Props) {
               />
             </Field>
           )}
-
-          {/* Vertical Alignment */}
-          <Field className="pt-2">
-            <FieldLabel>Vertical Alignment</FieldLabel>
-            <div className="grid grid-cols-3 gap-1">
-              {VALIGN_OPTIONS.map((option) => {
-                const Icon = option.icon;
-                const isSelected = state.vAlign === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => setVAlign(option.value)}
-                    className={cn(
-                      'flex flex-col items-center p-2 rounded-lg border transition-all',
-                      isSelected
-                        ? 'border-pink-500 bg-pink-50 dark:bg-pink-500/20'
-                        : 'border-gray-200 bg-white hover:border-gray-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20',
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        'h-4 w-4',
-                        isSelected
-                          ? 'text-pink-500 dark:text-pink-400'
-                          : 'text-gray-400 dark:text-white/40',
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        'text-xs font-medium mt-1',
-                        isSelected
-                          ? 'text-pink-600 dark:text-pink-300'
-                          : 'text-gray-600 dark:text-white/60',
-                      )}
-                    >
-                      {option.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </Field>
 
           {/* Row Spacing (between rows) */}
           {rowIndices.length > 1 && (
