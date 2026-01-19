@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   X,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useRef, useState } from 'react';
 import { HowToHang } from '@/components/how-to-hang';
 import { Measurements } from '@/components/measurements';
@@ -158,10 +159,19 @@ export function Sidebar({ calculator }: SidebarProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Minimized state - show just a floating button
-  if (isMinimized) {
-    return (
-      <div className="fixed top-4 left-4 z-50">
+  return (
+    <div className="fixed top-4 left-4 bottom-4 z-50 w-[340px]">
+      {/* Minimized toggle button - always in DOM, fades in/out */}
+      <motion.div
+        className="absolute top-0 left-0 z-10"
+        initial={false}
+        animate={{
+          opacity: isMinimized ? 1 : 0,
+          scale: isMinimized ? 1 : 0.8,
+        }}
+        transition={{ duration: 0.2 }}
+        style={{ pointerEvents: isMinimized ? 'auto' : 'none' }}
+      >
         <TooltipProvider delayDuration={100}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -175,14 +185,24 @@ export function Sidebar({ calculator }: SidebarProps) {
             <TooltipContent side="right">Show controls</TooltipContent>
           </Tooltip>
         </TooltipProvider>
-      </div>
-    );
-  }
+      </motion.div>
 
-  return (
-    <div className="fixed top-4 left-4 bottom-4 z-50 w-[340px] flex flex-col">
-      {/* Main floating panel */}
-      <div className="flex-1 flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden">
+      {/* Main panel - always in DOM, animates size */}
+      <motion.div
+        className="h-full flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden origin-top-left"
+        initial={false}
+        animate={{
+          opacity: isMinimized ? 0 : 1,
+          scale: isMinimized ? 0.14 : 1,
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 500,
+          damping: 35,
+          opacity: { duration: 0.15 },
+        }}
+        style={{ pointerEvents: isMinimized ? 'none' : 'auto' }}
+      >
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-white/10">
           <div className="flex items-center justify-between mb-3">
@@ -399,7 +419,7 @@ export function Sidebar({ calculator }: SidebarProps) {
             </ScrollArea>
           </TabsContent>
         </Tabs>
-      </div>
+      </motion.div>
     </div>
   );
 }
