@@ -20,6 +20,8 @@ export type FurnitureAnchor = 'left' | 'center' | 'right';
 
 export type FrameFurnitureAlignment = 'left' | 'center' | 'right' | 'span';
 
+export type FurnitureVerticalAnchor = 'center' | 'ceiling' | 'above-furniture';
+
 export interface FramePosition {
   id: number;
   name: string;
@@ -81,6 +83,7 @@ export interface CalculatorState {
   furnitureAnchor: FurnitureAnchor; // Where furniture sits on wall
   furnitureOffset: number; // Distance from anchor edge (always positive)
   frameFurnitureAlign: FrameFurnitureAlignment; // How frames align to furniture
+  furnitureVAnchor: FurnitureVerticalAnchor; // Vertical anchor for frames above furniture
 }
 
 export interface SavedLayout {

@@ -8,7 +8,7 @@ import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/componen
 import { Input } from '@/components/ui/input';
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
 import { cn } from '@/lib/utils';
-import type { Distribution, FrameFurnitureAlignment, FurnitureAnchor } from '@/types';
+import type { Distribution, FrameFurnitureAlignment, FurnitureAnchor, FurnitureVerticalAnchor } from '@/types';
 
 // Visual preview of frame alignment relative to furniture
 function AlignmentPreview({
@@ -200,6 +200,12 @@ const SPAN_DISTRIBUTION_OPTIONS: { value: Distribution; label: string }[] = [
   { value: 'space-around', label: 'Balanced' },
 ];
 
+const VERTICAL_ANCHOR_OPTIONS: { value: FurnitureVerticalAnchor; label: string; desc: string }[] = [
+  { value: 'above-furniture', label: 'Above Furniture', desc: 'Offset from furniture top' },
+  { value: 'ceiling', label: 'From Ceiling', desc: 'Offset from ceiling' },
+  { value: 'center', label: 'Centered', desc: 'Between ceiling and furniture' },
+];
+
 interface Props {
   calculator: UseCalculatorReturn;
 }
@@ -214,6 +220,7 @@ export function Furniture({ calculator }: Props) {
     setFurnitureAnchor,
     setFurnitureOffset,
     setFrameFurnitureAlign,
+    setFurnitureVAnchor,
     setAnchorValue,
     setHDistribution,
     setHSpacing,
@@ -270,7 +277,7 @@ export function Furniture({ calculator }: Props) {
 
           {/* Furniture Position */}
           <Field>
-            <FieldLabel>Position on Wall</FieldLabel>
+            <FieldLabel>Furniture Position on Wall</FieldLabel>
             <div className="grid grid-cols-3 gap-1.5">
               {FURNITURE_ANCHOR_OPTIONS.map((option) => (
                 <button
@@ -308,23 +315,63 @@ export function Furniture({ calculator }: Props) {
             </Field>
           )}
 
-          {/* Gap above furniture */}
+          {/* Vertical Position */}
           <Field>
-            <FieldLabel htmlFor="furnitureGap">Gap above furniture ({state.unit})</FieldLabel>
-            <Input
-              id="furnitureGap"
-              type="number"
-              step="0.125"
-              value={parseFloat(u(state.anchorValue).toFixed(3))}
-              onChange={(e) =>
-                setAnchorValue(fromU(parseFloat(e.target.value) || 0))
-              }
-            />
+            <FieldLabel>Vertical Frame Position</FieldLabel>
+            <div className="flex flex-col gap-2">
+              {VERTICAL_ANCHOR_OPTIONS.map((opt) => (
+                <label
+                  key={opt.value}
+                  className={cn(
+                    'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
+                    state.furnitureVAnchor === opt.value
+                      ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/20'
+                      : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10',
+                  )}
+                  onClick={() => setFurnitureVAnchor(opt.value)}
+                >
+                  <input
+                    type="radio"
+                    checked={state.furnitureVAnchor === opt.value}
+                    onChange={() => { }}
+                    className="mt-1 accent-violet-600 dark:accent-violet-500"
+                  />
+                  <div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      {opt.label}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-white/50">
+                      {opt.desc}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
           </Field>
+
+          {/* Offset input - shown for non-center vertical anchors */}
+          {state.furnitureVAnchor !== 'center' && (
+            <Field>
+              <FieldLabel htmlFor="furnitureGap">
+                {state.furnitureVAnchor === 'above-furniture'
+                  ? `Gap above furniture (${state.unit})`
+                  : `Distance from ceiling (${state.unit})`}
+              </FieldLabel>
+              <Input
+                id="furnitureGap"
+                type="number"
+                step="0.125"
+                value={parseFloat(u(state.anchorValue).toFixed(3))}
+                onChange={(e) =>
+                  setAnchorValue(fromU(parseFloat(e.target.value) || 0))
+                }
+              />
+            </Field>
+          )}
 
           {/* Frame Alignment */}
           <Field>
-            <FieldLabel>Frame Alignment</FieldLabel>
+            <FieldLabel>Horizontal Frame Alignment</FieldLabel>
             <div className="grid grid-cols-4 gap-1.5">
               {FRAME_ALIGNMENT_OPTIONS.map((option) => (
                 <button

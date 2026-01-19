@@ -12,6 +12,7 @@ import type {
   FrameFurnitureAlignment,
   FramePosition,
   FurnitureAnchor,
+  FurnitureVerticalAnchor,
   HangingType,
   HorizontalAnchorType,
   LayoutType,
@@ -88,6 +89,7 @@ const furnitureParsers = {
   fua: parseAsStringLiteral(['left', 'center', 'right'] as const).withDefault('center'),
   fuo: parseAsFloat.withDefault(0),
   ffa: parseAsStringLiteral(['left', 'center', 'right', 'span'] as const).withDefault('center'),
+  fva: parseAsStringLiteral(['center', 'ceiling', 'above-furniture'] as const).withDefault('above-furniture'),
 };
 
 export function useCalculator() {
@@ -126,6 +128,7 @@ export function useCalculator() {
       furnitureAnchor: furniture.fua as FurnitureAnchor,
       furnitureOffset: furniture.fuo,
       frameFurnitureAlign: furniture.ffa as FrameFurnitureAlignment,
+      furnitureVAnchor: furniture.fva as FurnitureVerticalAnchor,
     }),
     [wall, layout, frame, position, furniture],
   );
@@ -184,6 +187,7 @@ export function useCalculator() {
   const setFurnitureAnchor = (value: FurnitureAnchor) => setFurniture({ fua: value });
   const setFurnitureOffset = (value: number) => setFurniture({ fuo: value });
   const setFrameFurnitureAlign = (value: FrameFurnitureAlignment) => setFurniture({ ffa: value });
+  const setFurnitureVAnchor = (value: FurnitureVerticalAnchor) => setFurniture({ fva: value });
 
   return {
     state,
@@ -217,6 +221,7 @@ export function useCalculator() {
     setFurnitureAnchor,
     setFurnitureOffset,
     setFrameFurnitureAlign,
+    setFurnitureVAnchor,
   };
 }
 

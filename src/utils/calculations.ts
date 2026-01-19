@@ -60,6 +60,7 @@ export function calculateLayoutPositions(
     furnitureAnchor,
     furnitureOffset,
     frameFurnitureAlign,
+    furnitureVAnchor,
   } = state;
 
   const rows = layoutType === 'row' ? 1 : gridRows;
@@ -153,9 +154,18 @@ export function calculateLayoutPositions(
       }
       const furnitureCenterX = furnitureLeft + furnitureWidth / 2;
 
-      // Position above furniture with gap (anchorValue)
+      // Calculate vertical position based on furniture vertical anchor
       const furnitureTop = wallHeight - furnitureHeight;
-      startY = furnitureTop - anchorValue - totalHeight;
+      if (furnitureVAnchor === 'center') {
+        // Center frames between ceiling and furniture top
+        startY = (furnitureTop - totalHeight) / 2;
+      } else if (furnitureVAnchor === 'ceiling') {
+        // Position from ceiling
+        startY = anchorValue;
+      } else {
+        // above-furniture: Position above furniture with gap (anchorValue)
+        startY = furnitureTop - anchorValue - totalHeight;
+      }
 
       // Calculate frame horizontal positioning based on alignment
       if (frameFurnitureAlign === 'span') {

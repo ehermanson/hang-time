@@ -38,6 +38,7 @@ const createDefaultState = (
   furnitureAnchor: 'center',
   furnitureOffset: 0,
   frameFurnitureAlign: 'center',
+  furnitureVAnchor: 'above-furniture',
   ...overrides,
 });
 
@@ -579,6 +580,51 @@ describe('calculateLayoutPositions', () => {
         expect(positions[0].x).toBe(29);
         expect(positions[1].x).toBe(45); // 29 + 10 + 6
         expect(positions[2].x).toBe(61); // 29 + 2*(10 + 6)
+      });
+    });
+
+    describe('vertical anchor options', () => {
+      const vAnchorBase = {
+        frameCount: 1,
+        frameHeight: 20,
+        wallHeight: 100,
+        vDistribution: 'fixed' as const,
+        anchorType: 'furniture' as const,
+        furnitureHeight: 30,
+      };
+
+      it('above-furniture: positions with gap above furniture', () => {
+        const state = createDefaultState({
+          ...vAnchorBase,
+          furnitureVAnchor: 'above-furniture',
+          anchorValue: 5, // gap
+        });
+        const positions = calculateLayoutPositions(state);
+        // furnitureTop = 100 - 30 = 70
+        // y = 70 - 5 - 20 = 45
+        expect(positions[0].y).toBe(45);
+      });
+
+      it('ceiling: positions from ceiling', () => {
+        const state = createDefaultState({
+          ...vAnchorBase,
+          furnitureVAnchor: 'ceiling',
+          anchorValue: 10,
+        });
+        const positions = calculateLayoutPositions(state);
+        // y = anchorValue = 10
+        expect(positions[0].y).toBe(10);
+      });
+
+      it('center: centers between ceiling and furniture', () => {
+        const state = createDefaultState({
+          ...vAnchorBase,
+          furnitureVAnchor: 'center',
+        });
+        const positions = calculateLayoutPositions(state);
+        // furnitureTop = 100 - 30 = 70
+        // y = (70 - 20) / 2 = 25
+        expect(positions[0].y).toBe(25);
       });
     });
   });
