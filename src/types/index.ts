@@ -24,8 +24,6 @@ export type GalleryVAlign = 'center' | 'top' | 'bottom';
 
 export type GalleryRowMode = 'auto' | 'manual';
 
-export type GalleryLayoutMode = 'freeform' | 'template';
-
 export interface GalleryFrame {
   id: string;
   width: number;
@@ -38,23 +36,6 @@ export interface GalleryRowConfig {
   hSpacing?: number; // override global hSpacing
   vAlign?: GalleryVAlign; // override global vAlign
   hDistribution?: Distribution; // override global distribution
-}
-
-export interface TemplateSlot {
-  id: string;
-  x: number; // relative position (0-1)
-  y: number;
-  width: number;
-  height: number;
-  frameId?: string; // assigned frame
-}
-
-export interface GalleryTemplate {
-  id: string;
-  name: string;
-  description: string;
-  slots: TemplateSlot[];
-  aspectRatio?: number; // for scaling
 }
 
 export interface FramePosition {
@@ -124,9 +105,6 @@ export interface CalculatorState {
   maxRowWidth: number | null; // null = use wallWidth
   rowSpacing: number; // vertical spacing between rows
   rowConfigs: GalleryRowConfig[]; // per-row overrides
-  layoutMode: GalleryLayoutMode; // freeform or template
-  templateId: string | null;
-  slotAssignments: Record<string, string>; // slotId -> frameId
 
   // Alignment
   vAlign: GalleryVAlign; // vertical alignment within rows

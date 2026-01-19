@@ -52,9 +52,6 @@ const createDefaultState = (
   maxRowWidth: null,
   rowSpacing: 3,
   rowConfigs: [],
-  layoutMode: 'freeform',
-  templateId: null,
-  slotAssignments: {},
   ...overrides,
 });
 
