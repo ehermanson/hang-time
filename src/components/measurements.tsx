@@ -26,7 +26,7 @@ export function Measurements({ calculator }: MeasurementsProps) {
         </span>
         Hook Placement
       </h3>
-      <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+      <div className="space-y-2">
         {layoutPositions.map((frame) => (
           <div
             key={frame.id}

@@ -18,6 +18,7 @@ import { SavedLayoutsDialog } from '@/components/saved-layouts-dialog';
 import { SettingsDialog } from '@/components/settings-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
@@ -362,34 +363,40 @@ export function Sidebar({ calculator }: SidebarProps) {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="config" className="flex-1 overflow-y-auto mt-0">
-            <div className="p-4 space-y-4">
-              <WallDimensions calculator={calculator} />
-              <LayoutTypeSelector calculator={calculator} />
-              {state.layoutType === 'gallery' ? (
-                <GalleryFrames calculator={calculator} />
-              ) : (
-                <FrameSize calculator={calculator} />
-              )}
-              <VerticalPosition calculator={calculator} />
-              {state.anchorType === 'furniture' ? (
-                <Furniture calculator={calculator} />
-              ) : (
-                <HorizontalPosition calculator={calculator} />
-              )}
-            </div>
+          <TabsContent value="config" className="flex-1 overflow-hidden mt-0">
+            <ScrollArea className="h-full">
+              <div className="p-4 space-y-4">
+                <WallDimensions calculator={calculator} />
+                <LayoutTypeSelector calculator={calculator} />
+                {state.layoutType === 'gallery' ? (
+                  <GalleryFrames calculator={calculator} />
+                ) : (
+                  <FrameSize calculator={calculator} />
+                )}
+                <VerticalPosition calculator={calculator} />
+                {state.anchorType === 'furniture' ? (
+                  <Furniture calculator={calculator} />
+                ) : (
+                  <HorizontalPosition calculator={calculator} />
+                )}
+              </div>
+            </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="measurements" className="flex-1 overflow-y-auto mt-0">
-            <div className="p-4">
-              <Measurements calculator={calculator} />
-            </div>
+          <TabsContent value="measurements" className="flex-1 overflow-hidden mt-0">
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <Measurements calculator={calculator} />
+              </div>
+            </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="howto" className="flex-1 overflow-y-auto mt-0">
-            <div className="p-4">
-              <HowToHang calculator={calculator} />
-            </div>
+          <TabsContent value="howto" className="flex-1 overflow-hidden mt-0">
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <HowToHang calculator={calculator} />
+              </div>
+            </ScrollArea>
           </TabsContent>
         </Tabs>
       </div>
