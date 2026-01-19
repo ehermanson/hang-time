@@ -30,11 +30,11 @@ import {
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
 import { useSavedLayouts } from '@/hooks/use-saved-layouts';
 import { cn } from '@/lib/utils';
-import { FrameSize } from './frame-size';
 import { Furniture } from './furniture';
 import { GalleryFrames } from './gallery-frames';
+import { GalleryRowSettings } from './gallery-row-settings';
+import { GalleryTemplatePicker } from './gallery-template-picker';
 import { HorizontalPosition } from './horizontal-position';
-import { LayoutTypeSelector } from './layout-type-selector';
 import { VerticalPosition } from './vertical-position';
 import { WallDimensions } from './wall-dimensions';
 
@@ -387,16 +387,19 @@ export function Sidebar({ calculator }: SidebarProps) {
             <ScrollArea className="h-full">
               <div className="p-4 space-y-4">
                 <WallDimensions calculator={calculator} />
-                <LayoutTypeSelector calculator={calculator} />
-                {state.layoutType === 'gallery' ? (
-                  <GalleryFrames calculator={calculator} />
-                ) : (
-                  <FrameSize calculator={calculator} />
+                <GalleryFrames calculator={calculator} />
+                <GalleryTemplatePicker calculator={calculator} />
+                {state.layoutMode === 'freeform' && (
+                  <GalleryRowSettings
+                    calculator={calculator}
+                    layoutPositions={calculator.layoutPositions}
+                  />
                 )}
                 <VerticalPosition calculator={calculator} />
-                {state.anchorType === 'furniture' ? (
+                {state.anchorType === 'furniture' && (
                   <Furniture calculator={calculator} />
-                ) : (
+                )}
+                {state.anchorType !== 'furniture' && state.hDistribution === 'fixed' && (
                   <HorizontalPosition calculator={calculator} />
                 )}
               </div>

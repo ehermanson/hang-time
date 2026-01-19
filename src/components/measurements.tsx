@@ -33,9 +33,8 @@ export function Measurements({ calculator }: MeasurementsProps) {
             className="p-3 rounded-lg border border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/5"
           >
             <h4 className="text-xs font-medium text-gray-700 dark:text-white/80 mb-2">
-              {frame.name}{' '}
-              {state.layoutType === 'grid' &&
-                `(Row ${(frame.row ?? 0) + 1}, Col ${(frame.col ?? 0) + 1})`}
+              {frame.name}
+              {frame.row !== undefined && ` (Row ${frame.row + 1})`}
             </h4>
             <div className="grid grid-cols-2 gap-2">
               <div className="text-center p-2 bg-white dark:bg-white/5 rounded-md">

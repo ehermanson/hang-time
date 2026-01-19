@@ -2,8 +2,6 @@ export type Unit = 'in' | 'cm';
 
 export type Theme = 'light' | 'dark';
 
-export type LayoutType = 'grid' | 'row' | 'gallery';
-
 export type AnchorType = 'floor' | 'ceiling' | 'center' | 'furniture';
 
 export type HorizontalAnchorType = 'center' | 'left' | 'right';
@@ -24,10 +22,39 @@ export type FurnitureVerticalAnchor = 'center' | 'ceiling' | 'above-furniture';
 
 export type GalleryVAlign = 'center' | 'top' | 'bottom';
 
+export type GalleryRowMode = 'auto' | 'manual';
+
+export type GalleryLayoutMode = 'freeform' | 'template';
+
 export interface GalleryFrame {
   id: string;
   width: number;
   height: number;
+  row?: number; // computed or manually assigned row
+}
+
+export interface GalleryRowConfig {
+  id: string;
+  hSpacing?: number; // override global hSpacing
+  vAlign?: GalleryVAlign; // override global vAlign
+  hDistribution?: Distribution; // override global distribution
+}
+
+export interface TemplateSlot {
+  id: string;
+  x: number; // relative position (0-1)
+  y: number;
+  width: number;
+  height: number;
+  frameId?: string; // assigned frame
+}
+
+export interface GalleryTemplate {
+  id: string;
+  name: string;
+  description: string;
+  slots: TemplateSlot[];
+  aspectRatio?: number; // for scaling
 }
 
 export interface FramePosition {
@@ -62,22 +89,21 @@ export interface CalculatorState {
   wallWidth: number;
   wallHeight: number;
 
-  // Layout
-  layoutType: LayoutType;
-  frameCount: number; // Primary input: how many frames to hang
-  gridRows: number;
-  gridCols: number;
+  // Frames - always a list of variable-sized frames
+  frames: GalleryFrame[];
+  uniformSize: boolean; // When true, all frames use frameWidth/frameHeight
+  frameWidth: number; // Used when uniformSize is true
+  frameHeight: number; // Used when uniformSize is true
 
-  // Frame configuration (for grid/row)
-  frameWidth: number;
-  frameHeight: number;
+  // Hanging configuration
   hangingOffset: number; // Distance from top of frame to hanging point
   hangingType: HangingType; // 'center' (single hook) or 'dual' (two hooks)
   hookInset: number; // For dual: distance from frame edge to each hook
+
+  // Spacing and distribution
   hSpacing: number;
   vSpacing: number;
   hDistribution: Distribution;
-  vDistribution: Distribution;
 
   // Positioning
   anchorType: AnchorType;
@@ -93,9 +119,17 @@ export interface CalculatorState {
   frameFurnitureAlign: FrameFurnitureAlignment; // How frames align to furniture
   furnitureVAnchor: FurnitureVerticalAnchor; // Vertical anchor for frames above furniture
 
-  // Gallery mode (variable-sized frames)
-  galleryFrames: GalleryFrame[];
-  galleryVAlign: GalleryVAlign;
+  // Layout options
+  rowMode: GalleryRowMode; // auto-wrap or manual row assignment
+  maxRowWidth: number | null; // null = use wallWidth
+  rowSpacing: number; // vertical spacing between rows
+  rowConfigs: GalleryRowConfig[]; // per-row overrides
+  layoutMode: GalleryLayoutMode; // freeform or template
+  templateId: string | null;
+  slotAssignments: Record<string, string>; // slotId -> frameId
+
+  // Alignment
+  vAlign: GalleryVAlign; // vertical alignment within rows
 }
 
 export interface SavedLayout {
