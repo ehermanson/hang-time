@@ -9,11 +9,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { useTheme } from '@/hooks/use-theme';
 import { cn } from '@/lib/utils';
 import type { Theme, Unit } from '@/types';
@@ -60,16 +55,11 @@ export function SettingsDialog({ unit, onUnitChange }: SettingsDialogProps) {
 
   return (
     <Dialog>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="flex-1">
-              <Settings className="size-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>Settings</TooltipContent>
-      </Tooltip>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="flex-1" title="Settings">
+          <Settings className="size-4" />
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>

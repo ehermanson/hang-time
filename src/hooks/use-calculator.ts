@@ -112,17 +112,37 @@ function parseFrames(json: string): GalleryFrame[] {
   try {
     const parsed = JSON.parse(json);
     if (Array.isArray(parsed)) {
-      return parsed.filter(
-        (f): f is GalleryFrame =>
-          typeof f.id === 'string' &&
-          typeof f.width === 'number' &&
-          typeof f.height === 'number'
-      );
+      return parsed
+        .filter(
+          (f) =>
+            typeof f.id === 'string' &&
+            typeof f.w === 'number' &&
+            typeof f.h === 'number'
+        )
+        .map((f) => ({
+          id: f.id,
+          width: f.w,
+          height: f.h,
+          ...(f.r !== undefined ? { row: f.r } : {}),
+        }));
     }
   } catch {
     // Invalid JSON
   }
   return [];
+}
+
+// Serialize frames to JSON with short keys
+function serializeFrames(frames: GalleryFrame[]): string {
+  if (frames.length === 0) return '';
+  return JSON.stringify(
+    frames.map((f) => ({
+      id: f.id,
+      w: f.width,
+      h: f.height,
+      ...(f.row !== undefined ? { r: f.row } : {}),
+    }))
+  );
 }
 
 // Parse row configs from JSON string
@@ -277,7 +297,7 @@ export function useCalculator() {
   // Frame setters
   const setFrames = useCallback(
     (newFrames: GalleryFrame[]) => {
-      setFramesState({ f: newFrames.length > 0 ? JSON.stringify(newFrames) : '' });
+      setFramesState({ f: serializeFrames(newFrames) });
     },
     [setFramesState]
   );
@@ -379,7 +399,7 @@ export function useCalculator() {
         sa: '', // Clear slot assignments - will auto-assign
       });
       setFramesState({
-        f: JSON.stringify(newFrames),
+        f: serializeFrames(newFrames),
         us: false, // Disable uniform size when using template
       });
     },
