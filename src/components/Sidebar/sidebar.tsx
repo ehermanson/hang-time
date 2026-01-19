@@ -392,7 +392,7 @@ export function Sidebar({ calculator }: SidebarProps) {
                 {state.anchorType === 'furniture' && (
                   <Furniture calculator={calculator} />
                 )}
-                {state.anchorType !== 'furniture' && state.hDistribution === 'fixed' && (
+                {state.anchorType !== 'furniture' && (
                   <HorizontalPosition calculator={calculator} />
                 )}
               </div>
