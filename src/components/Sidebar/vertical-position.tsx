@@ -1,13 +1,11 @@
 import { ChevronDown, MoveVertical } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
 import { cn } from '@/lib/utils';
 import type { AnchorType, Distribution } from '@/types';
@@ -139,10 +137,6 @@ export function VerticalPosition({ calculator }: Props) {
     setAnchorValue,
     setVDistribution,
     setVSpacing,
-    setFurnitureWidth,
-    setFurnitureHeight,
-    setFurnitureX,
-    setFurnitureCentered,
   } = calculator;
 
   const showDistribution = state.layoutType !== 'row';
@@ -256,92 +250,6 @@ export function VerticalPosition({ calculator }: Props) {
                     />
                   </Field>
                 )}
-
-              {state.anchorType === 'furniture' && (
-                <div className="mt-3 space-y-3">
-                  <FieldSet>
-                    <FieldLegend variant="label">
-                      Furniture Dimensions
-                    </FieldLegend>
-                    <FieldGroup>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Field>
-                          <FieldLabel htmlFor="furnitureWidth">Width ({state.unit})</FieldLabel>
-                          <Input
-                            id="furnitureWidth"
-                            type="number"
-                            step="0.125"
-                            value={parseFloat(u(state.furnitureWidth).toFixed(3))}
-                            onChange={(e) =>
-                              setFurnitureWidth(
-                                fromU(parseFloat(e.target.value) || 0),
-                              )
-                            }
-                          />
-                        </Field>
-                        <Field>
-                          <FieldLabel htmlFor="furnitureHeight">Height ({state.unit})</FieldLabel>
-                          <Input
-                            id="furnitureHeight"
-                            type="number"
-                            step="0.125"
-                            value={parseFloat(
-                              u(state.furnitureHeight).toFixed(3),
-                            )}
-                            onChange={(e) =>
-                              setFurnitureHeight(
-                                fromU(parseFloat(e.target.value) || 0),
-                              )
-                            }
-                          />
-                        </Field>
-                      </div>
-                      <Field>
-                        <FieldLabel htmlFor="furnitureX">Offset from center ({state.unit})</FieldLabel>
-                        <Input
-                          id="furnitureX"
-                          type="number"
-                          step="0.125"
-                          value={parseFloat(u(state.furnitureX).toFixed(3))}
-                          onChange={(e) =>
-                            setFurnitureX(fromU(parseFloat(e.target.value) || 0))
-                          }
-                        />
-                        <FieldDescription>
-                          0 = centered, negative = left, positive = right
-                        </FieldDescription>
-                      </Field>
-                    </FieldGroup>
-                  </FieldSet>
-
-                  <Field orientation="horizontal">
-                    <Checkbox
-                      checked={state.furnitureCentered}
-                      id="furnitureCentered"
-                      onCheckedChange={setFurnitureCentered}
-                    />
-                    <Label
-                      htmlFor="furnitureCentered"
-                      className="text-sm text-gray-700 dark:text-white/70"
-                    >
-                      Center frames above furniture
-                    </Label>
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="furnitureGap">Gap above furniture ({state.unit})</FieldLabel>
-                    <Input
-                      id="furnitureGap"
-                      type="number"
-                      step="0.125"
-                      value={parseFloat(u(state.anchorValue).toFixed(3))}
-                      onChange={(e) =>
-                        setAnchorValue(fromU(parseFloat(e.target.value) || 0))
-                      }
-                    />
-                  </Field>
-                </div>
-              )}
 
               {/* Gap input for fixed distribution in multi-row layouts */}
               {showDistribution && (

@@ -9,7 +9,9 @@ import type {
   AnchorType,
   CalculatorState,
   Distribution,
+  FrameFurnitureAlignment,
   FramePosition,
+  FurnitureAnchor,
   HangingType,
   HorizontalAnchorType,
   LayoutType,
@@ -83,8 +85,9 @@ const positionParsers = {
 const furnitureParsers = {
   fuw: parseAsFloat.withDefault(48),
   fuh: parseAsFloat.withDefault(30),
-  fux: parseAsFloat.withDefault(0),
-  fuc: parseAsStringLiteral(['true', 'false'] as const).withDefault('true'),
+  fua: parseAsStringLiteral(['left', 'center', 'right'] as const).withDefault('center'),
+  fuo: parseAsFloat.withDefault(0),
+  ffa: parseAsStringLiteral(['left', 'center', 'right', 'span'] as const).withDefault('center'),
 };
 
 export function useCalculator() {
@@ -120,8 +123,9 @@ export function useCalculator() {
       hAnchorValue: position.hav,
       furnitureWidth: furniture.fuw,
       furnitureHeight: furniture.fuh,
-      furnitureX: furniture.fux,
-      furnitureCentered: furniture.fuc === 'true',
+      furnitureAnchor: furniture.fua as FurnitureAnchor,
+      furnitureOffset: furniture.fuo,
+      frameFurnitureAlign: furniture.ffa as FrameFurnitureAlignment,
     }),
     [wall, layout, frame, position, furniture],
   );
@@ -177,9 +181,9 @@ export function useCalculator() {
   const setHAnchorValue = (value: number) => setPosition({ hav: value });
   const setFurnitureWidth = (value: number) => setFurniture({ fuw: value });
   const setFurnitureHeight = (value: number) => setFurniture({ fuh: value });
-  const setFurnitureX = (value: number) => setFurniture({ fux: value });
-  const setFurnitureCentered = (value: boolean) =>
-    setFurniture({ fuc: value ? 'true' : 'false' });
+  const setFurnitureAnchor = (value: FurnitureAnchor) => setFurniture({ fua: value });
+  const setFurnitureOffset = (value: number) => setFurniture({ fuo: value });
+  const setFrameFurnitureAlign = (value: FrameFurnitureAlignment) => setFurniture({ ffa: value });
 
   return {
     state,
@@ -210,8 +214,9 @@ export function useCalculator() {
     setHAnchorValue,
     setFurnitureWidth,
     setFurnitureHeight,
-    setFurnitureX,
-    setFurnitureCentered,
+    setFurnitureAnchor,
+    setFurnitureOffset,
+    setFrameFurnitureAlign,
   };
 }
 

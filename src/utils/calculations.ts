@@ -55,9 +55,11 @@ export function calculateLayoutPositions(
     hAnchorValue,
     wallWidth,
     wallHeight,
+    furnitureWidth,
     furnitureHeight,
-    furnitureX,
-    furnitureCentered,
+    furnitureAnchor,
+    furnitureOffset,
+    frameFurnitureAlign,
   } = state;
 
   const rows = layoutType === 'row' ? 1 : gridRows;
@@ -140,16 +142,60 @@ export function calculateLayoutPositions(
     } else if (anchorType === 'ceiling') {
       startY = anchorValue;
     } else if (anchorType === 'furniture') {
+      // Calculate furniture left edge based on anchor
+      let furnitureLeft: number;
+      if (furnitureAnchor === 'center') {
+        furnitureLeft = (wallWidth - furnitureWidth) / 2;
+      } else if (furnitureAnchor === 'left') {
+        furnitureLeft = furnitureOffset;
+      } else {
+        furnitureLeft = wallWidth - furnitureWidth - furnitureOffset;
+      }
+      const furnitureCenterX = furnitureLeft + furnitureWidth / 2;
+
       // Position above furniture with gap (anchorValue)
       const furnitureTop = wallHeight - furnitureHeight;
       startY = furnitureTop - anchorValue - totalHeight;
 
-      // If furniture centering is enabled, override horizontal positioning
-      // (only if horizontal distribution is also fixed)
-      if (furnitureCentered && hDistribution === 'fixed') {
+      // Calculate frame horizontal positioning based on alignment
+      if (frameFurnitureAlign === 'span') {
+        // Use hDistribution within furniture width bounds
+        const totalWidth = actualCols * frameWidth + (actualCols - 1) * effectiveHSpacing;
+
+        if (hDistribution !== 'fixed') {
+          const availableHSpace = furnitureWidth - totalFrameWidth;
+
+          switch (hDistribution) {
+            case 'space-between':
+              effectiveHSpacing = actualCols > 1 ? availableHSpace / (actualCols - 1) : 0;
+              startX = furnitureLeft;
+              break;
+            case 'space-evenly':
+              effectiveHSpacing = availableHSpace / (actualCols + 1);
+              startX = furnitureLeft + effectiveHSpacing;
+              break;
+            case 'space-around':
+              effectiveHSpacing = availableHSpace / actualCols;
+              startX = furnitureLeft + effectiveHSpacing / 2;
+              break;
+          }
+        } else {
+          // Fixed spacing, center within furniture
+          startX = furnitureCenterX - totalWidth / 2;
+        }
+      } else {
+        // For left/center/right alignment, use fixed hSpacing
+        effectiveHSpacing = hSpacing;
         const totalWidth = actualCols * frameWidth + (actualCols - 1) * hSpacing;
-        const furnitureCenterX = wallWidth / 2 + furnitureX;
-        startX = furnitureCenterX - totalWidth / 2;
+
+        if (frameFurnitureAlign === 'center') {
+          startX = furnitureCenterX - totalWidth / 2;
+        } else if (frameFurnitureAlign === 'left') {
+          startX = furnitureLeft;
+        } else {
+          // right alignment
+          startX = furnitureLeft + furnitureWidth - totalWidth;
+        }
       }
     } else {
       // From floor: anchorValue is distance from floor to BOTTOM of arrangement

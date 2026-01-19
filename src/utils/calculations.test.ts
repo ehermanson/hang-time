@@ -35,8 +35,9 @@ const createDefaultState = (
   hAnchorValue: 0,
   furnitureWidth: 48,
   furnitureHeight: 30,
-  furnitureX: 0,
-  furnitureCentered: false,
+  furnitureAnchor: 'center',
+  furnitureOffset: 0,
+  frameFurnitureAlign: 'center',
   ...overrides,
 });
 
@@ -411,55 +412,174 @@ describe('calculateLayoutPositions', () => {
     });
   });
 
-  describe('Furniture Centering', () => {
-    it('centers frames above furniture when enabled', () => {
-      const state = createDefaultState({
-        frameCount: 1,
-        frameWidth: 20,
-        wallWidth: 100,
-        vDistribution: 'fixed',
-        hDistribution: 'fixed',
-        anchorType: 'furniture',
-        furnitureCentered: true,
-        furnitureX: 10, // Furniture offset 10 to the right
-      });
-      const positions = calculateLayoutPositions(state);
-      // Furniture center = wallWidth/2 + furnitureX = 50 + 10 = 60
-      // Frame start = 60 - 20/2 = 50
-      expect(positions[0].x).toBe(50);
-    });
+  describe('Furniture Frame Alignment', () => {
+    const baseState = {
+      frameCount: 1,
+      frameWidth: 20,
+      wallWidth: 100,
+      vDistribution: 'fixed' as const,
+      hDistribution: 'fixed' as const,
+      anchorType: 'furniture' as const,
+      furnitureWidth: 48,
+      furnitureAnchor: 'center' as const,
+      furnitureOffset: 0,
+    };
 
-    it('does not affect horizontal position when furniture centering disabled', () => {
+    it('centers frames above furniture with center alignment', () => {
       const state = createDefaultState({
-        frameCount: 1,
-        frameWidth: 20,
-        wallWidth: 100,
-        vDistribution: 'fixed',
-        hDistribution: 'fixed',
-        hAnchorType: 'center',
-        anchorType: 'furniture',
-        furnitureCentered: false,
-        furnitureX: 10,
+        ...baseState,
+        frameFurnitureAlign: 'center',
       });
       const positions = calculateLayoutPositions(state);
-      // Should center on wall, ignoring furniture
-      expect(positions[0].x).toBe(40); // (100 - 20) / 2
-    });
-
-    it('does not affect horizontal position when hDistribution is not fixed', () => {
-      const state = createDefaultState({
-        frameCount: 1,
-        frameWidth: 20,
-        wallWidth: 100,
-        vDistribution: 'fixed',
-        hDistribution: 'space-evenly',
-        anchorType: 'furniture',
-        furnitureCentered: true,
-        furnitureX: 10,
-      });
-      const positions = calculateLayoutPositions(state);
-      // space-evenly: spacing = (100-20)/2 = 40, startX = 40
+      // Furniture center = (100 - 48) / 2 + 48/2 = 50
+      // Frame start = 50 - 20/2 = 40
       expect(positions[0].x).toBe(40);
+    });
+
+    it('aligns frames to left edge of furniture', () => {
+      const state = createDefaultState({
+        ...baseState,
+        frameFurnitureAlign: 'left',
+      });
+      const positions = calculateLayoutPositions(state);
+      // Furniture left = (100 - 48) / 2 = 26
+      expect(positions[0].x).toBe(26);
+    });
+
+    it('aligns frames to right edge of furniture', () => {
+      const state = createDefaultState({
+        ...baseState,
+        frameFurnitureAlign: 'right',
+      });
+      const positions = calculateLayoutPositions(state);
+      // Furniture left = (100 - 48) / 2 = 26
+      // Frame start = 26 + 48 - 20 = 54
+      expect(positions[0].x).toBe(54);
+    });
+
+    it('positions furniture on left wall with offset', () => {
+      const state = createDefaultState({
+        ...baseState,
+        furnitureAnchor: 'left',
+        furnitureOffset: 10,
+        frameFurnitureAlign: 'left',
+      });
+      const positions = calculateLayoutPositions(state);
+      // Furniture left = 10
+      expect(positions[0].x).toBe(10);
+    });
+
+    it('positions furniture on right wall with offset', () => {
+      const state = createDefaultState({
+        ...baseState,
+        furnitureAnchor: 'right',
+        furnitureOffset: 10,
+        frameFurnitureAlign: 'right',
+      });
+      const positions = calculateLayoutPositions(state);
+      // Furniture left = 100 - 48 - 10 = 42
+      // Frame right = 42 + 48 - 20 = 70
+      expect(positions[0].x).toBe(70);
+    });
+
+    describe('with multiple frames and gap', () => {
+      const multiFrameBase = {
+        ...baseState,
+        frameCount: 3,
+        gridCols: 3,
+        frameWidth: 10,
+        hSpacing: 4,
+      };
+
+      it('left alignment respects gap between frames', () => {
+        const state = createDefaultState({
+          ...multiFrameBase,
+          frameFurnitureAlign: 'left',
+        });
+        const positions = calculateLayoutPositions(state);
+        // Furniture left = (100 - 48) / 2 = 26
+        expect(positions[0].x).toBe(26);
+        expect(positions[1].x).toBe(40); // 26 + 10 + 4
+        expect(positions[2].x).toBe(54); // 26 + 2*(10 + 4)
+      });
+
+      it('center alignment respects gap between frames', () => {
+        const state = createDefaultState({
+          ...multiFrameBase,
+          frameFurnitureAlign: 'center',
+        });
+        const positions = calculateLayoutPositions(state);
+        // Furniture center = 50
+        // Total width = 3*10 + 2*4 = 38
+        // Start = 50 - 38/2 = 31
+        expect(positions[0].x).toBe(31);
+        expect(positions[1].x).toBe(45); // 31 + 10 + 4
+        expect(positions[2].x).toBe(59); // 31 + 2*(10 + 4)
+      });
+
+      it('right alignment respects gap between frames', () => {
+        const state = createDefaultState({
+          ...multiFrameBase,
+          frameFurnitureAlign: 'right',
+        });
+        const positions = calculateLayoutPositions(state);
+        // Furniture left = 26, furniture right = 74
+        // Total width = 3*10 + 2*4 = 38
+        // Start = 74 - 38 = 36
+        expect(positions[0].x).toBe(36);
+        expect(positions[1].x).toBe(50); // 36 + 10 + 4
+        expect(positions[2].x).toBe(64); // 36 + 2*(10 + 4)
+      });
+    });
+
+    describe('span mode distributions', () => {
+      const spanBase = {
+        ...baseState,
+        frameCount: 3,
+        gridCols: 3,
+        frameWidth: 10,
+        frameFurnitureAlign: 'span' as const,
+      };
+
+      it('space-between: first at furniture left, last at furniture right', () => {
+        const state = createDefaultState({
+          ...spanBase,
+          hDistribution: 'space-between',
+        });
+        const positions = calculateLayoutPositions(state);
+        // Furniture left = 26, width = 48
+        // Available = 48 - 30 = 18, spacing = 18 / 2 = 9
+        expect(positions[0].x).toBe(26);
+        expect(positions[1].x).toBe(45); // 26 + 10 + 9
+        expect(positions[2].x).toBe(64); // 26 + 2*(10 + 9)
+      });
+
+      it('space-evenly: equal space at edges and between', () => {
+        const state = createDefaultState({
+          ...spanBase,
+          hDistribution: 'space-evenly',
+        });
+        const positions = calculateLayoutPositions(state);
+        // Furniture left = 26, width = 48
+        // Available = 48 - 30 = 18, spacing = 18 / 4 = 4.5
+        expect(positions[0].x).toBeCloseTo(30.5); // 26 + 4.5
+        expect(positions[1].x).toBeCloseTo(45); // 26 + 4.5 + 10 + 4.5
+        expect(positions[2].x).toBeCloseTo(59.5); // 26 + 2*(4.5 + 10) + 4.5
+      });
+
+      it('space-around: half space at edges, full between', () => {
+        const state = createDefaultState({
+          ...spanBase,
+          hDistribution: 'space-around',
+        });
+        const positions = calculateLayoutPositions(state);
+        // Furniture left = 26, width = 48
+        // Available = 48 - 30 = 18, spacing = 18 / 3 = 6
+        // Start = 26 + 6/2 = 29
+        expect(positions[0].x).toBe(29);
+        expect(positions[1].x).toBe(45); // 29 + 10 + 6
+        expect(positions[2].x).toBe(61); // 29 + 2*(10 + 6)
+      });
     });
   });
 

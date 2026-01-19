@@ -16,6 +16,10 @@ export type Distribution =
   | 'space-evenly'
   | 'space-around';
 
+export type FurnitureAnchor = 'left' | 'center' | 'right';
+
+export type FrameFurnitureAlignment = 'left' | 'center' | 'right' | 'span';
+
 export interface FramePosition {
   id: number;
   name: string;
@@ -74,8 +78,9 @@ export interface CalculatorState {
   // Furniture positioning (when anchorType === 'furniture')
   furnitureWidth: number;
   furnitureHeight: number;
-  furnitureX: number; // Offset from wall center (0 = centered)
-  furnitureCentered: boolean; // Center frames above furniture
+  furnitureAnchor: FurnitureAnchor; // Where furniture sits on wall
+  furnitureOffset: number; // Distance from anchor edge (always positive)
+  frameFurnitureAlign: FrameFurnitureAlignment; // How frames align to furniture
 }
 
 export interface SavedLayout {

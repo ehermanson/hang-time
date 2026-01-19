@@ -390,8 +390,15 @@ export function Preview({ calculator }: PreviewProps) {
 
     // Draw furniture
     if (state.anchorType === 'furniture') {
-      const furnitureCenterX = state.wallWidth / 2 + state.furnitureX;
-      const furnitureLeft = furnitureCenterX - state.furnitureWidth / 2;
+      // Calculate furniture left edge based on anchor
+      let furnitureLeft: number;
+      if (state.furnitureAnchor === 'center') {
+        furnitureLeft = (state.wallWidth - state.furnitureWidth) / 2;
+      } else if (state.furnitureAnchor === 'left') {
+        furnitureLeft = state.furnitureOffset;
+      } else {
+        furnitureLeft = state.wallWidth - state.furnitureWidth - state.furnitureOffset;
+      }
       const furnitureTop = state.wallHeight - state.furnitureHeight;
 
       const fx = offsetX + furnitureLeft * scale;
