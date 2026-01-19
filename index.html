@@ -8,6 +8,14 @@
   <title>Hang Time - Picture Hanging Calculator</title>
   <meta name="description"
     content="Pixel Perfect Picture Placement. Calculate precise measurements for hanging pictures and creating gallery walls." />
+  <script>
+    (function() {
+      var theme = localStorage.getItem('picture-hanging-theme');
+      if (theme === 'dark' || (!theme && theme !== 'light')) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
 </head>
 
 <body>
