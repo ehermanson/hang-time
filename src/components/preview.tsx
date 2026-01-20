@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
+import { useTheme } from '@/hooks/use-theme';
 import {
   formatMeasurement,
   formatShort,
@@ -19,6 +20,8 @@ interface PreviewProps {
 
 export function Preview({ calculator }: PreviewProps) {
   const { state, layoutPositions } = calculator;
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -275,17 +278,16 @@ export function Preview({ calculator }: PreviewProps) {
 
     ctx.scale(2, 2); // Retina scaling
 
-    // Clear
-    ctx.fillStyle = '#fafafa';
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    // Clear (transparent to show app gradient behind)
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // Apply pan offset to wall position
     const offsetX = padding + pan.x;
     const offsetY = padding + pan.y;
 
     // Draw wall background
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#ccc';
+    ctx.fillStyle = isDark ? '#1e293b' : '#fff';
+    ctx.strokeStyle = isDark ? '#475569' : '#ccc';
     ctx.lineWidth = 2;
     ctx.fillRect(
       offsetX,
@@ -301,7 +303,7 @@ export function Preview({ calculator }: PreviewProps) {
     );
 
     // Draw ruler marks on top
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = isDark ? '#94a3b8' : '#666';
     ctx.font = '10px -apple-system, sans-serif';
     ctx.textAlign = 'center';
 
@@ -311,7 +313,7 @@ export function Preview({ calculator }: PreviewProps) {
       ctx.beginPath();
       ctx.moveTo(x, offsetY - 10);
       ctx.lineTo(x, offsetY);
-      ctx.strokeStyle = '#999';
+      ctx.strokeStyle = isDark ? '#64748b' : '#999';
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.fillText(fmtShort(i), x, offsetY - 14);
@@ -324,31 +326,24 @@ export function Preview({ calculator }: PreviewProps) {
       ctx.beginPath();
       ctx.moveTo(offsetX - 10, y);
       ctx.lineTo(offsetX, y);
-      ctx.strokeStyle = '#999';
+      ctx.strokeStyle = isDark ? '#64748b' : '#999';
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.fillText(fmtShort(i), offsetX - 14, y + 4);
     }
 
-    // Draw floor
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(
-      offsetX,
-      offsetY + state.wallHeight * scale,
-      state.wallWidth * scale,
-      8,
-    );
-    ctx.fillStyle = '#666';
+    // Draw floor label
+    ctx.fillStyle = isDark ? '#94a3b8' : '#666';
     ctx.font = '11px -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(
       'FLOOR',
       offsetX + (state.wallWidth * scale) / 2,
-      offsetY + state.wallHeight * scale + 20,
+      offsetY + state.wallHeight * scale + 16,
     );
 
     // Draw ceiling indicator
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = isDark ? '#94a3b8' : '#666';
     ctx.fillText(
       'CEILING',
       offsetX + (state.wallWidth * scale) / 2,
@@ -406,14 +401,14 @@ export function Preview({ calculator }: PreviewProps) {
       const fw = state.furnitureWidth * scale;
       const fh = state.furnitureHeight * scale;
 
-      ctx.fillStyle = 'rgba(0,0,0,0.08)';
+      ctx.fillStyle = isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.08)';
       ctx.fillRect(fx + 2, fy + 2, fw, fh);
-      ctx.fillStyle = '#e5e7eb';
+      ctx.fillStyle = isDark ? '#475569' : '#e5e7eb';
       ctx.fillRect(fx, fy, fw, fh);
-      ctx.strokeStyle = '#9ca3af';
+      ctx.strokeStyle = isDark ? '#64748b' : '#9ca3af';
       ctx.lineWidth = 2;
       ctx.strokeRect(fx, fy, fw, fh);
-      ctx.fillStyle = '#6b7280';
+      ctx.fillStyle = isDark ? '#94a3b8' : '#6b7280';
       ctx.font = 'bold 11px -apple-system, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('FURNITURE', fx + fw / 2, fy + fh / 2 + 4);
@@ -428,16 +423,18 @@ export function Preview({ calculator }: PreviewProps) {
       const fw = frame.width * scale;
       const fh = frame.height * scale;
 
-      ctx.fillStyle = 'rgba(0,0,0,0.1)';
+      ctx.fillStyle = isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)';
       ctx.fillRect(fx + 3, fy + 3, fw, fh);
-      ctx.fillStyle = frame.isOutOfBounds ? '#fef2f2' : '#f8f8f8';
+      ctx.fillStyle = frame.isOutOfBounds
+        ? (isDark ? '#450a0a' : '#fef2f2')
+        : (isDark ? '#334155' : '#f8f8f8');
       ctx.fillRect(fx, fy, fw, fh);
-      ctx.strokeStyle = frame.isOutOfBounds ? '#ef4444' : '#333';
+      ctx.strokeStyle = frame.isOutOfBounds ? '#ef4444' : (isDark ? '#64748b' : '#333');
       ctx.lineWidth = frame.isOutOfBounds ? 3 : 2;
       ctx.strokeRect(fx, fy, fw, fh);
 
       const matInset = Math.min(fw, fh) * 0.1;
-      ctx.strokeStyle = '#ddd';
+      ctx.strokeStyle = isDark ? '#475569' : '#ddd';
       ctx.lineWidth = 1;
       ctx.strokeRect(
         fx + matInset,
@@ -456,7 +453,7 @@ export function Preview({ calculator }: PreviewProps) {
       ctx.fillStyle = '#ef4444';
       ctx.fill();
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1;
       ctx.stroke();
 
       // Draw second hook if dual hanging
@@ -467,17 +464,17 @@ export function Preview({ calculator }: PreviewProps) {
         ctx.fillStyle = '#ef4444';
         ctx.fill();
         ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1;
         ctx.stroke();
       }
 
-      ctx.fillStyle = '#666';
+      ctx.fillStyle = isDark ? '#94a3b8' : '#666';
       ctx.font = 'bold 11px -apple-system, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(frame.name, fx + fw / 2, fy + fh / 2 + 4);
 
       ctx.font = '10px -apple-system, sans-serif';
-      ctx.fillStyle = '#4f46e5';
+      ctx.fillStyle = isDark ? '#818cf8' : '#4f46e5';
       ctx.fillText(fmtShort(frame.width), fx + fw / 2, fy - 6);
 
       ctx.save();
@@ -521,7 +518,7 @@ export function Preview({ calculator }: PreviewProps) {
       const fromLeftText = fmt(fromLeft);
       const fromLeftX = offsetX + (fromLeft * scale) / 2;
       const fromLeftWidth = ctx.measureText(fromLeftText).width;
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = isDark ? '#1e293b' : '#fff';
       ctx.fillRect(
         fromLeftX - fromLeftWidth / 2 - 2,
         hookY - 14,
@@ -540,7 +537,7 @@ export function Preview({ calculator }: PreviewProps) {
       ctx.translate(hookX + 10, fromFloorY);
       ctx.rotate(-Math.PI / 2);
       const floorTextWidth = ctx.measureText(fromFloorText).width;
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = isDark ? '#1e293b' : '#fff';
       ctx.fillRect(-floorTextWidth / 2 - 2, -9, floorTextWidth + 4, 12);
       ctx.fillStyle = '#22c55e';
       ctx.fillText(fromFloorText, 0, 0);
@@ -567,7 +564,7 @@ export function Preview({ calculator }: PreviewProps) {
         ctx.translate(hookX - 10, fromCeilingY);
         ctx.rotate(-Math.PI / 2);
         const ceilingTextWidth = ctx.measureText(fromCeilingText).width;
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = isDark ? '#1e293b' : '#fff';
         ctx.fillRect(-ceilingTextWidth / 2 - 2, -9, ceilingTextWidth + 4, 12);
         ctx.fillStyle = '#22c55e';
         ctx.fillText(fromCeilingText, 0, 0);
@@ -596,7 +593,7 @@ export function Preview({ calculator }: PreviewProps) {
         const textX = (hookX + hookX2) / 2;
         ctx.font = 'bold 10px -apple-system, sans-serif';
         const textWidth = ctx.measureText(gapText).width;
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = isDark ? '#1e293b' : '#fff';
         ctx.beginPath();
         ctx.roundRect(
           textX - textWidth / 2 - 4,
@@ -625,7 +622,7 @@ export function Preview({ calculator }: PreviewProps) {
             (referenceHook.hookIndex === 1 && frame.hookX2
               ? frame.hookX2
               : frame.hookX) *
-              scale;
+            scale;
           const hookY = offsetY + frame.hookY * scale;
 
           const tooltipText = 'Shift+click another hook to compare';
@@ -637,7 +634,7 @@ export function Preview({ calculator }: PreviewProps) {
           const tooltipY = hookY - 25;
 
           // Draw tooltip background
-          ctx.fillStyle = '#1f2937';
+          ctx.fillStyle = isDark ? '#f1f5f9' : '#1f2937';
           ctx.beginPath();
           ctx.roundRect(
             tooltipX - textWidth / 2 - 8,
@@ -657,7 +654,7 @@ export function Preview({ calculator }: PreviewProps) {
           ctx.fill();
 
           // Draw text
-          ctx.fillStyle = '#fff';
+          ctx.fillStyle = isDark ? '#1e293b' : '#fff';
           ctx.textAlign = 'center';
           ctx.fillText(tooltipText, tooltipX, tooltipY + 2);
         }
@@ -772,6 +769,7 @@ export function Preview({ calculator }: PreviewProps) {
     referenceHook,
     compareHook,
     pan,
+    isDark,
   ]);
 
   return (
