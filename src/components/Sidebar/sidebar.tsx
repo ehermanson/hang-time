@@ -28,6 +28,7 @@ import { useSavedLayouts } from '@/hooks/use-saved-layouts';
 import { cn } from '@/lib/utils';
 import { Furniture } from './furniture';
 import { GalleryFrames } from './gallery-frames';
+import { HangingHardware } from './hanging-hardware';
 import { HorizontalPosition } from './horizontal-position';
 import { VerticalPosition } from './vertical-position';
 import { WallDimensions } from './wall-dimensions';
@@ -375,6 +376,7 @@ export function Sidebar({ calculator }: SidebarProps) {
               <div className="p-4 space-y-4">
                 <WallDimensions calculator={calculator} />
                 <GalleryFrames calculator={calculator} />
+                <HangingHardware calculator={calculator} />
                 <VerticalPosition calculator={calculator} />
                 {state.anchorType === 'furniture' && (
                   <Furniture calculator={calculator} />
