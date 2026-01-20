@@ -6,6 +6,7 @@ import {
   PanelLeft,
   PanelLeftClose,
   Pencil,
+  RotateCcw,
   Ruler,
   SlidersHorizontal,
   X,
@@ -21,20 +22,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
 import { useSavedLayouts } from '@/hooks/use-saved-layouts';
 import { cn } from '@/lib/utils';
-import { FrameSize } from './frame-size';
 import { Furniture } from './furniture';
 import { GalleryFrames } from './gallery-frames';
 import { HorizontalPosition } from './horizontal-position';
-import { LayoutTypeSelector } from './layout-type-selector';
 import { VerticalPosition } from './vertical-position';
 import { WallDimensions } from './wall-dimensions';
 
@@ -172,19 +165,13 @@ export function Sidebar({ calculator }: SidebarProps) {
         transition={{ duration: 0.2 }}
         style={{ pointerEvents: isMinimized ? 'auto' : 'none' }}
       >
-        <TooltipProvider delayDuration={100}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={() => setIsMinimized(false)}
-                className="h-12 w-12 rounded-2xl bg-white/90 hover:bg-white dark:bg-slate-900/90 dark:hover:bg-slate-800 backdrop-blur-xl shadow-2xl border border-gray-200 dark:border-white/10"
-              >
-                <PanelLeft className="h-5 w-5 text-gray-700 dark:text-white" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Show controls</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          onClick={() => setIsMinimized(false)}
+          className="h-12 w-12 rounded-2xl bg-white/90 hover:bg-white dark:bg-slate-900/90 dark:hover:bg-slate-800 backdrop-blur-xl shadow-2xl border border-gray-200 dark:border-white/10"
+          title="Show controls"
+        >
+          <PanelLeft className="h-5 w-5 text-gray-700 dark:text-white" />
+        </Button>
       </motion.div>
 
       {/* Main panel - always in DOM, animates size */}
@@ -217,21 +204,15 @@ export function Sidebar({ calculator }: SidebarProps) {
                 </p>
               </div>
             </div>
-            <TooltipProvider delayDuration={100}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsMinimized(true)}
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/10"
-                  >
-                    <PanelLeftClose className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Minimize</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMinimized(true)}
+              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/10"
+              title="Minimize"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Current layout indicator */}
@@ -315,28 +296,33 @@ export function Sidebar({ calculator }: SidebarProps) {
           )}
 
           {/* Action buttons */}
-          <TooltipProvider delayDuration={300}>
-            <div className="flex gap-2 mt-3">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
-                    onClick={handleCopyLink}
-                  >
-                    {copied ? (
-                      <Check className="size-4" />
-                    ) : (
-                      <Link className="size-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {copied ? 'Copied!' : 'Copy link'}
-                </TooltipContent>
-              </Tooltip>
-              <SaveLayoutDialog
+          <div className="flex gap-2 mt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+              onClick={handleCopyLink}
+              title={copied ? 'Copied!' : 'Copy link'}
+            >
+              {copied ? (
+                <Check className="size-4" />
+              ) : (
+                <Link className="size-4" />
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+              onClick={() => {
+                window.history.pushState({}, '', window.location.pathname);
+                window.location.reload();
+              }}
+              title="Reset all"
+            >
+              <RotateCcw className="size-4" />
+            </Button>
+            <SaveLayoutDialog
                 onSave={save}
                 onUpdate={update}
                 isNameTaken={isNameTaken}
@@ -350,12 +336,11 @@ export function Sidebar({ calculator }: SidebarProps) {
                 onDelete={remove}
                 onRename={rename}
               />
-              <SettingsDialog
-                unit={state.unit}
-                onUnitChange={calculator.setUnit}
-              />
-            </div>
-          </TooltipProvider>
+            <SettingsDialog
+              unit={state.unit}
+              onUnitChange={calculator.setUnit}
+            />
+          </div>
         </div>
 
         <Tabs defaultValue="config" className="flex-1 flex flex-col overflow-hidden">
@@ -387,16 +372,12 @@ export function Sidebar({ calculator }: SidebarProps) {
             <ScrollArea className="h-full">
               <div className="p-4 space-y-4">
                 <WallDimensions calculator={calculator} />
-                <LayoutTypeSelector calculator={calculator} />
-                {state.layoutType === 'gallery' ? (
-                  <GalleryFrames calculator={calculator} />
-                ) : (
-                  <FrameSize calculator={calculator} />
-                )}
+                <GalleryFrames calculator={calculator} />
                 <VerticalPosition calculator={calculator} />
-                {state.anchorType === 'furniture' ? (
+                {state.anchorType === 'furniture' && (
                   <Furniture calculator={calculator} />
-                ) : (
+                )}
+                {state.anchorType !== 'furniture' && (
                   <HorizontalPosition calculator={calculator} />
                 )}
               </div>

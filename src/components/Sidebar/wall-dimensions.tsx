@@ -17,7 +17,7 @@ export function WallDimensions({ calculator }: Props) {
 
   return (
     <Collapsible
-      defaultOpen
+      defaultOpen={false}
       className="pb-4 border-b border-gray-200 dark:border-white/10"
     >
       <CollapsibleTrigger className="w-full group">

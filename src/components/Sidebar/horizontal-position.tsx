@@ -8,89 +8,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
 import { cn } from '@/lib/utils';
-import type { Distribution, HorizontalAnchorType } from '@/types';
-
-// Visual preview of distribution mode
-function DistributionPreview({
-  mode,
-  isSelected,
-}: {
-  mode: Distribution;
-  isSelected: boolean;
-}) {
-  const frameColor = isSelected
-    ? 'fill-amber-500 dark:fill-amber-400'
-    : 'fill-gray-400 dark:fill-white/40';
-  const wallColor = isSelected
-    ? 'stroke-amber-300 dark:stroke-amber-400'
-    : 'stroke-gray-300 dark:stroke-white/30';
-
-  const w = 48;
-  const h = 24;
-  const fw = 10;
-  const fh = 14;
-
-  const getPositions = (): number[] => {
-    const totalFrames = 3 * fw;
-    const available = w - totalFrames;
-
-    switch (mode) {
-      case 'fixed': {
-        const gap = 3;
-        const totalWidth = 3 * fw + 2 * gap;
-        const start = (w - totalWidth) / 2;
-        return [start, start + fw + gap, start + 2 * (fw + gap)];
-      }
-      case 'space-between': {
-        const gap = available / 2;
-        return [0, fw + gap, 2 * (fw + gap)];
-      }
-      case 'space-evenly': {
-        const gap = available / 4;
-        return [gap, gap + fw + gap, gap + 2 * (fw + gap)];
-      }
-      case 'space-around': {
-        const gap = available / 3;
-        return [gap / 2, gap / 2 + fw + gap, gap / 2 + 2 * (fw + gap)];
-      }
-    }
-  };
-
-  const positions = getPositions();
-
-  return (
-    <svg width={w} height={h} className="flex-shrink-0">
-      <rect
-        x={0.5}
-        y={0.5}
-        width={w - 1}
-        height={h - 1}
-        fill="none"
-        className={wallColor}
-        strokeWidth={1}
-        rx={2}
-      />
-      {positions.map((pos, i) => (
-        <rect
-          key={i}
-          x={pos}
-          y={(h - fh) / 2}
-          width={fw}
-          height={fh}
-          className={frameColor}
-          rx={1}
-        />
-      ))}
-    </svg>
-  );
-}
-
-const DISTRIBUTION_OPTIONS: { value: Distribution; label: string }[] = [
-  { value: 'fixed', label: 'Fixed' },
-  { value: 'space-between', label: 'Edge' },
-  { value: 'space-evenly', label: 'Even' },
-  { value: 'space-around', label: 'Balanced' },
-];
+import type { HorizontalAnchorType } from '@/types';
 
 interface Props {
   calculator: UseCalculatorReturn;
@@ -123,15 +41,8 @@ const options: {
 ];
 
 export function HorizontalPosition({ calculator }: Props) {
-  const {
-    state,
-    u,
-    fromU,
-    setHAnchorType,
-    setHAnchorValue,
-    setHDistribution,
-    setHSpacing,
-  } = calculator;
+  const { state, u, fromU, setHAnchorType, setHAnchorValue, setHSpacing } =
+    calculator;
 
   return (
     <Collapsible defaultOpen>
@@ -146,42 +57,12 @@ export function HorizontalPosition({ calculator }: Props) {
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-3 pt-3">
-          {/* Distribution Mode */}
-          <Field>
-            <FieldLabel>Distribution</FieldLabel>
-            <div className="grid grid-cols-4 gap-1.5">
-              {DISTRIBUTION_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setHDistribution(option.value)}
-                  className={cn(
-                    'flex flex-col items-center p-1.5 rounded-lg border transition-all',
-                    state.hDistribution === option.value
-                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20'
-                      : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10',
-                  )}
-                >
-                  <DistributionPreview
-                    mode={option.value}
-                    isSelected={state.hDistribution === option.value}
-                  />
-                  <span
-                    className={cn(
-                      'text-[10px] font-medium mt-1',
-                      state.hDistribution === option.value
-                        ? 'text-amber-600 dark:text-amber-300'
-                        : 'text-gray-600 dark:text-white/60',
-                    )}
-                  >
-                    {option.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          {/* Anchor options - only show for fixed distribution */}
-          {state.hDistribution === 'fixed' && (
+          {state.hDistribution !== 'fixed' ? (
+            <p className="text-xs text-gray-500 dark:text-white/50 italic">
+              Position is automatic for {state.hDistribution.replace('space-', '')} distribution.
+              Set distribution to "Fixed" to control position and spacing.
+            </p>
+          ) : (
             <>
               <div className="flex flex-col gap-2">
                 {options.map((opt) => (
@@ -218,7 +99,7 @@ export function HorizontalPosition({ calculator }: Props) {
               </div>
 
               {state.hAnchorType !== 'center' && (
-                <Field className="mt-3">
+                <Field>
                   <FieldLabel htmlFor="hAnchorValue">
                     Distance from {state.hAnchorType} edge ({state.unit})
                   </FieldLabel>
@@ -234,8 +115,10 @@ export function HorizontalPosition({ calculator }: Props) {
                 </Field>
               )}
 
-              <Field className="mt-3">
-                <FieldLabel htmlFor="hSpacing">Gap between frames ({state.unit})</FieldLabel>
+              <Field>
+                <FieldLabel htmlFor="hSpacing">
+                  Gap between frames ({state.unit})
+                </FieldLabel>
                 <Input
                   id="hSpacing"
                   type="number"

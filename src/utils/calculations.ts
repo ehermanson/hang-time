@@ -1,4 +1,4 @@
-import type { CalculatorState, FramePosition } from '@/types';
+import type { CalculatorState, Distribution, FramePosition, GalleryFrame, GalleryVAlign } from '@/types';
 
 export const INCH_TO_CM = 2.54;
 
@@ -32,140 +32,40 @@ export const formatShort = (value: number, unit: 'in' | 'cm'): string => {
     : `${formatNumber(value, decimals)}cm`;
 };
 
-function calculateGalleryPositions(state: CalculatorState): FramePosition[] {
-  const {
-    galleryFrames,
-    galleryVAlign,
-    hSpacing,
-    hangingOffset,
-    hangingType,
-    hookInset,
-    anchorType,
-    anchorValue,
-    hAnchorType,
-    hAnchorValue,
-    wallWidth,
-    wallHeight,
-  } = state;
-
-  if (galleryFrames.length === 0) return [];
-
-  // Calculate total width of gallery (sum of frames + gaps)
-  const totalWidth =
-    galleryFrames.reduce((sum, f) => sum + f.width, 0) +
-    (galleryFrames.length - 1) * hSpacing;
-
-  // Calculate max height of all frames
-  const maxHeight = Math.max(...galleryFrames.map((f) => f.height));
-
-  // Calculate horizontal start position (bounding box left edge)
-  let startX: number;
-  if (hAnchorType === 'center') {
-    startX = (wallWidth - totalWidth) / 2;
-  } else if (hAnchorType === 'left') {
-    startX = hAnchorValue;
-  } else {
-    startX = wallWidth - totalWidth - hAnchorValue;
-  }
-
-  // Calculate vertical position of the bounding box top
-  let boundingBoxY: number;
-  if (anchorType === 'center') {
-    boundingBoxY = (wallHeight - maxHeight) / 2;
-  } else if (anchorType === 'ceiling') {
-    boundingBoxY = anchorValue;
-  } else if (anchorType === 'floor') {
-    // anchorValue is distance from floor to bottom of bounding box
-    boundingBoxY = wallHeight - anchorValue - maxHeight;
-  } else {
-    // furniture mode - treat same as floor for now
-    boundingBoxY = wallHeight - anchorValue - maxHeight;
-  }
-
-  const positions: FramePosition[] = [];
-  let currentX = startX;
-
-  galleryFrames.forEach((frame, index) => {
-    // Position frame vertically within bounding box based on alignment
-    let y: number;
-    if (galleryVAlign === 'top') {
-      y = boundingBoxY;
-    } else if (galleryVAlign === 'bottom') {
-      y = boundingBoxY + maxHeight - frame.height;
-    } else {
-      // center (default)
-      y = boundingBoxY + (maxHeight - frame.height) / 2;
-    }
-    const hookY = y + hangingOffset;
-
-    // Calculate hook positions based on hanging type
-    let hookX: number;
-    let hookX2: number | undefined;
-    let hookGap: number | undefined;
-
-    if (hangingType === 'dual') {
-      hookX = currentX + hookInset;
-      hookX2 = currentX + frame.width - hookInset;
-      hookGap = frame.width - 2 * hookInset;
-    } else {
-      hookX = currentX + frame.width / 2;
-    }
-
-    // Check if frame extends beyond wall boundaries
-    const isOutOfBounds =
-      currentX < 0 ||
-      y < 0 ||
-      currentX + frame.width > wallWidth ||
-      y + frame.height > wallHeight;
-
-    positions.push({
-      id: index + 1,
-      name: `Frame ${index + 1}`,
-      x: currentX,
-      y,
-      width: frame.width,
-      height: frame.height,
-      hangingOffset,
-      hookX,
-      hookX2,
-      hookY,
-      hookGap,
-      fromLeft: hookX,
-      fromTop: hookY,
-      fromFloor: wallHeight - hookY,
-      fromRight: wallWidth - (hookX2 ?? hookX),
-      fromCeiling: hookY,
-      isOutOfBounds,
-    });
-
-    currentX += frame.width + hSpacing;
-  });
-
-  return positions;
+interface LayoutRow {
+  id: string;
+  frames: { frame: GalleryFrame; originalIndex: number }[];
+  width: number;
+  height: number;
+  hSpacing: number;
+  vAlign: GalleryVAlign;
+  hDistribution: Distribution;
 }
 
-export function calculateLayoutPositions(
-  state: CalculatorState,
-): FramePosition[] {
-  // Gallery mode has separate calculation
-  if (state.layoutType === 'gallery') {
-    return calculateGalleryPositions(state);
+// Get effective frame dimensions (respects uniformSize toggle)
+function getFrameDimensions(
+  frame: GalleryFrame,
+  state: CalculatorState
+): { width: number; height: number } {
+  if (state.uniformSize) {
+    return { width: state.frameWidth, height: state.frameHeight };
   }
+  return { width: frame.width, height: frame.height };
+}
 
+export function calculateLayoutPositions(state: CalculatorState): FramePosition[] {
   const {
-    layoutType,
-    frameCount,
-    gridRows,
-    gridCols,
-    frameWidth,
-    frameHeight,
+    frames,
+    vAlign,
+    rowMode,
+    maxRowWidth,
+    rowSpacing,
+    rowConfigs,
+    hSpacing,
+    hDistribution,
     hangingOffset,
     hangingType,
     hookInset,
-    hSpacing,
-    vSpacing,
-    hDistribution,
-    vDistribution,
     anchorType,
     anchorValue,
     hAnchorType,
@@ -180,211 +80,300 @@ export function calculateLayoutPositions(
     furnitureVAnchor,
   } = state;
 
-  const rows = layoutType === 'row' ? 1 : gridRows;
-  const cols = gridCols;
+  if (frames.length === 0) return [];
 
-  // Calculate actual number of frames that will be displayed
-  const maxFrames = Math.min(frameCount, rows * cols);
-  const actualCols = layoutType === 'row' ? maxFrames : cols;
-  const actualRows = layoutType === 'row' ? 1 : Math.ceil(maxFrames / cols);
+  const effectiveMaxWidth = maxRowWidth ?? wallWidth;
 
-  // Calculate effective spacing based on distribution mode
-  let effectiveHSpacing = hSpacing;
-  let effectiveVSpacing = vSpacing;
+  // Step 1: Group frames into rows
+  const rows: LayoutRow[] = [];
 
-  // Calculate total frame dimensions (without gaps) - use actual frame count
-  const totalFrameWidth = actualCols * frameWidth;
-  const totalFrameHeight = actualRows * frameHeight;
+  if (rowMode === 'manual') {
+    // Manual mode: group by frame.row property
+    const rowMap = new Map<number, LayoutRow['frames']>();
+    frames.forEach((frame, index) => {
+      const rowNum = frame.row ?? 0;
+      if (!rowMap.has(rowNum)) {
+        rowMap.set(rowNum, []);
+      }
+      rowMap.get(rowNum)!.push({ frame, originalIndex: index });
+    });
 
-  // Calculate horizontal spacing and start position based on distribution
-  let startX: number;
-  if (hDistribution !== 'fixed') {
-    const availableHSpace = wallWidth - totalFrameWidth;
+    // Sort by row number and create row objects
+    const sortedRowNums = [...rowMap.keys()].sort((a, b) => a - b);
+    sortedRowNums.forEach((rowNum, idx) => {
+      const rowFrames = rowMap.get(rowNum)!;
+      const rowConfig = rowConfigs.find((c) => c.id === `row-${idx}`);
+      const rowHSpacing = rowConfig?.hSpacing ?? hSpacing;
+      const rowVAlign = rowConfig?.vAlign ?? vAlign;
+      const rowHDistribution = rowConfig?.hDistribution ?? hDistribution;
 
-    switch (hDistribution) {
-      case 'space-between':
-        // First/last frames at edges, equal gaps between
-        effectiveHSpacing = actualCols > 1 ? availableHSpace / (actualCols - 1) : 0;
-        startX = 0;
-        break;
-      case 'space-evenly':
-        // Equal space at edges and between all frames
-        effectiveHSpacing = availableHSpace / (actualCols + 1);
-        startX = effectiveHSpacing;
-        break;
-      case 'space-around':
-        // Half-size space at edges, full space between
-        effectiveHSpacing = availableHSpace / actualCols;
-        startX = effectiveHSpacing / 2;
-        break;
-    }
+      const rowWidth =
+        rowFrames.reduce((sum, f) => sum + getFrameDimensions(f.frame, state).width, 0) +
+        (rowFrames.length - 1) * rowHSpacing;
+      const rowHeight = Math.max(...rowFrames.map((f) => getFrameDimensions(f.frame, state).height));
+
+      rows.push({
+        id: `row-${idx}`,
+        frames: rowFrames,
+        width: rowWidth,
+        height: rowHeight,
+        hSpacing: rowHSpacing,
+        vAlign: rowVAlign,
+        hDistribution: rowHDistribution,
+      });
+    });
   } else {
-    // Fixed mode: use original anchor-based positioning
-    const totalWidth = actualCols * frameWidth + (actualCols - 1) * hSpacing;
-    if (hAnchorType === 'center') {
-      startX = (wallWidth - totalWidth) / 2;
-    } else if (hAnchorType === 'left') {
-      startX = hAnchorValue;
-    } else {
-      startX = wallWidth - totalWidth - hAnchorValue;
+    // Auto mode: wrap when cumulative width exceeds maxWidth
+    let currentRowFrames: LayoutRow['frames'] = [];
+    let currentRowWidth = 0;
+    let rowIndex = 0;
+
+    frames.forEach((frame, index) => {
+      const dims = getFrameDimensions(frame, state);
+      const frameWithGap = dims.width + (currentRowFrames.length > 0 ? hSpacing : 0);
+
+      if (currentRowFrames.length > 0 && currentRowWidth + frameWithGap > effectiveMaxWidth) {
+        // Finish current row
+        const rowConfig = rowConfigs.find((c) => c.id === `row-${rowIndex}`);
+        const rowHSpacing = rowConfig?.hSpacing ?? hSpacing;
+        const rowVAlign = rowConfig?.vAlign ?? vAlign;
+        const rowHDistribution = rowConfig?.hDistribution ?? hDistribution;
+
+        const rowWidth =
+          currentRowFrames.reduce((sum, f) => sum + getFrameDimensions(f.frame, state).width, 0) +
+          (currentRowFrames.length - 1) * rowHSpacing;
+        const rowHeight = Math.max(...currentRowFrames.map((f) => getFrameDimensions(f.frame, state).height));
+
+        rows.push({
+          id: `row-${rowIndex}`,
+          frames: currentRowFrames,
+          width: rowWidth,
+          height: rowHeight,
+          hSpacing: rowHSpacing,
+          vAlign: rowVAlign,
+          hDistribution: rowHDistribution,
+        });
+
+        rowIndex++;
+        currentRowFrames = [];
+        currentRowWidth = 0;
+      }
+
+      currentRowFrames.push({ frame, originalIndex: index });
+      currentRowWidth += currentRowFrames.length === 1 ? dims.width : dims.width + hSpacing;
+    });
+
+    // Add the last row
+    if (currentRowFrames.length > 0) {
+      const rowConfig = rowConfigs.find((c) => c.id === `row-${rowIndex}`);
+      const rowHSpacing = rowConfig?.hSpacing ?? hSpacing;
+      const rowVAlign = rowConfig?.vAlign ?? vAlign;
+      const rowHDistribution = rowConfig?.hDistribution ?? hDistribution;
+
+      const rowWidth =
+        currentRowFrames.reduce((sum, f) => sum + getFrameDimensions(f.frame, state).width, 0) +
+        (currentRowFrames.length - 1) * rowHSpacing;
+      const rowHeight = Math.max(...currentRowFrames.map((f) => getFrameDimensions(f.frame, state).height));
+
+      rows.push({
+        id: `row-${rowIndex}`,
+        frames: currentRowFrames,
+        width: rowWidth,
+        height: rowHeight,
+        hSpacing: rowHSpacing,
+        vAlign: rowVAlign,
+        hDistribution: rowHDistribution,
+      });
     }
   }
 
-  // Calculate vertical spacing and start position based on distribution
-  let startY: number;
-  if (vDistribution !== 'fixed') {
-    const availableVSpace = wallHeight - totalFrameHeight;
+  // Step 2: Calculate total height
+  const totalHeight =
+    rows.reduce((sum, row) => sum + row.height, 0) +
+    (rows.length - 1) * rowSpacing;
 
-    switch (vDistribution) {
-      case 'space-between':
-        // First/last frames at edges, equal gaps between
-        effectiveVSpacing = actualRows > 1 ? availableVSpace / (actualRows - 1) : 0;
-        startY = 0;
-        break;
-      case 'space-evenly':
-        // Equal space at edges and between all frames
-        effectiveVSpacing = availableVSpace / (actualRows + 1);
-        startY = effectiveVSpacing;
-        break;
-      case 'space-around':
-        // Half-size space at edges, full space between
-        effectiveVSpacing = availableVSpace / actualRows;
-        startY = effectiveVSpacing / 2;
-        break;
+  // Step 3: Calculate vertical starting position based on anchor type
+  let boundingBoxY: number;
+  if (anchorType === 'center') {
+    boundingBoxY = (wallHeight - totalHeight) / 2;
+  } else if (anchorType === 'ceiling') {
+    boundingBoxY = anchorValue;
+  } else if (anchorType === 'floor') {
+    boundingBoxY = wallHeight - anchorValue - totalHeight;
+  } else if (anchorType === 'furniture') {
+    const furnitureTop = wallHeight - furnitureHeight;
+    if (furnitureVAnchor === 'center') {
+      boundingBoxY = (furnitureTop - totalHeight) / 2;
+    } else if (furnitureVAnchor === 'ceiling') {
+      boundingBoxY = anchorValue;
+    } else {
+      // above-furniture
+      boundingBoxY = furnitureTop - anchorValue - totalHeight;
     }
   } else {
-    // Fixed mode: use original anchor-based positioning
-    const totalHeight = actualRows * frameHeight + (actualRows - 1) * vSpacing;
-    if (anchorType === 'center') {
-      startY = (wallHeight - totalHeight) / 2;
-    } else if (anchorType === 'ceiling') {
-      startY = anchorValue;
-    } else if (anchorType === 'furniture') {
-      // Calculate furniture left edge based on anchor
-      let furnitureLeft: number;
-      if (furnitureAnchor === 'center') {
-        furnitureLeft = (wallWidth - furnitureWidth) / 2;
-      } else if (furnitureAnchor === 'left') {
-        furnitureLeft = furnitureOffset;
-      } else {
-        furnitureLeft = wallWidth - furnitureWidth - furnitureOffset;
-      }
-      const furnitureCenterX = furnitureLeft + furnitureWidth / 2;
-
-      // Calculate vertical position based on furniture vertical anchor
-      const furnitureTop = wallHeight - furnitureHeight;
-      if (furnitureVAnchor === 'center') {
-        // Center frames between ceiling and furniture top
-        startY = (furnitureTop - totalHeight) / 2;
-      } else if (furnitureVAnchor === 'ceiling') {
-        // Position from ceiling
-        startY = anchorValue;
-      } else {
-        // above-furniture: Position above furniture with gap (anchorValue)
-        startY = furnitureTop - anchorValue - totalHeight;
-      }
-
-      // Calculate frame horizontal positioning based on alignment
-      if (frameFurnitureAlign === 'span') {
-        // Use hDistribution within furniture width bounds
-        const totalWidth = actualCols * frameWidth + (actualCols - 1) * effectiveHSpacing;
-
-        if (hDistribution !== 'fixed') {
-          const availableHSpace = furnitureWidth - totalFrameWidth;
-
-          switch (hDistribution) {
-            case 'space-between':
-              effectiveHSpacing = actualCols > 1 ? availableHSpace / (actualCols - 1) : 0;
-              startX = furnitureLeft;
-              break;
-            case 'space-evenly':
-              effectiveHSpacing = availableHSpace / (actualCols + 1);
-              startX = furnitureLeft + effectiveHSpacing;
-              break;
-            case 'space-around':
-              effectiveHSpacing = availableHSpace / actualCols;
-              startX = furnitureLeft + effectiveHSpacing / 2;
-              break;
-          }
-        } else {
-          // Fixed spacing, center within furniture
-          startX = furnitureCenterX - totalWidth / 2;
-        }
-      } else {
-        // For left/center/right alignment, use fixed hSpacing
-        effectiveHSpacing = hSpacing;
-        const totalWidth = actualCols * frameWidth + (actualCols - 1) * hSpacing;
-
-        if (frameFurnitureAlign === 'center') {
-          startX = furnitureCenterX - totalWidth / 2;
-        } else if (frameFurnitureAlign === 'left') {
-          startX = furnitureLeft;
-        } else {
-          // right alignment
-          startX = furnitureLeft + furnitureWidth - totalWidth;
-        }
-      }
-    } else {
-      // From floor: anchorValue is distance from floor to BOTTOM of arrangement
-      startY = wallHeight - anchorValue - totalHeight;
-    }
+    boundingBoxY = wallHeight - anchorValue - totalHeight;
   }
 
+  // Step 4: Position frames within each row
   const positions: FramePosition[] = [];
-  let frameNum = 0;
+  let currentRowY = boundingBoxY;
 
-  for (let row = 0; row < rows && frameNum < maxFrames; row++) {
-    for (let col = 0; col < cols && frameNum < maxFrames; col++) {
-      const x = startX + col * (frameWidth + effectiveHSpacing);
-      const y = startY + row * (frameHeight + effectiveVSpacing);
+  rows.forEach((row, rowIdx) => {
+    const framesInRow = row.frames.length;
+    const totalFrameWidth = row.frames.reduce(
+      (sum, f) => sum + getFrameDimensions(f.frame, state).width,
+      0
+    );
+
+    // Calculate horizontal positioning based on distribution mode
+    let effectiveHSpacing = row.hSpacing;
+    let rowStartX: number;
+
+    if (row.hDistribution !== 'fixed') {
+      const availableSpace = wallWidth - totalFrameWidth;
+
+      switch (row.hDistribution) {
+        case 'space-between':
+          effectiveHSpacing = framesInRow > 1 ? availableSpace / (framesInRow - 1) : 0;
+          rowStartX = 0;
+          break;
+        case 'space-evenly':
+          effectiveHSpacing = availableSpace / (framesInRow + 1);
+          rowStartX = effectiveHSpacing;
+          break;
+        case 'space-around':
+          effectiveHSpacing = availableSpace / framesInRow;
+          rowStartX = effectiveHSpacing / 2;
+          break;
+        default:
+          rowStartX = 0;
+      }
+    } else {
+      // Fixed mode: use anchor-based positioning
+      // Recalculate row width with fixed spacing
+      const fixedRowWidth = totalFrameWidth + (framesInRow - 1) * row.hSpacing;
+
+      // Handle furniture alignment
+      if (anchorType === 'furniture') {
+        let furnitureLeft: number;
+        if (furnitureAnchor === 'center') {
+          furnitureLeft = (wallWidth - furnitureWidth) / 2;
+        } else if (furnitureAnchor === 'left') {
+          furnitureLeft = furnitureOffset;
+        } else {
+          furnitureLeft = wallWidth - furnitureWidth - furnitureOffset;
+        }
+        const furnitureCenterX = furnitureLeft + furnitureWidth / 2;
+
+        if (frameFurnitureAlign === 'span') {
+          // Use distribution within furniture width bounds
+          if (hDistribution !== 'fixed') {
+            const availableSpace = furnitureWidth - totalFrameWidth;
+
+            switch (hDistribution) {
+              case 'space-between':
+                effectiveHSpacing = framesInRow > 1 ? availableSpace / (framesInRow - 1) : 0;
+                rowStartX = furnitureLeft;
+                break;
+              case 'space-evenly':
+                effectiveHSpacing = availableSpace / (framesInRow + 1);
+                rowStartX = furnitureLeft + effectiveHSpacing;
+                break;
+              case 'space-around':
+                effectiveHSpacing = availableSpace / framesInRow;
+                rowStartX = furnitureLeft + effectiveHSpacing / 2;
+                break;
+              default:
+                rowStartX = furnitureLeft;
+            }
+          } else {
+            rowStartX = furnitureCenterX - fixedRowWidth / 2;
+          }
+        } else if (frameFurnitureAlign === 'center') {
+          rowStartX = furnitureCenterX - fixedRowWidth / 2;
+        } else if (frameFurnitureAlign === 'left') {
+          rowStartX = furnitureLeft;
+        } else {
+          // right
+          rowStartX = furnitureLeft + furnitureWidth - fixedRowWidth;
+        }
+      } else {
+        // Standard anchor-based positioning
+        if (hAnchorType === 'center') {
+          rowStartX = (wallWidth - fixedRowWidth) / 2;
+        } else if (hAnchorType === 'left') {
+          rowStartX = hAnchorValue;
+        } else {
+          rowStartX = wallWidth - fixedRowWidth - hAnchorValue;
+        }
+      }
+    }
+
+    let currentX = rowStartX;
+
+    row.frames.forEach(({ frame, originalIndex }) => {
+      const dims = getFrameDimensions(frame, state);
+
+      // Position frame vertically within row based on vAlign
+      let y: number;
+      if (row.vAlign === 'top') {
+        y = currentRowY;
+      } else if (row.vAlign === 'bottom') {
+        y = currentRowY + row.height - dims.height;
+      } else {
+        // center
+        y = currentRowY + (row.height - dims.height) / 2;
+      }
       const hookY = y + hangingOffset;
 
-      // Calculate hook positions based on hanging type
+      // Calculate hook positions
       let hookX: number;
       let hookX2: number | undefined;
       let hookGap: number | undefined;
 
       if (hangingType === 'dual') {
-        // Dual hooks: positioned inset from each edge
-        hookX = x + hookInset; // Left hook
-        hookX2 = x + frameWidth - hookInset; // Right hook
-        hookGap = frameWidth - 2 * hookInset; // Gap between hooks
+        hookX = currentX + hookInset;
+        hookX2 = currentX + dims.width - hookInset;
+        hookGap = dims.width - 2 * hookInset;
       } else {
-        // Center hook (default)
-        hookX = x + frameWidth / 2;
+        hookX = currentX + dims.width / 2;
       }
 
-      // Check if frame extends beyond wall boundaries
       const isOutOfBounds =
-        x < 0 ||
+        currentX < 0 ||
         y < 0 ||
-        x + frameWidth > wallWidth ||
-        y + frameHeight > wallHeight;
+        currentX + dims.width > wallWidth ||
+        y + dims.height > wallHeight;
 
-      frameNum++;
       positions.push({
-        id: frameNum,
-        name: `Frame ${frameNum}`,
-        row,
-        col,
-        x,
+        id: originalIndex + 1,
+        name: `Frame ${originalIndex + 1}`,
+        row: rowIdx,
+        x: currentX,
         y,
-        width: frameWidth,
-        height: frameHeight,
+        width: dims.width,
+        height: dims.height,
         hangingOffset,
         hookX,
         hookX2,
         hookY,
         hookGap,
-        fromLeft: hookX, // Distance to first (left) hook
+        fromLeft: hookX,
         fromTop: hookY,
         fromFloor: wallHeight - hookY,
-        fromRight: wallWidth - (hookX2 ?? hookX), // Distance from right hook (or center)
+        fromRight: wallWidth - (hookX2 ?? hookX),
         fromCeiling: hookY,
         isOutOfBounds,
       });
-    }
-  }
+
+      currentX += dims.width + effectiveHSpacing;
+    });
+
+    currentRowY += row.height + rowSpacing;
+  });
+
+  // Sort by original index
+  positions.sort((a, b) => a.id - b.id);
 
   return positions;
 }

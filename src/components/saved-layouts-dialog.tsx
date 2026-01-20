@@ -10,11 +10,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import type { SavedLayout } from '@/types';
 
 interface SavedLayoutsDialogProps {
@@ -94,16 +89,11 @@ export function SavedLayoutsDialog({
 
   return (
     <Dialog>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="flex-1">
-              <FolderOpen className="size-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>Saved layouts</TooltipContent>
-      </Tooltip>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="flex-1" title="Saved layouts">
+          <FolderOpen className="size-4" />
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Saved Layouts</DialogTitle>

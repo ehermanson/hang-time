@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CalculatorState } from '@/types';
+import type { CalculatorState, GalleryFrame } from '@/types';
 import {
   calculateLayoutPositions,
   formatMeasurement,
@@ -9,6 +9,17 @@ import {
   toDisplayUnit,
 } from './calculations';
 
+// Helper to create frames
+const createFrame = (width: number, height: number, row?: number): GalleryFrame => ({
+  id: Math.random().toString(36).substring(7),
+  width,
+  height,
+  row,
+});
+
+const createFrames = (count: number, width: number, height: number): GalleryFrame[] =>
+  Array.from({ length: count }, () => createFrame(width, height));
+
 // Default state factory for tests
 const createDefaultState = (
   overrides: Partial<CalculatorState> = {},
@@ -16,10 +27,8 @@ const createDefaultState = (
   unit: 'in',
   wallWidth: 120,
   wallHeight: 96,
-  layoutType: 'grid',
-  frameCount: 1,
-  gridRows: 1,
-  gridCols: 1,
+  frames: createFrames(1, 16, 20),
+  uniformSize: true,
   frameWidth: 16,
   frameHeight: 20,
   hangingOffset: 2,
@@ -28,7 +37,6 @@ const createDefaultState = (
   hSpacing: 4,
   vSpacing: 4,
   hDistribution: 'fixed',
-  vDistribution: 'fixed',
   anchorType: 'center',
   anchorValue: 0,
   hAnchorType: 'center',
@@ -39,8 +47,11 @@ const createDefaultState = (
   furnitureOffset: 0,
   frameFurnitureAlign: 'center',
   furnitureVAnchor: 'above-furniture',
-  galleryFrames: [],
-  galleryVAlign: 'center',
+  vAlign: 'center',
+  rowMode: 'auto',
+  maxRowWidth: null,
+  rowSpacing: 3,
+  rowConfigs: [],
   ...overrides,
 });
 
@@ -138,68 +149,64 @@ describe('calculateLayoutPositions', () => {
   describe('Basic Layout', () => {
     it('returns correct number of frames', () => {
       const state = createDefaultState({
-        frameCount: 4,
-        gridRows: 2,
-        gridCols: 2,
+        frames: createFrames(4, 16, 20),
       });
       const positions = calculateLayoutPositions(state);
       expect(positions).toHaveLength(4);
     });
 
-    it('limits frames to grid capacity', () => {
-      const state = createDefaultState({
-        frameCount: 10,
-        gridRows: 2,
-        gridCols: 2,
-      });
-      const positions = calculateLayoutPositions(state);
-      expect(positions).toHaveLength(4); // 2x2 = 4 max
-    });
-
     it('assigns sequential IDs starting from 1', () => {
       const state = createDefaultState({
-        frameCount: 3,
-        gridRows: 1,
-        gridCols: 3,
+        frames: createFrames(3, 16, 20),
       });
       const positions = calculateLayoutPositions(state);
       expect(positions.map((p) => p.id)).toEqual([1, 2, 3]);
     });
 
-    it('assigns row and col indices', () => {
+    it('uses uniform dimensions when uniformSize is true', () => {
+      const frames = [
+        createFrame(10, 10),
+        createFrame(20, 20),
+        createFrame(30, 30),
+      ];
       const state = createDefaultState({
-        frameCount: 4,
-        gridRows: 2,
-        gridCols: 2,
+        frames,
+        uniformSize: true,
+        frameWidth: 16,
+        frameHeight: 20,
       });
       const positions = calculateLayoutPositions(state);
-      expect(positions[0]).toMatchObject({ row: 0, col: 0 });
-      expect(positions[1]).toMatchObject({ row: 0, col: 1 });
-      expect(positions[2]).toMatchObject({ row: 1, col: 0 });
-      expect(positions[3]).toMatchObject({ row: 1, col: 1 });
+      positions.forEach(p => {
+        expect(p.width).toBe(16);
+        expect(p.height).toBe(20);
+      });
     });
-  });
 
-  describe('Row Layout', () => {
-    it('treats row layout as single-row grid', () => {
+    it('uses individual frame dimensions when uniformSize is false', () => {
+      const frames = [
+        createFrame(10, 12),
+        createFrame(20, 22),
+        createFrame(30, 32),
+      ];
       const state = createDefaultState({
-        layoutType: 'row',
-        frameCount: 3,
-        gridRows: 5, // Should be ignored
-        gridCols: 3,
+        frames,
+        uniformSize: false,
       });
       const positions = calculateLayoutPositions(state);
-      expect(positions).toHaveLength(3);
-      for (const p of positions) {
-        expect(p.row).toBe(0);
-      }
+      expect(positions[0].width).toBe(10);
+      expect(positions[0].height).toBe(12);
+      expect(positions[1].width).toBe(20);
+      expect(positions[1].height).toBe(22);
+      expect(positions[2].width).toBe(30);
+      expect(positions[2].height).toBe(32);
     });
   });
 
   describe('Center Hook (default)', () => {
     it('positions hook at frame center horizontally', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 20, 20),
+        uniformSize: true,
         frameWidth: 20,
         hAnchorType: 'left',
         hAnchorValue: 0,
@@ -211,11 +218,10 @@ describe('calculateLayoutPositions', () => {
 
     it('positions hook at hangingOffset from top', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 16, 20),
         hangingOffset: 3,
         anchorType: 'ceiling',
         anchorValue: 0,
-        vDistribution: 'fixed',
       });
       const positions = calculateLayoutPositions(state);
       expect(positions[0].hookY).toBe(3); // y=0 + hangingOffset=3
@@ -232,7 +238,8 @@ describe('calculateLayoutPositions', () => {
   describe('Dual Hooks', () => {
     it('positions two hooks with correct inset', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 20, 20),
+        uniformSize: true,
         frameWidth: 20,
         hangingType: 'dual',
         hookInset: 3,
@@ -248,16 +255,17 @@ describe('calculateLayoutPositions', () => {
   });
 
   describe('Horizontal Distribution Modes', () => {
-    const baseState = createDefaultState({
-      frameCount: 3,
-      gridRows: 1,
-      gridCols: 3,
-      frameWidth: 20,
-      wallWidth: 100,
-    });
+    const createDistributionState = (hDistribution: 'fixed' | 'space-between' | 'space-evenly' | 'space-around') =>
+      createDefaultState({
+        frames: createFrames(3, 20, 20),
+        uniformSize: true,
+        frameWidth: 20,
+        wallWidth: 100,
+        hDistribution,
+      });
 
     it('space-between: first at edge, last at edge', () => {
-      const state = { ...baseState, hDistribution: 'space-between' as const };
+      const state = createDistributionState('space-between');
       const positions = calculateLayoutPositions(state);
       // Available space = 100 - (3*20) = 40
       // Spacing = 40 / (3-1) = 20
@@ -267,7 +275,7 @@ describe('calculateLayoutPositions', () => {
     });
 
     it('space-evenly: equal space at edges and between', () => {
-      const state = { ...baseState, hDistribution: 'space-evenly' as const };
+      const state = createDistributionState('space-evenly');
       const positions = calculateLayoutPositions(state);
       // Available space = 100 - (3*20) = 40
       // Spacing = 40 / (3+1) = 10
@@ -277,7 +285,7 @@ describe('calculateLayoutPositions', () => {
     });
 
     it('space-around: half space at edges, full between', () => {
-      const state = { ...baseState, hDistribution: 'space-around' as const };
+      const state = createDistributionState('space-around');
       const positions = calculateLayoutPositions(state);
       // Available space = 100 - (3*20) = 40
       // Spacing = 40 / 3 ≈ 13.33
@@ -288,12 +296,15 @@ describe('calculateLayoutPositions', () => {
     });
 
     it('fixed with center anchor: centers group on wall', () => {
-      const state = {
-        ...baseState,
-        hDistribution: 'fixed' as const,
-        hAnchorType: 'center' as const,
+      const state = createDefaultState({
+        frames: createFrames(3, 20, 20),
+        uniformSize: true,
+        frameWidth: 20,
+        wallWidth: 100,
+        hDistribution: 'fixed',
+        hAnchorType: 'center',
         hSpacing: 4,
-      };
+      });
       const positions = calculateLayoutPositions(state);
       // Total width = 3*20 + 2*4 = 68
       // Start = (100 - 68) / 2 = 16
@@ -301,25 +312,31 @@ describe('calculateLayoutPositions', () => {
     });
 
     it('fixed with left anchor: positions from left edge', () => {
-      const state = {
-        ...baseState,
-        hDistribution: 'fixed' as const,
-        hAnchorType: 'left' as const,
+      const state = createDefaultState({
+        frames: createFrames(3, 20, 20),
+        uniformSize: true,
+        frameWidth: 20,
+        wallWidth: 100,
+        hDistribution: 'fixed',
+        hAnchorType: 'left',
         hAnchorValue: 10,
         hSpacing: 4,
-      };
+      });
       const positions = calculateLayoutPositions(state);
       expect(positions[0].x).toBe(10);
     });
 
     it('fixed with right anchor: positions from right edge', () => {
-      const state = {
-        ...baseState,
-        hDistribution: 'fixed' as const,
-        hAnchorType: 'right' as const,
+      const state = createDefaultState({
+        frames: createFrames(3, 20, 20),
+        uniformSize: true,
+        frameWidth: 20,
+        wallWidth: 100,
+        hDistribution: 'fixed',
+        hAnchorType: 'right',
         hAnchorValue: 10,
         hSpacing: 4,
-      };
+      });
       const positions = calculateLayoutPositions(state);
       // Total width = 3*20 + 2*4 = 68
       // Start = wallWidth - totalWidth - anchorValue = 100 - 68 - 10 = 22
@@ -327,87 +344,56 @@ describe('calculateLayoutPositions', () => {
     });
   });
 
-  describe('Vertical Distribution Modes', () => {
-    const baseState = createDefaultState({
-      frameCount: 2,
-      gridRows: 2,
-      gridCols: 1,
-      frameHeight: 20,
-      wallHeight: 80,
-    });
-
-    it('space-between: first at top, last at bottom', () => {
-      const state = { ...baseState, vDistribution: 'space-between' as const };
-      const positions = calculateLayoutPositions(state);
-      // Available = 80 - (2*20) = 40
-      // Spacing = 40 / (2-1) = 40
-      expect(positions[0].y).toBe(0);
-      expect(positions[1].y).toBe(60); // 0 + 20 + 40
-    });
-
-    it('space-evenly: equal space at edges and between', () => {
-      const state = { ...baseState, vDistribution: 'space-evenly' as const };
-      const positions = calculateLayoutPositions(state);
-      // Available = 80 - (2*20) = 40
-      // Spacing = 40 / (2+1) ≈ 13.33
-      const spacing = 40 / 3;
-      expect(positions[0].y).toBeCloseTo(spacing);
-      expect(positions[1].y).toBeCloseTo(spacing + 20 + spacing);
-    });
-
-    it('space-around: half space at edges', () => {
-      const state = { ...baseState, vDistribution: 'space-around' as const };
-      const positions = calculateLayoutPositions(state);
-      // Available = 80 - (2*20) = 40
-      // Spacing = 40 / 2 = 20
-      expect(positions[0].y).toBe(10); // spacing/2
-      expect(positions[1].y).toBe(50); // 10 + 20 + 20
-    });
-  });
-
-  describe('Vertical Anchor Types (fixed distribution)', () => {
-    const baseState = createDefaultState({
-      frameCount: 1,
-      frameHeight: 20,
-      wallHeight: 100,
-      vDistribution: 'fixed',
-      vSpacing: 0,
-    });
-
+  describe('Vertical Anchor Types', () => {
     it('center: vertically centers frame', () => {
-      const state = { ...baseState, anchorType: 'center' as const };
+      const state = createDefaultState({
+        frames: createFrames(1, 16, 20),
+        uniformSize: true,
+        frameHeight: 20,
+        wallHeight: 100,
+        anchorType: 'center',
+      });
       const positions = calculateLayoutPositions(state);
       expect(positions[0].y).toBe(40); // (100 - 20) / 2
     });
 
     it('ceiling: positions from top', () => {
-      const state = {
-        ...baseState,
-        anchorType: 'ceiling' as const,
+      const state = createDefaultState({
+        frames: createFrames(1, 16, 20),
+        uniformSize: true,
+        frameHeight: 20,
+        wallHeight: 100,
+        anchorType: 'ceiling',
         anchorValue: 15,
-      };
+      });
       const positions = calculateLayoutPositions(state);
       expect(positions[0].y).toBe(15);
     });
 
     it('floor: positions from bottom', () => {
-      const state = {
-        ...baseState,
-        anchorType: 'floor' as const,
+      const state = createDefaultState({
+        frames: createFrames(1, 16, 20),
+        uniformSize: true,
+        frameHeight: 20,
+        wallHeight: 100,
+        anchorType: 'floor',
         anchorValue: 10,
-      };
+      });
       const positions = calculateLayoutPositions(state);
       // y = wallHeight - anchorValue - totalHeight = 100 - 10 - 20 = 70
       expect(positions[0].y).toBe(70);
     });
 
     it('furniture: positions above furniture', () => {
-      const state = {
-        ...baseState,
-        anchorType: 'furniture' as const,
+      const state = createDefaultState({
+        frames: createFrames(1, 16, 20),
+        uniformSize: true,
+        frameHeight: 20,
+        wallHeight: 100,
+        anchorType: 'furniture',
         anchorValue: 5, // gap above furniture
         furnitureHeight: 30,
-      };
+      });
       const positions = calculateLayoutPositions(state);
       // furnitureTop = 100 - 30 = 70
       // y = 70 - 5 - 20 = 45
@@ -415,226 +401,116 @@ describe('calculateLayoutPositions', () => {
     });
   });
 
-  describe('Furniture Frame Alignment', () => {
-    const baseState = {
-      frameCount: 1,
-      frameWidth: 20,
-      wallWidth: 100,
-      vDistribution: 'fixed' as const,
-      hDistribution: 'fixed' as const,
-      anchorType: 'furniture' as const,
-      furnitureWidth: 48,
-      furnitureAnchor: 'center' as const,
-      furnitureOffset: 0,
-    };
-
-    it('centers frames above furniture with center alignment', () => {
+  describe('Multi-Row Layout', () => {
+    it('wraps frames to multiple rows based on maxRowWidth', () => {
       const state = createDefaultState({
-        ...baseState,
-        frameFurnitureAlign: 'center',
+        frames: createFrames(4, 30, 20),
+        uniformSize: true,
+        frameWidth: 30,
+        wallWidth: 100,
+        maxRowWidth: 100,
+        hSpacing: 5,
+        rowMode: 'auto',
       });
       const positions = calculateLayoutPositions(state);
-      // Furniture center = (100 - 48) / 2 + 48/2 = 50
-      // Frame start = 50 - 20/2 = 40
-      expect(positions[0].x).toBe(40);
+      // Each frame is 30 + 5 = 35 units with spacing
+      // 3 frames would be 30 + 35 + 35 = 100 (exactly)
+      // So we should have 3 frames in first row, 1 in second
+      expect(positions[0].row).toBe(0);
+      expect(positions[1].row).toBe(0);
+      expect(positions[2].row).toBe(0);
+      expect(positions[3].row).toBe(1);
     });
 
-    it('aligns frames to left edge of furniture', () => {
+    it('respects manual row assignment', () => {
+      const frames = [
+        createFrame(16, 20, 0),
+        createFrame(16, 20, 1),
+        createFrame(16, 20, 0),
+        createFrame(16, 20, 1),
+      ];
       const state = createDefaultState({
-        ...baseState,
-        frameFurnitureAlign: 'left',
-      });
-      const positions = calculateLayoutPositions(state);
-      // Furniture left = (100 - 48) / 2 = 26
-      expect(positions[0].x).toBe(26);
-    });
-
-    it('aligns frames to right edge of furniture', () => {
-      const state = createDefaultState({
-        ...baseState,
-        frameFurnitureAlign: 'right',
-      });
-      const positions = calculateLayoutPositions(state);
-      // Furniture left = (100 - 48) / 2 = 26
-      // Frame start = 26 + 48 - 20 = 54
-      expect(positions[0].x).toBe(54);
-    });
-
-    it('positions furniture on left wall with offset', () => {
-      const state = createDefaultState({
-        ...baseState,
-        furnitureAnchor: 'left',
-        furnitureOffset: 10,
-        frameFurnitureAlign: 'left',
-      });
-      const positions = calculateLayoutPositions(state);
-      // Furniture left = 10
-      expect(positions[0].x).toBe(10);
-    });
-
-    it('positions furniture on right wall with offset', () => {
-      const state = createDefaultState({
-        ...baseState,
-        furnitureAnchor: 'right',
-        furnitureOffset: 10,
-        frameFurnitureAlign: 'right',
-      });
-      const positions = calculateLayoutPositions(state);
-      // Furniture left = 100 - 48 - 10 = 42
-      // Frame right = 42 + 48 - 20 = 70
-      expect(positions[0].x).toBe(70);
-    });
-
-    describe('with multiple frames and gap', () => {
-      const multiFrameBase = {
-        ...baseState,
-        frameCount: 3,
-        gridCols: 3,
-        frameWidth: 10,
-        hSpacing: 4,
-      };
-
-      it('left alignment respects gap between frames', () => {
-        const state = createDefaultState({
-          ...multiFrameBase,
-          frameFurnitureAlign: 'left',
-        });
-        const positions = calculateLayoutPositions(state);
-        // Furniture left = (100 - 48) / 2 = 26
-        expect(positions[0].x).toBe(26);
-        expect(positions[1].x).toBe(40); // 26 + 10 + 4
-        expect(positions[2].x).toBe(54); // 26 + 2*(10 + 4)
-      });
-
-      it('center alignment respects gap between frames', () => {
-        const state = createDefaultState({
-          ...multiFrameBase,
-          frameFurnitureAlign: 'center',
-        });
-        const positions = calculateLayoutPositions(state);
-        // Furniture center = 50
-        // Total width = 3*10 + 2*4 = 38
-        // Start = 50 - 38/2 = 31
-        expect(positions[0].x).toBe(31);
-        expect(positions[1].x).toBe(45); // 31 + 10 + 4
-        expect(positions[2].x).toBe(59); // 31 + 2*(10 + 4)
-      });
-
-      it('right alignment respects gap between frames', () => {
-        const state = createDefaultState({
-          ...multiFrameBase,
-          frameFurnitureAlign: 'right',
-        });
-        const positions = calculateLayoutPositions(state);
-        // Furniture left = 26, furniture right = 74
-        // Total width = 3*10 + 2*4 = 38
-        // Start = 74 - 38 = 36
-        expect(positions[0].x).toBe(36);
-        expect(positions[1].x).toBe(50); // 36 + 10 + 4
-        expect(positions[2].x).toBe(64); // 36 + 2*(10 + 4)
-      });
-    });
-
-    describe('span mode distributions', () => {
-      const spanBase = {
-        ...baseState,
-        frameCount: 3,
-        gridCols: 3,
-        frameWidth: 10,
-        frameFurnitureAlign: 'span' as const,
-      };
-
-      it('space-between: first at furniture left, last at furniture right', () => {
-        const state = createDefaultState({
-          ...spanBase,
-          hDistribution: 'space-between',
-        });
-        const positions = calculateLayoutPositions(state);
-        // Furniture left = 26, width = 48
-        // Available = 48 - 30 = 18, spacing = 18 / 2 = 9
-        expect(positions[0].x).toBe(26);
-        expect(positions[1].x).toBe(45); // 26 + 10 + 9
-        expect(positions[2].x).toBe(64); // 26 + 2*(10 + 9)
-      });
-
-      it('space-evenly: equal space at edges and between', () => {
-        const state = createDefaultState({
-          ...spanBase,
-          hDistribution: 'space-evenly',
-        });
-        const positions = calculateLayoutPositions(state);
-        // Furniture left = 26, width = 48
-        // Available = 48 - 30 = 18, spacing = 18 / 4 = 4.5
-        expect(positions[0].x).toBeCloseTo(30.5); // 26 + 4.5
-        expect(positions[1].x).toBeCloseTo(45); // 26 + 4.5 + 10 + 4.5
-        expect(positions[2].x).toBeCloseTo(59.5); // 26 + 2*(4.5 + 10) + 4.5
-      });
-
-      it('space-around: half space at edges, full between', () => {
-        const state = createDefaultState({
-          ...spanBase,
-          hDistribution: 'space-around',
-        });
-        const positions = calculateLayoutPositions(state);
-        // Furniture left = 26, width = 48
-        // Available = 48 - 30 = 18, spacing = 18 / 3 = 6
-        // Start = 26 + 6/2 = 29
-        expect(positions[0].x).toBe(29);
-        expect(positions[1].x).toBe(45); // 29 + 10 + 6
-        expect(positions[2].x).toBe(61); // 29 + 2*(10 + 6)
-      });
-    });
-
-    describe('vertical anchor options', () => {
-      const vAnchorBase = {
-        frameCount: 1,
+        frames,
+        uniformSize: true,
+        frameWidth: 16,
         frameHeight: 20,
-        wallHeight: 100,
-        vDistribution: 'fixed' as const,
-        anchorType: 'furniture' as const,
-        furnitureHeight: 30,
-      };
-
-      it('above-furniture: positions with gap above furniture', () => {
-        const state = createDefaultState({
-          ...vAnchorBase,
-          furnitureVAnchor: 'above-furniture',
-          anchorValue: 5, // gap
-        });
-        const positions = calculateLayoutPositions(state);
-        // furnitureTop = 100 - 30 = 70
-        // y = 70 - 5 - 20 = 45
-        expect(positions[0].y).toBe(45);
+        rowMode: 'manual',
       });
+      const positions = calculateLayoutPositions(state);
+      // Frames should be grouped by their row assignment
+      expect(positions.filter(p => p.row === 0)).toHaveLength(2);
+      expect(positions.filter(p => p.row === 1)).toHaveLength(2);
+    });
+  });
 
-      it('ceiling: positions from ceiling', () => {
-        const state = createDefaultState({
-          ...vAnchorBase,
-          furnitureVAnchor: 'ceiling',
-          anchorValue: 10,
-        });
-        const positions = calculateLayoutPositions(state);
-        // y = anchorValue = 10
-        expect(positions[0].y).toBe(10);
+  describe('Vertical Alignment within Rows', () => {
+    it('vAlign top: aligns frames to top of row', () => {
+      const frames = [
+        createFrame(16, 10, 0), // short frame
+        createFrame(16, 20, 0), // tall frame
+      ];
+      const state = createDefaultState({
+        frames,
+        uniformSize: false,
+        rowMode: 'manual',
+        vAlign: 'top',
+        anchorType: 'ceiling',
+        anchorValue: 0,
       });
+      const positions = calculateLayoutPositions(state);
+      // Both frames should start at y=0 (top aligned)
+      expect(positions[0].y).toBe(0);
+      expect(positions[1].y).toBe(0);
+    });
 
-      it('center: centers between ceiling and furniture', () => {
-        const state = createDefaultState({
-          ...vAnchorBase,
-          furnitureVAnchor: 'center',
-        });
-        const positions = calculateLayoutPositions(state);
-        // furnitureTop = 100 - 30 = 70
-        // y = (70 - 20) / 2 = 25
-        expect(positions[0].y).toBe(25);
+    it('vAlign bottom: aligns frames to bottom of row', () => {
+      const frames = [
+        createFrame(16, 10, 0), // short frame
+        createFrame(16, 20, 0), // tall frame
+      ];
+      const state = createDefaultState({
+        frames,
+        uniformSize: false,
+        rowMode: 'manual',
+        vAlign: 'bottom',
+        anchorType: 'ceiling',
+        anchorValue: 0,
       });
+      const positions = calculateLayoutPositions(state);
+      // Row height is 20 (max of frames)
+      // Short frame should be at y = 0 + (20 - 10) = 10
+      // Tall frame should be at y = 0
+      expect(positions[0].y).toBe(10); // short frame pushed down
+      expect(positions[1].y).toBe(0);  // tall frame at top
+    });
+
+    it('vAlign center: centers frames within row', () => {
+      const frames = [
+        createFrame(16, 10, 0), // short frame
+        createFrame(16, 20, 0), // tall frame
+      ];
+      const state = createDefaultState({
+        frames,
+        uniformSize: false,
+        rowMode: 'manual',
+        vAlign: 'center',
+        anchorType: 'ceiling',
+        anchorValue: 0,
+      });
+      const positions = calculateLayoutPositions(state);
+      // Row height is 20 (max of frames)
+      // Short frame should be at y = 0 + (20 - 10) / 2 = 5
+      // Tall frame should be at y = 0
+      expect(positions[0].y).toBe(5);  // short frame centered
+      expect(positions[1].y).toBe(0);  // tall frame at top (fills row)
     });
   });
 
   describe('Distance Calculations', () => {
     it('calculates fromLeft as distance to hook', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 20, 20),
+        uniformSize: true,
         frameWidth: 20,
         hAnchorType: 'left',
         hAnchorValue: 30,
@@ -647,7 +523,8 @@ describe('calculateLayoutPositions', () => {
 
     it('calculates fromRight as distance from right hook', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 20, 20),
+        uniformSize: true,
         frameWidth: 20,
         wallWidth: 100,
         hangingType: 'dual',
@@ -664,12 +541,11 @@ describe('calculateLayoutPositions', () => {
 
     it('calculates fromFloor correctly', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 16, 20),
         hangingOffset: 2,
         wallHeight: 100,
         anchorType: 'ceiling',
         anchorValue: 10,
-        vDistribution: 'fixed',
       });
       const positions = calculateLayoutPositions(state);
       // hookY = y + hangingOffset = 10 + 2 = 12
@@ -679,11 +555,10 @@ describe('calculateLayoutPositions', () => {
 
     it('calculates fromCeiling as hookY', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 16, 20),
         hangingOffset: 2,
         anchorType: 'ceiling',
         anchorValue: 10,
-        vDistribution: 'fixed',
       });
       const positions = calculateLayoutPositions(state);
       expect(positions[0].fromCeiling).toBe(positions[0].hookY);
@@ -693,28 +568,25 @@ describe('calculateLayoutPositions', () => {
   describe('Edge Cases', () => {
     it('handles single frame with space-between (no division by zero)', () => {
       const state = createDefaultState({
-        frameCount: 1,
-        gridRows: 1,
-        gridCols: 1,
+        frames: createFrames(1, 16, 20),
         hDistribution: 'space-between',
-        vDistribution: 'space-between',
       });
       const positions = calculateLayoutPositions(state);
       expect(positions).toHaveLength(1);
       // With single frame, spacing should be 0, frame at edge
       expect(positions[0].x).toBe(0);
-      expect(positions[0].y).toBe(0);
     });
 
-    it('handles zero frame count', () => {
-      const state = createDefaultState({ frameCount: 0 });
+    it('handles empty frames array', () => {
+      const state = createDefaultState({ frames: [] });
       const positions = calculateLayoutPositions(state);
       expect(positions).toHaveLength(0);
     });
 
     it('includes frame dimensions in position output', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 25, 35),
+        uniformSize: true,
         frameWidth: 25,
         frameHeight: 35,
       });
@@ -725,7 +597,7 @@ describe('calculateLayoutPositions', () => {
 
     it('includes hangingOffset in position output', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 16, 20),
         hangingOffset: 5,
       });
       const positions = calculateLayoutPositions(state);
@@ -736,7 +608,8 @@ describe('calculateLayoutPositions', () => {
   describe('Out of Bounds Detection', () => {
     it('marks frame as in bounds when fully within wall', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 20, 20),
+        uniformSize: true,
         frameWidth: 20,
         frameHeight: 20,
         wallWidth: 100,
@@ -750,7 +623,8 @@ describe('calculateLayoutPositions', () => {
 
     it('marks frame as out of bounds when extending past left edge', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 20, 20),
+        uniformSize: true,
         frameWidth: 20,
         wallWidth: 100,
         hDistribution: 'fixed',
@@ -763,7 +637,8 @@ describe('calculateLayoutPositions', () => {
 
     it('marks frame as out of bounds when extending past right edge', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 20, 20),
+        uniformSize: true,
         frameWidth: 20,
         wallWidth: 100,
         hDistribution: 'fixed',
@@ -774,77 +649,15 @@ describe('calculateLayoutPositions', () => {
       expect(positions[0].isOutOfBounds).toBe(true);
     });
 
-    it('marks frame as out of bounds when extending past top edge', () => {
-      const state = createDefaultState({
-        frameCount: 1,
-        frameHeight: 20,
-        wallHeight: 100,
-        vDistribution: 'fixed',
-        anchorType: 'ceiling',
-        anchorValue: -5, // Starts 5 units above ceiling
-      });
-      const positions = calculateLayoutPositions(state);
-      expect(positions[0].isOutOfBounds).toBe(true);
-    });
-
-    it('marks frame as out of bounds when extending past bottom edge', () => {
-      const state = createDefaultState({
-        frameCount: 1,
-        frameHeight: 20,
-        wallHeight: 100,
-        vDistribution: 'fixed',
-        anchorType: 'floor',
-        anchorValue: -5, // Extends 5 units below floor
-      });
-      const positions = calculateLayoutPositions(state);
-      expect(positions[0].isOutOfBounds).toBe(true);
-    });
-
-    it('marks multiple frames correctly when some are out of bounds', () => {
-      const state = createDefaultState({
-        layoutType: 'row',
-        frameCount: 5,
-        gridCols: 5,
-        frameWidth: 30,
-        wallWidth: 100,
-        hDistribution: 'fixed',
-        hAnchorType: 'center',
-        hSpacing: 5,
-      });
-      const positions = calculateLayoutPositions(state);
-      // Total width = 5*30 + 4*5 = 170, wall = 100
-      // startX = (100 - 170) / 2 = -35
-      // Some frames will be off left edge, some off right edge
-      const outOfBoundsCount = positions.filter((p) => p.isOutOfBounds).length;
-      expect(outOfBoundsCount).toBeGreaterThan(0);
-    });
-
-    it('detects out of bounds with too many frames in row layout', () => {
-      const state = createDefaultState({
-        layoutType: 'row',
-        frameCount: 9,
-        gridCols: 9,
-        frameWidth: 24,
-        wallWidth: 120,
-        hDistribution: 'fixed',
-        hAnchorType: 'center',
-        hSpacing: 6,
-      });
-      const positions = calculateLayoutPositions(state);
-      // Total width = 9*24 + 8*6 = 264, wall = 120
-      // Frames definitely extend beyond wall
-      expect(positions.some((p) => p.isOutOfBounds)).toBe(true);
-    });
-
     it('frame exactly fitting wall is not out of bounds', () => {
       const state = createDefaultState({
-        frameCount: 1,
+        frames: createFrames(1, 100, 100),
+        uniformSize: true,
         frameWidth: 100,
         frameHeight: 100,
         wallWidth: 100,
         wallHeight: 100,
         hDistribution: 'fixed',
-        vDistribution: 'fixed',
         hAnchorType: 'center',
         anchorType: 'center',
       });

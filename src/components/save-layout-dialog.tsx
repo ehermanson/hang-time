@@ -13,11 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import type { SavedLayout } from '@/types';
 
 interface SaveLayoutDialogProps {
@@ -84,14 +79,9 @@ export function SaveLayoutDialog({
   // If already saved (exact match), just show disabled button
   if (existingLayoutForCurrentConfig) {
     return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="outline" size="sm" className="flex-1" disabled>
-            <Save className="size-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Already saved</TooltipContent>
-      </Tooltip>
+      <Button variant="outline" size="sm" className="flex-1" disabled title="Already saved">
+        <Save className="size-4" />
+      </Button>
     );
   }
 
@@ -99,16 +89,11 @@ export function SaveLayoutDialog({
   if (loadedLayout && hasUnsavedChanges) {
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="flex-1">
-                <Save className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent>Save changes</TooltipContent>
-        </Tooltip>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="flex-1" title="Save changes">
+            <Save className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Save Changes</DialogTitle>
@@ -193,16 +178,11 @@ export function SaveLayoutDialog({
   // Default: simple save dialog for new layout
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="flex-1">
-              <Save className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>Save layout</TooltipContent>
-      </Tooltip>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="flex-1" title="Save layout">
+          <Save className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Save Layout</DialogTitle>
