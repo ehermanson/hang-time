@@ -168,6 +168,38 @@ export const GALLERY_PRESETS: GalleryPreset[] = [
       furnitureVAnchor: 'above-furniture',
     },
   },
+  {
+    id: 'mirror-gallery',
+    name: 'Mirror Gallery',
+    description: '10 frames, stacked pyramids',
+    frames: [
+      { id: genId(), width: 8, height: 10, row: 0 },
+      { id: genId(), width: 11, height: 14, row: 0 },
+      { id: genId(), width: 16, height: 20, row: 0 },
+      { id: genId(), width: 11, height: 14, row: 0 },
+      { id: genId(), width: 8, height: 10, row: 0 },
+      { id: genId(), width: 8, height: 10, row: 1 },
+      { id: genId(), width: 11, height: 14, row: 1 },
+      { id: genId(), width: 16, height: 20, row: 1 },
+      { id: genId(), width: 11, height: 14, row: 1 },
+      { id: genId(), width: 8, height: 10, row: 1 },
+    ],
+    settings: {
+      uniformSize: false,
+      hSpacing: 2.25,
+      vSpacing: 3,
+      hDistribution: 'fixed',
+      vAlign: 'center',
+      rowSpacing: 2.25,
+      rowConfigs: [
+        { id: 'row-0', vAlign: 'bottom' },
+        { id: 'row-1', vAlign: 'top' },
+      ],
+      anchorType: 'ceiling',
+      anchorValue: 6,
+      hAnchorType: 'center',
+    },
+  },
 ];
 
 // Default preset to use on initial load

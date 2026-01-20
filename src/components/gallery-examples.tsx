@@ -155,9 +155,22 @@ function PresetThumbnail({ preset }: { preset: GalleryPreset }) {
             .reduce((sum, r) => sum + Math.max(...r.map((f) => f.height)) + 2, 0);
           const rowX = (totalWidth - rowWidth) / 2;
 
+          // Check for row-specific vAlign from rowConfigs
+          const rowConfig = preset.settings.rowConfigs.find(
+            (c) => c.id === `row-${rowIndex}`
+          );
+          const vAlign = rowConfig?.vAlign ?? preset.settings.vAlign;
+
           let x = rowX;
           return row.map((frame, frameIndex) => {
-            const y = rowY + (rowHeight - frame.height) / 2;
+            let y: number;
+            if (vAlign === 'top') {
+              y = rowY;
+            } else if (vAlign === 'bottom') {
+              y = rowY + (rowHeight - frame.height);
+            } else {
+              y = rowY + (rowHeight - frame.height) / 2;
+            }
             const rect = (
               <rect
                 key={`${rowIndex}-${frameIndex}`}
