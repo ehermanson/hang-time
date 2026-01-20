@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRef, useState } from 'react';
+import { GalleryExamples } from '@/components/gallery-examples';
 import { HowToHang } from '@/components/how-to-hang';
 import { Measurements } from '@/components/measurements';
 import { SaveLayoutDialog } from '@/components/save-layout-dialog';
@@ -322,6 +323,7 @@ export function Sidebar({ calculator }: SidebarProps) {
             >
               <RotateCcw className="size-4" />
             </Button>
+            <GalleryExamples calculator={calculator} />
             <SaveLayoutDialog
                 onSave={save}
                 onUpdate={update}

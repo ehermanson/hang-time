@@ -27,6 +27,7 @@ import {
   fromDisplayUnit,
   toDisplayUnit,
 } from '@/utils/calculations';
+import { DEFAULT_PRESET } from '@/data/gallery-presets';
 
 const UNIT_STORAGE_KEY = 'picture-hanging-unit';
 
@@ -46,7 +47,7 @@ const wallParsers = {
 
 const framesParsers = {
   f: parseAsString.withDefault(''), // JSON-encoded GalleryFrame[]
-  us: parseAsBoolean.withDefault(true), // uniformSize - when true, all frames use fw/fh
+  us: parseAsBoolean.withDefault(false), // uniformSize - when false, frames use individual sizes
 };
 
 const frameParsers = {
@@ -156,12 +157,11 @@ function parseRowConfigs(json: string): GalleryRowConfig[] {
   return [];
 }
 
-// Create default frames for initial state
-function createDefaultFrames(count: number, width: number, height: number): GalleryFrame[] {
-  return Array.from({ length: count }, () => ({
+// Create default frames from preset (with fresh IDs)
+function createDefaultFrames(): GalleryFrame[] {
+  return DEFAULT_PRESET.frames.map((f) => ({
+    ...f,
     id: generateId(),
-    width,
-    height,
   }));
 }
 
@@ -178,11 +178,10 @@ export function useCalculator() {
   const frames = useMemo(() => {
     const parsed = parseFrames(framesState.f);
     if (parsed.length === 0) {
-      // Create 3 default frames
-      return createDefaultFrames(3, frame.fw, frame.fh);
+      return createDefaultFrames();
     }
     return parsed;
-  }, [framesState.f, frame.fw, frame.fh]);
+  }, [framesState.f]);
 
   const rowConfigs = useMemo(
     () => parseRowConfigs(layout.rc),
