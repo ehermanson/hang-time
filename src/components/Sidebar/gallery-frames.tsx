@@ -23,9 +23,6 @@ import {
   AlignHorizontalJustifyStart,
   AlignHorizontalSpaceAround,
   AlignHorizontalSpaceBetween,
-  AlignVerticalDistributeCenter,
-  AlignVerticalJustifyEnd,
-  AlignVerticalJustifyStart,
   ChevronDown,
   Frame,
   GripVertical,
@@ -33,6 +30,37 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+
+// Custom icons for row vertical alignment (showing different-height frames)
+function AlignTopIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 12" fill="none" className={className}>
+      <rect x="0" y="0" width="4" height="7" rx="1" fill="currentColor" opacity="0.35" />
+      <rect x="6" y="0" width="4" height="12" rx="1" fill="currentColor" />
+      <rect x="12" y="0" width="4" height="7" rx="1" fill="currentColor" opacity="0.35" />
+    </svg>
+  );
+}
+
+function AlignCenterIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 12" fill="none" className={className}>
+      <rect x="0" y="2.5" width="4" height="7" rx="1" fill="currentColor" opacity="0.35" />
+      <rect x="6" y="0" width="4" height="12" rx="1" fill="currentColor" />
+      <rect x="12" y="2.5" width="4" height="7" rx="1" fill="currentColor" opacity="0.35" />
+    </svg>
+  );
+}
+
+function AlignBottomIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 12" fill="none" className={className}>
+      <rect x="0" y="5" width="4" height="7" rx="1" fill="currentColor" opacity="0.35" />
+      <rect x="6" y="0" width="4" height="12" rx="1" fill="currentColor" />
+      <rect x="12" y="5" width="4" height="7" rx="1" fill="currentColor" opacity="0.35" />
+    </svg>
+  );
+}
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,14 +71,20 @@ import {
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { UseCalculatorReturn } from '@/hooks/use-calculator';
 import { cn } from '@/lib/utils';
 import type { Distribution, GalleryFrame, GalleryVAlign } from '@/types';
 
-const VALIGN_OPTIONS: { value: GalleryVAlign; label: string; icon: typeof AlignVerticalDistributeCenter }[] = [
-  { value: 'top', label: 'Top', icon: AlignVerticalJustifyStart },
-  { value: 'center', label: 'Center', icon: AlignVerticalDistributeCenter },
-  { value: 'bottom', label: 'Bottom', icon: AlignVerticalJustifyEnd },
+const VALIGN_OPTIONS: { value: GalleryVAlign; label: string; icon: typeof AlignTopIcon }[] = [
+  { value: 'top', label: 'Top', icon: AlignTopIcon },
+  { value: 'center', label: 'Center', icon: AlignCenterIcon },
+  { value: 'bottom', label: 'Bottom', icon: AlignBottomIcon },
 ];
 
 const DISTRIBUTION_OPTIONS: { value: Distribution; label: string; icon: typeof AlignHorizontalDistributeCenter }[] = [
@@ -243,6 +277,14 @@ function DraggableFrameCard({
   );
 }
 
+// Check if all frames in a row have the same height
+function allFramesSameHeight(frames: GalleryFrame[], uniformSize: boolean): boolean {
+  if (frames.length <= 1) return true;
+  if (uniformSize) return true;
+  const firstHeight = frames[0].height;
+  return frames.every((f) => f.height === firstHeight);
+}
+
 // Row container that frames can be dragged into
 interface RowContainerProps {
   rowIndex: number;
@@ -277,6 +319,7 @@ function RowContainer({
   onRemoveRow,
   canRemoveRow,
 }: RowContainerProps) {
+  const showVAlignControls = !allFramesSameHeight(frames, uniformSize);
   const { setNodeRef, isOver } = useDroppable({
     id: `row-${rowIndex}`,
   });
@@ -298,32 +341,44 @@ function RowContainer({
         <span className="text-[10px] text-gray-400 dark:text-white/30">
           ({frames.length} {frames.length === 1 ? 'frame' : 'frames'})
         </span>
-        {/* Per-row vertical alignment */}
-        <div className="ml-auto flex items-center gap-0.5">
-          {VALIGN_OPTIONS.map((option) => {
-            const Icon = option.icon;
-            const isSelected = vAlign === option.value;
-            return (
-              <button
-                key={option.value}
-                onClick={() => onVAlignChange(option.value)}
-                className={cn(
-                  'p-1 rounded transition-colors',
-                  isSelected
-                    ? 'bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400'
-                    : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100 dark:text-white/30 dark:hover:text-white/50 dark:hover:bg-white/10',
-                )}
-                title={`Align ${option.label}`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-              </button>
-            );
-          })}
-        </div>
+        {/* Per-row vertical alignment (only shown when frames have different heights) */}
+        {showVAlignControls && (
+          <TooltipProvider delayDuration={300}>
+            <div className="ml-auto flex items-center gap-0.5">
+              {VALIGN_OPTIONS.map((option) => {
+                const Icon = option.icon;
+                const isSelected = vAlign === option.value;
+                return (
+                  <Tooltip key={option.value}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => onVAlignChange(option.value)}
+                        className={cn(
+                          'p-1 rounded transition-colors',
+                          isSelected
+                            ? 'bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400'
+                            : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100 dark:text-white/30 dark:hover:text-white/50 dark:hover:bg-white/10',
+                        )}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      Align {option.label.toLowerCase()}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
+        )}
         {canRemoveRow && frames.length === 0 && (
           <button
             onClick={onRemoveRow}
-            className="p-1 text-gray-300 hover:text-red-500 dark:text-white/30 dark:hover:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-500/10"
+            className={cn(
+              'p-1 text-gray-300 hover:text-red-500 dark:text-white/30 dark:hover:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-500/10',
+              !showVAlignControls && 'ml-auto',
+            )}
             title="Remove empty row"
           >
             <Trash2 className="h-3.5 w-3.5" />
