@@ -13,5 +13,8 @@
   // Enable observability for logs in the Cloudflare dashboard
   "observability": {
     "enabled": true
-  }
+  },
+
+  // Custom domain
+  "routes": [{ "pattern": "hang-time.app", "custom_domain": true }]
 }
