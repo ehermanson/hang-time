@@ -15,7 +15,7 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  horizontalListSortingStrategy,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
@@ -61,7 +61,7 @@ function AlignBottomIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -155,7 +155,7 @@ function DraggableFrameCard({
         isOverlay
           ? 'border-pink-400 bg-white shadow-xl dark:bg-slate-800'
           : isDragging
-            ? 'opacity-40 border-dashed border-pink-300 bg-pink-50/50 dark:border-pink-500/50 dark:bg-pink-500/10'
+            ? 'opacity-30 border-pink-300 bg-pink-50/50 dark:border-pink-500/50 dark:bg-pink-500/10'
             : 'border-gray-200 bg-white dark:border-white/10 dark:bg-white/5',
       )}
     >
@@ -387,7 +387,7 @@ function RowContainer({
       </div>
       <SortableContext
         items={frames.map((f) => f.id)}
-        strategy={horizontalListSortingStrategy}
+        strategy={verticalListSortingStrategy}
       >
         <div className="space-y-2">
           {frames.map((frame) => {
@@ -444,6 +444,7 @@ export function GalleryFrames({ calculator }: Props) {
   } = calculator;
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const lastRowMoveRef = useRef<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -476,6 +477,7 @@ export function GalleryFrames({ calculator }: Props) {
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
+    lastRowMoveRef.current = null;
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -485,27 +487,33 @@ export function GalleryFrames({ calculator }: Props) {
     const activeFrame = state.frames.find((f) => f.id === active.id);
     if (!activeFrame) return;
 
-    // Check if dropping over a row container
-    const overId = over.id as string;
-    if (overId.startsWith('row-')) {
-      const newRowIndex = parseInt(overId.replace('row-', ''));
-      if (activeFrame.row !== newRowIndex) {
-        updateFrame(activeFrame.id, { row: newRowIndex });
+    // Determine target row
+    const currentOverId = over.id as string;
+    let targetRow: number | null = null;
+
+    if (currentOverId.startsWith('row-')) {
+      targetRow = parseInt(currentOverId.replace('row-', ''));
+    } else {
+      const overFrame = state.frames.find((f) => f.id === over.id);
+      if (overFrame && activeFrame.row !== overFrame.row) {
+        targetRow = overFrame.row ?? 0;
       }
-      return;
     }
 
-    // Check if dropping over another frame
-    const overFrame = state.frames.find((f) => f.id === over.id);
-    if (overFrame && activeFrame.row !== overFrame.row) {
-      // Move to the same row as the target frame
-      updateFrame(activeFrame.id, { row: overFrame.row });
+    // Only update if moving to a different row, and guard against repeated calls
+    if (targetRow !== null && activeFrame.row !== targetRow) {
+      const moveKey = `${activeFrame.id}->${targetRow}`;
+      if (lastRowMoveRef.current !== moveKey) {
+        lastRowMoveRef.current = moveKey;
+        updateFrame(activeFrame.id, { row: targetRow });
+      }
     }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
+    lastRowMoveRef.current = null;
 
     if (!over) return;
 
@@ -579,7 +587,7 @@ export function GalleryFrames({ calculator }: Props) {
     setFrames([...state.frames, newFrame]);
   };
 
-  const activeFrame = activeId ? state.frames.find((f) => f.id === activeId) : null;
+  const activeFrame = activeId ? state.frames.find((f) => f.id === activeId) ?? null : null;
   const activeIndex = activeFrame ? state.frames.findIndex((f) => f.id === activeFrame.id) : -1;
 
   return (
